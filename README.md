@@ -32,7 +32,7 @@ Current Versions:
 
 ##  Credits
 - **Create** team and **Iron's Spells & Spellbooks** team for their fantastic mods.
-- **TTZPlayz** (author), **Snakeypro**, and the **Pheonix Studios Discord** for bug testing 😁.
+- **TTZPlayz** (author), **Snakeypro**, and the **Phoenix Studios Discord** for bug testing 😁.
 
 ---
 

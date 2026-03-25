@@ -18,7 +18,7 @@ import net.ttzplayz.create_wizardry.datagen.CWLangProvider;
 import java.util.Collections;
 import java.util.List;
 
-@EventBusSubscriber(modid = CreateWizardry.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber
 public class CWDataGenerators {
     public CWDataGenerators(IEventBus modBus) {
         if (!DatagenModLoader.isRunningDataGen())

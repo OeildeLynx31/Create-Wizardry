@@ -103,6 +103,4 @@ public class ChannelerBlock extends Block implements IWrenchable, IBE<ChannelerB
         super.setPlacedBy(worldIn, pos, state, placer, stack);
         AdvancementBehaviour.setPlacedBy(worldIn, pos, placer);
     }
-
-    //TODO: Fluid/Hand Interaction
 }

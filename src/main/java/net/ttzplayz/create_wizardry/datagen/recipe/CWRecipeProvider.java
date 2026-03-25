@@ -1268,7 +1268,7 @@ public class CWRecipeProvider extends RecipeProvider {
     }
     private void bucketEmptyingAndFilling(RecipeOutput output, FlowingFluid fluid, ItemLike vesselItem) {
         filling(ResourceLocation.parse(String.valueOf(vesselItem)))
-                .require(BUCKETS)
+                .require(BUCKET)
                 .require(SizedFluidIngredient.of(fluid, 1000))
                 .output(vesselItem, 1)
                 .build(output);

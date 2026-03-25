@@ -55,12 +55,12 @@ public class CWAdvancements implements DataProvider {
                     .title("Vampire Shower")
                     .description("Bathe in the blood of your enemies.")
                     .special(CWAdvancement.TaskType.SECRET)
-                    .after(ROOT)),
-            INDUSTRIAL_INK = create("industrial_ink", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(IronsSpellbooks.MODID, "legendary_ink")))
-                    .title("Industrial Ink")
-                    .description("Mix ink using Create contraptions.")
-                    .special(CWAdvancement.TaskType.SECRET)
                     .after(ROOT));
+//            INDUSTRIAL_INK = create("industrial_ink", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(IronsSpellbooks.MODID, "legendary_ink")))
+//                    .title("Industrial Ink")
+//                    .description("Mix ink using Create contraptions.")
+//                    .special(CWAdvancement.TaskType.SECRET)
+//                    .after(ROOT)); //todo
 
 
 

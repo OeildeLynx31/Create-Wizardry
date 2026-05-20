@@ -1,4 +1,4 @@
-package net.ttzplayz.create_wizardry.block.entity;
+package net.ttzplayz.create_wizardry.block.channeler;
 
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
@@ -25,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 
 import java.util.List;
 

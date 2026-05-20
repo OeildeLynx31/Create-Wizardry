@@ -17,6 +17,7 @@ public class CWBlockDropsProvider extends BlockLootSubProvider {
     @Override
     protected void generate() {
         dropSelf(CWBlocks.CHANNELER.get());
+        dropSelf(CWBlocks.BLAZE_CASTER.get()); //todo
     }
 
     @Override

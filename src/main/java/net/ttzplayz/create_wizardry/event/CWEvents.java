@@ -1,7 +1,7 @@
 package net.ttzplayz.create_wizardry.event;
 
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.ttzplayz.create_wizardry.block.entity.ChannelerBlockEntity;
+import net.ttzplayz.create_wizardry.block.channeler.ChannelerBlockEntity;
 
 public class CWEvents {
     @net.neoforged.bus.api.SubscribeEvent

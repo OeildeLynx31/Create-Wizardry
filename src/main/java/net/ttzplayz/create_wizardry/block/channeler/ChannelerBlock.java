@@ -1,6 +1,5 @@
 package net.ttzplayz.create_wizardry.block.channeler;
 
-import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
 import com.simibubi.create.foundation.block.IBE;
@@ -26,8 +25,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.ttzplayz.create_wizardry.block.entity.CWBlockEntities;
-import net.ttzplayz.create_wizardry.block.entity.ChannelerBlockEntity;
+import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import org.jetbrains.annotations.NotNull;
 
 import static net.ttzplayz.create_wizardry.block.CWShapes.CHANNELER_SHAPE;

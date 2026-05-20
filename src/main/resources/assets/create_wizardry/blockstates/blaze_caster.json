@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "create_wizardry:block/blaze_caster" },
+    "facing=east":  { "model": "create_wizardry:block/blaze_caster", "y": 90 },
+    "facing=south": { "model": "create_wizardry:block/blaze_caster", "y": 180 },
+    "facing=west":  { "model": "create_wizardry:block/blaze_caster", "y": 270 }
+  }
+}

@@ -1,43 +1,27 @@
 package net.ttzplayz.create_wizardry;
 
-import com.simibubi.create.AllContraptionTypes;
 import com.simibubi.create.AllCreativeModeTabs;
 import com.simibubi.create.api.effect.OpenPipeEffectHandler;
-import com.simibubi.create.content.equipment.potatoCannon.AllPotatoProjectileBlockHitActions;
-import com.simibubi.create.content.equipment.potatoCannon.AllPotatoProjectileEntityHitActions;
-import com.simibubi.create.content.equipment.potatoCannon.AllPotatoProjectileRenderModes;
-import com.simibubi.create.content.kinetics.fan.processing.AllFanProcessingTypes;
-import com.simibubi.create.content.kinetics.mechanicalArm.AllArmInteractionPointTypes;
-import com.simibubi.create.content.logistics.item.filter.attribute.AllItemAttributeTypes;
-import com.simibubi.create.foundation.advancement.AllAdvancements;
-import com.simibubi.create.foundation.advancement.AllTriggers;
-import com.simibubi.create.foundation.render.RenderTypes;
 import io.redspace.ironsspellbooks.fluids.SimpleClientFluidType;
 import io.redspace.ironsspellbooks.fluids.SimpleTintedClientFluidType;
-import io.redspace.ironsspellbooks.registries.FluidRegistry;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.registries.GameData;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.ttzplayz.create_wizardry.advancement.CWAdvancements;
 import net.ttzplayz.create_wizardry.advancement.CWTriggers;
 import net.ttzplayz.create_wizardry.block.CWBlocks;
-import net.ttzplayz.create_wizardry.block.entity.CWBlockEntities;
-import net.ttzplayz.create_wizardry.block.entity.ChannelerBlockEntity;
-import net.ttzplayz.create_wizardry.block.entity.renderer.ChannelerRenderer;
-import net.ttzplayz.create_wizardry.advancement.CWAdvancements;
+import net.ttzplayz.create_wizardry.block.CWBlockEntities;
+import net.ttzplayz.create_wizardry.client.CWPartialModels;
+import net.ttzplayz.create_wizardry.client.rendering.BlazeCasterRenderer;
+import net.ttzplayz.create_wizardry.client.rendering.ChannelerRenderer;
 import net.ttzplayz.create_wizardry.advancement.CWBuiltInTriggers;
 import net.ttzplayz.create_wizardry.event.CWEvents;
 import net.ttzplayz.create_wizardry.fluids.CWEffectHandlers;
@@ -175,7 +159,7 @@ public class CreateWizardry {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event)
         {
-//            ItemBlockRenderTypes.setRenderLayer(LIGHTNING.get(), RenderType.lightning());
+            CWPartialModels.register();
         }
 
         @SubscribeEvent
@@ -189,6 +173,7 @@ public class CreateWizardry {
         @SubscribeEvent
         public static void registerBER(EntityRenderersEvent.RegisterRenderers event) {
             event.registerBlockEntityRenderer(CWBlockEntities.CHANNELER_BE.get(), ChannelerRenderer::new);
+            event.registerBlockEntityRenderer(CWBlockEntities.BLAZE_CASTER_BE.get(), BlazeCasterRenderer::new);
         }
 
     }

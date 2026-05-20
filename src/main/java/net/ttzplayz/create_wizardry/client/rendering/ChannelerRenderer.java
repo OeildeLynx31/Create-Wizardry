@@ -1,4 +1,4 @@
-package net.ttzplayz.create_wizardry.block.entity.renderer;
+package net.ttzplayz.create_wizardry.client.rendering;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
@@ -7,7 +7,7 @@ import net.createmod.catnip.platform.NeoForgeCatnipServices;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.ttzplayz.create_wizardry.block.entity.ChannelerBlockEntity;
+import net.ttzplayz.create_wizardry.block.channeler.ChannelerBlockEntity;
 
 public class ChannelerRenderer extends SmartBlockEntityRenderer<ChannelerBlockEntity> {
 

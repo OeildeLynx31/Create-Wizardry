@@ -11,6 +11,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ttzplayz.create_wizardry.CreateWizardry;
+import net.ttzplayz.create_wizardry.block.blaze_caster.BlazeCasterBlock;
 import net.ttzplayz.create_wizardry.block.channeler.ChannelerBlock;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import net.ttzplayz.create_wizardry.item.CWItems;
@@ -30,6 +31,16 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
                         .lightLevel(powered -> 4)
                         .noOcclusion()
         ));
+
+    public static final DeferredBlock<BlazeCasterBlock> BLAZE_CASTER =
+            registerBlock("blaze_caster", () -> new BlazeCasterBlock(
+                    Block.Properties.of()
+                            .mapColor(MapColor.COLOR_BLUE)
+                            .strength(3.5F)
+                            .sound(SoundType.METAL)
+                            .lightLevel(BlazeCasterBlock::getLight)
+                            .noOcclusion()
+            ));
 
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);

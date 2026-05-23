@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"2": "create_wizardry:block/blaze_caster_inert",
-		"particle": "create_wizardry:block/blaze_caster_inert"
+		"2": "create_wizardry:block/blaze_caster/blaze_caster_inert",
+		"particle": "create_wizardry:block/blaze_caster/blaze_caster_inert"
 	},
 	"elements": [
 		{

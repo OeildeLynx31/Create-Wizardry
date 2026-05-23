@@ -9,6 +9,7 @@
   "advancement.create_wizardry.unlimited_power.desc": "Safe? No. Fun? Yes.\n§7(Hidden Advancement)",
   "advancement.create_wizardry.vampire_shower": "Vampire Shower",
   "advancement.create_wizardry.vampire_shower.desc": "Bathe in the blood of your enemies.\n§7(Hidden Advancement)",
+  "block.create_wizardry.blaze_caster": "Blaze Caster",
   "block.create_wizardry.channeler": "Channeler",
   "fluid_type.create_wizardry.fire_ale_type": "Fire Ale",
   "fluid_type.create_wizardry.lightning_type": "Liquid Lightning",
@@ -23,5 +24,10 @@
   "item.create_wizardry.mithril_nugget": "Mithril Nugget",
   "jei.create_wizardry.blood": "The lifeblood of all organisms. Can be obtained by compressing meat or boiling mobs.",
   "jei.create_wizardry.liquid_lightning": "An extremely volatile fluid that is charged with electric energy. Can be obtained by channeling lightning bolts using the Channeler block or by extracting from charged creepers in a bottle.",
-  "jei.create_wizardry.mana": "The liquid essence of magic. Can be used to form arcane essence when combined with dust."
+  "jei.create_wizardry.mana": "The liquid essence of magic. Can be used to form arcane essence when combined with dust.",
+  "create_wizardry.tooltip.spell": "Spell: %s",
+  "create_wizardry.tooltip.no_scroll": "No scroll equipped",
+  "create_wizardry.tooltip.hat": "Hat: %s",
+  "create_wizardry.tooltip.mode.sentry": "Mode: Sentry",
+  "create_wizardry.tooltip.mode.impulse": "Mode: Impulse"
 }

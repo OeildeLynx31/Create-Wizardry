@@ -41,18 +41,19 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         BlockState blockState = blockEntity.getBlockState();
         float animation = blockEntity.headAnimation.getValue(partialTicks) * .175f;
         float horizontalAngle = AngleHelper.rad(blockEntity.headAngle.getValue(partialTicks));
-        boolean active = animation > 0.125f;
+        boolean active = blockEntity.isActive();
         int seed = blockEntity.hashCode();
         PartialModel blazeModel = blockEntity.getBlazeModel(heatLevel, active);
         PartialModel hatModel = blockEntity.getHatModel(heatLevel);
         PartialModel gogglesModel = blockEntity.getGogglesModel(heatLevel);
+        PartialModel eyesModel = blockEntity.getEyesModel(heatLevel);
         renderBlaze(
                 blockState, heatLevel, renderTime,
                 poseStack, null, bufferSource,
                 light, overlay, seed,
                 animation, horizontalAngle,
                 active && heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING),
-                blazeModel, hatModel, gogglesModel);
+                blazeModel, hatModel, gogglesModel, eyesModel);
     }
 
     protected void renderGoggles(
@@ -83,12 +84,22 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         drawCentered(hatBuffer, horizontalAngle + Mth.PI, poseStack, bufferSource.getBuffer(renderType));
     }
 
+    protected void renderEyes(
+            BlockState blockState, PoseStack poseStack, @Nullable PoseStack transformStack,
+            MultiBufferSource bufferSource, float horizontalAngle, float headY, PartialModel eyesModel) {
+        SuperByteBuffer eyesBuffer = CachedBuffers.partial(eyesModel, blockState);
+        if (transformStack != null) eyesBuffer.transform(transformStack);
+        eyesBuffer.translate(0, headY, 0);
+        draw(eyesBuffer, horizontalAngle, poseStack, bufferSource.getBuffer(RenderType.cutoutMipped()));
+    }
+
     public void renderBlaze(
             BlockState blockState, BlazeBurnerBlock.HeatLevel heatLevel, float renderTime,
             PoseStack poseStack, @Nullable PoseStack transformStack, MultiBufferSource bufferSource,
             int light, int overlay, int seed,
             float animation, float horizontalAngle, boolean active,
-            PartialModel blazeModel, @Nullable PartialModel hatModel, @Nullable PartialModel gogglesModel) {
+            PartialModel blazeModel, @Nullable PartialModel hatModel, @Nullable PartialModel gogglesModel,
+            @Nullable PartialModel eyesModel) {
         float seededRenderTime = renderTime + (seed % 13) * 16f;
         float offsetScale = heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) ? 64 : 16;
         float offset = Mth.sin((seededRenderTime / 16f) % (2 * Mth.PI)) / offsetScale;
@@ -103,6 +114,9 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
             blazeBuffer.transform(transformStack);
         blazeBuffer.translate(0, headY, 0);
         draw(blazeBuffer, horizontalAngle, poseStack, bufferSource.getBuffer(RenderType.solid()));
+        // Eyes overlay
+        if (eyesModel != null)
+            renderEyes(blockState, poseStack, transformStack, bufferSource, horizontalAngle, headY, eyesModel);
         // Goggles
         if (gogglesModel != null)
             renderGoggles(

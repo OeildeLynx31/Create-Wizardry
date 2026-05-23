@@ -4,8 +4,8 @@
 	"render_type": "minecraft:cutout_mipped",
 	"texture_size": [32, 32],
 	"textures": {
-		"1": "create_wizardry:block/blaze_caster_brazier",
-		"particle": "create_wizardry:block/blaze_caster_brazier"
+		"1": "create_wizardry:block/blaze_caster/blaze_caster_brazier",
+		"particle": "create_wizardry:block/blaze_caster/blaze_caster_brazier"
 	},
 	"elements": [
 		{

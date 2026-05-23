@@ -11,6 +11,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.level.block.state.BlockState;
+import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.registries.GameData;
@@ -21,6 +22,7 @@ import net.ttzplayz.create_wizardry.block.CWBlocks;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import net.ttzplayz.create_wizardry.client.CWPartialModels;
 import net.ttzplayz.create_wizardry.client.rendering.BlazeCasterRenderer;
+import net.ttzplayz.create_wizardry.client.rendering.BlazeCasterVisual;
 import net.ttzplayz.create_wizardry.client.rendering.ChannelerRenderer;
 import net.ttzplayz.create_wizardry.advancement.CWBuiltInTriggers;
 import net.ttzplayz.create_wizardry.event.CWEvents;
@@ -160,6 +162,10 @@ public class CreateWizardry {
         public static void onClientSetup(FMLClientSetupEvent event)
         {
             CWPartialModels.register();
+            event.enqueueWork(() -> SimpleBlockEntityVisualizer.builder(CWBlockEntities.BLAZE_CASTER_BE.get())
+                    .factory(BlazeCasterVisual::new)
+                    .skipVanillaRender(be -> true)
+                    .apply());
         }
 
         @SubscribeEvent

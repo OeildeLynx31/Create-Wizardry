@@ -3,15 +3,14 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
-		"1": "irons_spellbooks:textures/models/armor/electromancer",
-		"particle": "irons_spellbooks:textures/models/armor/electromancer"
+		"1": "create_wizardry:block/blaze_caster/hats/electromancer"
 	},
 	"elements": [
 		{
 			"name": "armorHead",
 			"from": [8, 0, 8],
-			"to": [24, 1, 24],
-			"rotation": {"angle": 0, "axis": "y", "origin": [16, -8, 16]},
+		    "to": [24, 1, 24],
+		    "rotation": {"angle": 0, "axis": "y", "origin": [16, -8, 16]},
 			"faces": {
 				"north": {"uv": [13.33334, 2.5, 16, 2.66667], "texture": "#1"},
 				"east": {"uv": [13.33334, 2.5, 16, 2.66667], "texture": "#1"},

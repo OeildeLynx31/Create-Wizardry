@@ -92,7 +92,10 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
         super.setPlacedBy(worldIn, pos, state, placer, stack);
         AdvancementBehaviour.setPlacedBy(worldIn, pos, placer);
         if (placer instanceof Player p)
-            withBlockEntityDo(worldIn, pos, be -> be.placerUuid = p.getUUID());
+            withBlockEntityDo(worldIn, pos, be -> {
+                be.placerUuid = p.getUUID();
+                be.notifyUpdate();
+            });
     }
 
     @Override
@@ -132,18 +135,19 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
         // Shift right-click: hat management
         if (player.isShiftKeyDown()) {
             if (!stack.isEmpty() && isHat(stack)) {
-                boolean hatSlotEmpty = getBlockEntityOptional(level, pos)
-                        .map(be -> be.heldHat.isEmpty()).orElse(false);
-                if (hatSlotEmpty) {
-                    if (!level.isClientSide) {
-                        withBlockEntityDo(level, pos, be -> {
+                // Always consume the interaction when shift-clicking with a hat so that
+                // the armor item's auto-equip never fires. The actual slot check is
+                // server-only — if the slot is already full, nothing happens.
+                if (!level.isClientSide) {
+                    withBlockEntityDo(level, pos, be -> {
+                        if (be.heldHat.isEmpty()) {
                             be.heldHat = stack.copyWithCount(1);
                             if (!player.isCreative()) stack.shrink(1);
                             be.notifyUpdate();
-                        });
-                    }
-                    return ItemInteractionResult.sidedSuccess(level.isClientSide);
+                        }
+                    });
                 }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
             } else if (stack.isEmpty()) {
                 boolean hasHat = getBlockEntityOptional(level, pos)
                         .map(be -> !be.heldHat.isEmpty()).orElse(false);

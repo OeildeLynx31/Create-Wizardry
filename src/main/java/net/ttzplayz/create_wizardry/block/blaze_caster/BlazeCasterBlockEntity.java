@@ -77,7 +77,10 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     public BlazeBurnerBlock.HeatLevel getHeatLevel() {
-        return castTicksRemaining > 0 ? BlazeBurnerBlock.HeatLevel.FADING : BlazeBurnerBlock.HeatLevel.NONE;
+        if (castTicksRemaining > 0) return BlazeBurnerBlock.HeatLevel.FADING;
+        boolean hasMana = creative || (internalTank != null
+                && internalTank.getPrimaryHandler().getFluidInTank(0).getAmount() > 0);
+        return hasMana ? BlazeBurnerBlock.HeatLevel.SMOULDERING : BlazeBurnerBlock.HeatLevel.NONE;
     }
 
     public void toggleCreativeHeat() {
@@ -94,7 +97,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
     @OnlyIn(Dist.CLIENT)
     public PartialModel getBlazeModel(BlazeBurnerBlock.HeatLevel heatLevel, boolean active) {
-        if (!heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING))
+        if (!heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.SMOULDERING))
             return CWPartialModels.BLAZE_CASTER_INERT;
         String element = getElementId();
         return CWPartialModels.BLAZE_BY_ELEMENT.getOrDefault(element, CWPartialModels.BLAZE_CASTER_NONE);
@@ -132,8 +135,10 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     @OnlyIn(Dist.CLIENT)
     @Nullable
     public PartialModel getEyesModel(BlazeBurnerBlock.HeatLevel heatLevel) {
+        if (!heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.SMOULDERING)) return null;
         return heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING)
-                ? CWPartialModels.BLAZE_CASTER_EYES : null;
+                ? CWPartialModels.BLAZE_CASTER_ACTIVE_EYES
+                : CWPartialModels.BLAZE_CASTER_IDLE_EYES;
     }
 
     @Override
@@ -168,6 +173,11 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         CasterMode mode = getBlockState().getValue(BlazeCasterBlock.MODE);
         tooltip.add(Component.translatable("create_wizardry.tooltip.mode." + mode.getSerializedName())
                 .withStyle(ChatFormatting.AQUA));
+        if (creative) {
+            tooltip.add(Component.translatable("create_wizardry.tooltip.creative_mode")
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+            showed = true;
+        }
         return showed;
     }
 
@@ -279,7 +289,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
     private void tryStartCast(AbstractSpell spell, int spellLevel) {
         if (cooldownTicksRemaining > 0) return;
-        int manaCost = spell.getManaCost(spellLevel) * 100;
+        int manaCost = spell.getManaCost(spellLevel) * 10;
         IFluidHandler handler = internalTank.getPrimaryHandler();
         if (!creative && handler.getFluidInTank(0).getAmount() < manaCost) return;
         if (!creative)
@@ -293,7 +303,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         AABB box = new AABB(worldPosition).inflate(range);
         return level.getEntitiesOfClass(LivingEntity.class, box, e ->
                 e.isAlive()
-                && !(e instanceof Player p && p.getUUID().equals(placerUuid))
+                // if placerUuid is null (UUID not yet captured), exclude all players as a safe default
+                && !(e instanceof Player p && (placerUuid == null || p.getUUID().equals(placerUuid)))
         ).stream()
          .min(Comparator.comparingDouble(e -> e.distanceToSqr(
                  worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5)))

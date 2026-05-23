@@ -29,5 +29,6 @@
   "create_wizardry.tooltip.no_scroll": "No scroll equipped",
   "create_wizardry.tooltip.hat": "Hat: %s",
   "create_wizardry.tooltip.mode.sentry": "Mode: Sentry",
-  "create_wizardry.tooltip.mode.impulse": "Mode: Impulse"
+  "create_wizardry.tooltip.mode.impulse": "Mode: Impulse",
+  "create_wizardry.tooltip.creative_mode": "Creative Mode: ON (right-click with Creative Blaze Cake to toggle)"
 }

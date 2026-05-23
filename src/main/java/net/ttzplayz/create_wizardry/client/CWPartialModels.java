@@ -19,7 +19,9 @@ public class CWPartialModels {
     public static final PartialModel BLAZE_CASTER_ICE       = block("blaze_caster/blaze/ice");
     public static final PartialModel BLAZE_CASTER_BLOOD     = block("blaze_caster/blaze/blood");
     public static final PartialModel BLAZE_CASTER_EVOCATION = block("blaze_caster/blaze/evocation");
-    public static final PartialModel BLAZE_CASTER_EYES      = block("blaze_caster/blaze/eyes");
+    public static final PartialModel BLAZE_CASTER_EYES        = block("blaze_caster/blaze/eyes");
+    public static final PartialModel BLAZE_CASTER_IDLE_EYES   = block("blaze_caster/blaze/idle_eyes");
+    public static final PartialModel BLAZE_CASTER_ACTIVE_EYES = block("blaze_caster/blaze/active_eyes");
 
     public static final Map<String, PartialModel> BLAZE_BY_ELEMENT = Map.of(
         "none",      BLAZE_CASTER_NONE,

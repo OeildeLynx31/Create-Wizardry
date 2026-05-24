@@ -34,9 +34,13 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -189,32 +193,56 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     @OnlyIn(Dist.CLIENT)
     public void tickAnimation() {
         boolean active = getHeatLevelFromBlock().isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) && isActive();
-        if (active) {
-            headAngle.chase((AngleHelper.horizontalAngle(getBlockState()
-                    .getOptionalValue(BlazeBurnerBlock.FACING)
-                    .orElse(Direction.SOUTH)) + 180) % 360, .125f, LerpedFloat.Chaser.EXP);
-            headAngle.tickChaser();
-        } else {
-            float target = 0;
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player != null && !player.isInvisible()) {
-                double x;
-                double z;
-                if (isVirtual()) {
-                    x = -4;
-                    z = -10;
-                } else {
+
+        float targetAngle = 0;
+        boolean foundMob = false;
+
+        // In sentry mode, track the nearest non-player entity in the world
+        if (!isVirtual() && level != null) {
+            CasterMode mode = getBlockState().getValue(BlazeCasterBlock.MODE);
+            if (mode == CasterMode.SENTRY) {
+                AABB box = new AABB(worldPosition).inflate(16.0);
+                LivingEntity nearest = level.getEntitiesOfClass(LivingEntity.class, box, e ->
+                        e.isAlive() && !(e instanceof Player) && !(e instanceof ArmorStand))
+                    .stream()
+                    .min(Comparator.comparingDouble(e -> e.distanceToSqr(
+                            worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5)))
+                    .orElse(null);
+                if (nearest != null) {
+                    double dx = nearest.getX() - (getBlockPos().getX() + 0.5);
+                    double dz = nearest.getZ() - (getBlockPos().getZ() + 0.5);
+                    targetAngle = AngleHelper.deg(-Mth.atan2(dz, dx)) - 90;
+                    foundMob = true;
+                }
+            }
+        }
+
+        // Fall back to tracking the local player
+        if (!foundMob) {
+            double x, z;
+            if (isVirtual()) {
+                x = -4;
+                z = -10;
+            } else {
+                LocalPlayer player = Minecraft.getInstance().player;
+                if (player != null && !player.isInvisible()) {
                     x = player.getX();
                     z = player.getZ();
+                } else {
+                    x = getBlockPos().getX() + 0.5;
+                    z = getBlockPos().getZ() + 0.5;
                 }
-                double dx = x - (getBlockPos().getX() + 0.5);
-                double dz = z - (getBlockPos().getZ() + 0.5);
-                target = AngleHelper.deg(-Mth.atan2(dz, dx)) - 90;
             }
-            target = headAngle.getValue() + AngleHelper.getShortestAngleDiff(headAngle.getValue(), target);
-            headAngle.chase(target, .25f, LerpedFloat.Chaser.exp(5));
-            headAngle.tickChaser();
+            double dx = x - (getBlockPos().getX() + 0.5);
+            double dz = z - (getBlockPos().getZ() + 0.5);
+            targetAngle = AngleHelper.deg(-Mth.atan2(dz, dx)) - 90;
         }
+
+        float adjustedTarget = headAngle.getValue() + AngleHelper.getShortestAngleDiff(headAngle.getValue(), targetAngle);
+        float chaseSpeed = active ? .125f : .25f;
+        LerpedFloat.Chaser chaser = active ? LerpedFloat.Chaser.EXP : LerpedFloat.Chaser.exp(5);
+        headAngle.chase(adjustedTarget, chaseSpeed, chaser);
+        headAngle.tickChaser();
 
         headAnimation.chase(active ? 1 : 0, .25f, LerpedFloat.Chaser.exp(.25f));
         headAnimation.tickChaser();
@@ -303,18 +331,27 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         AABB box = new AABB(worldPosition).inflate(range);
         return level.getEntitiesOfClass(LivingEntity.class, box, e ->
                 e.isAlive()
-                // if placerUuid is null (UUID not yet captured), exclude all players as a safe default
+                && !(e instanceof ArmorStand)
                 && !(e instanceof Player p && (placerUuid == null || p.getUUID().equals(placerUuid)))
         ).stream()
+         .filter(this::hasLineOfSight)
          .min(Comparator.comparingDouble(e -> e.distanceToSqr(
                  worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5)))
          .orElse(null);
     }
 
+    private boolean hasLineOfSight(LivingEntity target) {
+        if (level == null) return false;
+        Vec3 from = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.0, worldPosition.getZ() + 0.5);
+        Vec3 to = new Vec3(target.getX(), target.getEyeY(), target.getZ());
+        HitResult result = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()));
+        return result.getType() == HitResult.Type.MISS;
+    }
+
     private void executeCast(AbstractSpell spell, int spellLevel, @Nullable LivingEntity target) {
         if (!(level instanceof ServerLevel serverLevel)) return;
         ArmorStand proxy = new ArmorStand(EntityType.ARMOR_STAND, serverLevel);
-        proxy.setPos(worldPosition.getX() + 0.5, worldPosition.getY() + 0.75, worldPosition.getZ() + 0.5);
+        proxy.setPos(worldPosition.getX() + 0.5, worldPosition.getY() - 0.25, worldPosition.getZ() + 0.5);
         if (target != null) {
             double dx = target.getX() - proxy.getX();
             double dy = target.getEyeY() - proxy.getEyeY();
@@ -336,6 +373,18 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
     public void updateBlockState() {
         setBlockHeat(getHeatLevel());
+    }
+
+    private int getEffectiveTankCapacity() {
+        return heldHat.isEmpty() ? 4000 : 5250;
+    }
+
+    public void updateTankCapacity() {
+        if (internalTank == null) return;
+        IFluidHandler h = internalTank.getPrimaryHandler();
+        if (h instanceof FluidTank ft) {
+            ft.setCapacity(getEffectiveTankCapacity());
+        }
     }
 
     protected void setBlockHeat(BlazeBurnerBlock.HeatLevel newHeat) {
@@ -400,6 +449,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         placerUuid = compound.hasUUID("PlacerUuid") ? compound.getUUID("PlacerUuid") : null;
         wasPowered = compound.getBoolean("WasPowered");
         super.read(compound, registries, clientPacket);
+        updateTankCapacity();
     }
 
     @Override

@@ -10,14 +10,17 @@ import com.simibubi.create.content.schematics.requirement.ItemRequirement;
 import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
 import com.simibubi.create.foundation.block.IBE;
 import io.redspace.ironsspellbooks.api.item.IScroll;
-import io.redspace.ironsspellbooks.registries.ItemRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
@@ -143,6 +146,7 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
                         if (be.heldHat.isEmpty()) {
                             be.heldHat = stack.copyWithCount(1);
                             if (!player.isCreative()) stack.shrink(1);
+                            be.updateTankCapacity();
                             be.notifyUpdate();
                         }
                     });
@@ -156,6 +160,7 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
                         withBlockEntityDo(level, pos, be -> {
                             ItemStack give = be.heldHat.copy();
                             be.heldHat = ItemStack.EMPTY;
+                            be.updateTankCapacity();
                             be.notifyUpdate();
                             if (!player.getInventory().add(give)) player.drop(give, false);
                         });
@@ -204,8 +209,12 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
+    private static final TagKey<Item> WIZARD_HATS = TagKey.create(
+            Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "armors/helmets"));
+
     private static boolean isHat(ItemStack stack) {
-        return stack.is(ItemRegistry.ELECTROMANCER_HELMET.get());
+        return stack.is(WIZARD_HATS);
     }
 
     @Override

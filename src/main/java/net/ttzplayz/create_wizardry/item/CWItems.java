@@ -21,6 +21,8 @@ public class CWItems {
             () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
     public static final DeferredHolder<Item, Item> MITHRIL_NUGGET = ITEMS.register("mithril_nugget",
             () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+    public static final DeferredHolder<Item, Item> INCOMPLETE_BLAZE_CASTER = ITEMS.register("incomplete_blaze_caster",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
     public static final DeferredHolder<Item, Item> MANA_BUCKET = ITEMS.register("mana_bucket",
             () -> new BucketItem(CWFluidRegistry.MANA.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
     public static final DeferredHolder<Item, Item> LIGHTNING_BUCKET = ITEMS.register("lightning_bucket",

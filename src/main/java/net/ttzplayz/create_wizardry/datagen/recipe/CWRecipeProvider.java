@@ -43,6 +43,7 @@ import com.simibubi.create.content.fluids.potion.PotionFluidHandler;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static com.simibubi.create.AllBlocks.BLAZE_BURNER;
 import static com.simibubi.create.AllBlocks.COGWHEEL;
 import static com.simibubi.create.AllFluids.*;
 import static com.simibubi.create.AllItems.*;
@@ -61,6 +62,7 @@ import static net.minecraft.world.item.Items.DIRT;
 import static net.neoforged.neoforge.common.Tags.Fluids.EXPERIENCE;
 import static net.neoforged.neoforge.common.Tags.Items.*;
 import static net.neoforged.neoforge.common.Tags.Items.FENCES;
+import static net.ttzplayz.create_wizardry.block.CWBlocks.BLAZE_CASTER;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.CHANNELER;
 import static net.ttzplayz.create_wizardry.fluids.CWFluidRegistry.*;
 import static net.ttzplayz.create_wizardry.item.CWItems.*;
@@ -642,6 +644,18 @@ public class CWRecipeProvider extends RecipeProvider {
                 .addOutput(SCROLL_FORGE_BLOCK.get(), 1)
                 .loops(1)
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(POLISHED_DEEPSLATE))
+                .addStep(PressingRecipe::new, builder -> (builder))
+                .build(output);
+        // BLAZE CASTER
+        sequencedAssembly(BLAZE_CASTER.getId())
+                .require(BLAZE_BURNER.get())
+                .transitionTo(INCOMPLETE_BLAZE_CASTER.get())
+                .addOutput(BLAZE_CASTER.get(), 1)
+                .loops(1)
+                .addStep(DeployerApplicationRecipe::new, builder -> builder.require(SHRIVING_STONE.get()))
+                .addStep(DeployerApplicationRecipe::new, builder -> builder.require(ARCANE_INGOT.get()))
+                .addStep(DeployerApplicationRecipe::new, builder -> builder.require(MANA_RUNE.get()))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output);
     }

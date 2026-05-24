@@ -11,6 +11,9 @@ import io.redspace.ironsspellbooks.util.ParticleHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.neoforged.neoforge.registries.DeferredBlock;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -51,6 +54,7 @@ public class CWFluidRegistry {
 
     private static final DeferredRegister<Fluid> FLUIDS = DeferredRegister.create(Registries.FLUID, CreateWizardry.MOD_ID);
     private static final DeferredRegister<FluidType> FLUID_TYPES = DeferredRegister.create(NeoForgeRegistries.FLUID_TYPES, CreateWizardry.MOD_ID);
+    private static final DeferredRegister.Blocks FLUID_BLOCKS = DeferredRegister.createBlocks(CreateWizardry.MOD_ID);
 
     // TEXTURES
     public static final ResourceLocation LIGHTNING_TEXTURE = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/lightning");
@@ -85,6 +89,9 @@ public class CWFluidRegistry {
             FLUIDS.register("mana", () -> new BaseFlowingFluid.Source(CWFluidRegistry.MANA_PROPERTIES));
     public static final DeferredHolder<Fluid, FlowingFluid> MANA_FLOWING =
             FLUIDS.register("mana_flowing", () -> new BaseFlowingFluid.Flowing(CWFluidRegistry.MANA_PROPERTIES));
+//    public static final DeferredBlock<LiquidBlock> MANA_BLOCK =
+//            FLUID_BLOCKS.register("mana_fluid_block", () -> new LiquidBlock(MANA,
+//                    net.minecraft.world.level.block.Block.Properties.ofFullCopy(Blocks.WATER).noLootTable()));
 
     private static final BaseFlowingFluid.Properties MANA_PROPERTIES =
             new BaseFlowingFluid.Properties(
@@ -93,6 +100,7 @@ public class CWFluidRegistry {
                     MANA_FLOWING)
                     .explosionResistance(100f)
                     .bucket(CWItems.MANA_BUCKET)
+//                    .block(MANA_BLOCK)
                     .levelDecreasePerBlock(1)
                     .tickRate(20);
     // LIGHTNING
@@ -142,6 +150,9 @@ public class CWFluidRegistry {
             FLUIDS.register("lightning", () -> new BaseFlowingFluid.Source(CWFluidRegistry.LIGHTNING_PROPERTIES));
     public static final DeferredHolder<Fluid, FlowingFluid> LIGHTNING_FLOWING =
             FLUIDS.register("lightning_flowing", () -> new BaseFlowingFluid.Flowing(CWFluidRegistry.LIGHTNING_PROPERTIES));
+//    public static final DeferredBlock<LiquidBlock> LIGHTNING_BLOCK =
+//            FLUID_BLOCKS.register("lightning_fluid_block", () -> new LiquidBlock(LIGHTNING,
+//                    net.minecraft.world.level.block.Block.Properties.ofFullCopy(Blocks.WATER).noLootTable()));
 
     private static final BaseFlowingFluid.Properties LIGHTNING_PROPERTIES =
             new BaseFlowingFluid.Properties(
@@ -150,6 +161,7 @@ public class CWFluidRegistry {
                     LIGHTNING_FLOWING)
                     .explosionResistance(100f)
                     .bucket(CWItems.LIGHTNING_BUCKET)
+//                    .block(LIGHTNING_BLOCK)
                     .levelDecreasePerBlock(1)
                     .tickRate(20);
 
@@ -184,5 +196,6 @@ public class CWFluidRegistry {
     public static void register(IEventBus eventBus) {
         FLUIDS.register(eventBus);
         FLUID_TYPES.register(eventBus);
+        FLUID_BLOCKS.register(eventBus);
     }
 }

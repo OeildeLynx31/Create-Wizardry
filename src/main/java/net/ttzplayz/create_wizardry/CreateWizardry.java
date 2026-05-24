@@ -47,6 +47,7 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityStruckByLightningEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
+import static com.simibubi.create.AllBlocks.BLAZE_BURNER;
 import static com.simibubi.create.AllBlocks.STEAM_WHISTLE;
 import static io.redspace.ironsspellbooks.registries.CreativeTabRegistry.MATERIALS_TAB;
 import static io.redspace.ironsspellbooks.registries.FluidRegistry.BLOOD;
@@ -54,6 +55,7 @@ import static io.redspace.ironsspellbooks.registries.FluidRegistry.ICE_VENOM_FLU
 import static io.redspace.ironsspellbooks.registries.ItemRegistry.MITHRIL_SCRAP;
 import static io.redspace.ironsspellbooks.registries.ItemRegistry.RAW_MITHRIL;
 import static net.minecraft.world.item.CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS;
+import static net.ttzplayz.create_wizardry.block.CWBlocks.BLAZE_CASTER;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.CHANNELER;
 import static net.ttzplayz.create_wizardry.fluids.CWFluidRegistry.*;
 import static net.ttzplayz.create_wizardry.item.CWItems.*;
@@ -79,6 +81,7 @@ public class CreateWizardry {
         CWBlocks.register(modEventBus);
         CWBlockEntities.register(modEventBus);
         CWItems.register(modEventBus);
+        CWCreativeTabs.register(modEventBus);
         CWBuiltInTriggers.register(modEventBus);
         CWAdvancements.registerTriggers();
 
@@ -125,6 +128,19 @@ public class CreateWizardry {
         }
         if (event.getTabKey() == AllCreativeModeTabs.BASE_CREATIVE_TAB.getKey()) {
             event.insertAfter(STEAM_WHISTLE.asStack(), CHANNELER.toStack(), PARENT_AND_SEARCH_TABS);
+        }
+        if (event.getTabKey() == AllCreativeModeTabs.BASE_CREATIVE_TAB.getKey()) {
+            event.insertAfter(BLAZE_BURNER.asStack(), BLAZE_CASTER.toStack(), PARENT_AND_SEARCH_TABS);
+        }
+        if (event.getTabKey() == CWCreativeTabs.CREATE_WIZARDRY_TAB.getKey()) {
+            event.accept(BLAZE_CASTER.get());
+            event.accept(CHANNELER.get());
+            event.accept(INCOMPLETE_BLAZE_CASTER.get());
+            event.accept(CRUSHED_MITHRIL.get());
+            event.accept(MITHRIL_NUGGET.get());
+            event.accept(MANA_BUCKET.get());
+            event.accept(LIGHTNING_BUCKET.get());
+            event.accept(BLOOD_BUCKET.get());
         }
     }
 

@@ -1,4 +1,5 @@
 {
+  "itemGroup.create_wizardry.main": "Create: Wizardry",
   "advancement.create_wizardry.channeler": "Harvest the Heavens",
   "advancement.create_wizardry.channeler.desc": "Craft and Place Down a Channeler to harvest Liquid Lightning.",
   "advancement.create_wizardry.root": "Welcome to Create: Wizardry",
@@ -16,6 +17,7 @@
   "fluid_type.create_wizardry.mana_type": "Mana",
   "fluid_type.create_wizardry.netherward_tincture_type": "Netherward Tincture",
   "item.create_wizardry.blood_bucket": "Bucket o' Blood",
+  "item.create_wizardry.incomplete_blaze_caster": "Incomplete Blaze Caster",
   "item.create_wizardry.channeler": "Channeler",
   "item.create_wizardry.crushed_mithril": "Crushed Raw Mithril",
   "item.create_wizardry.lightning_bucket": "Bucket o' Liquid Lightning",

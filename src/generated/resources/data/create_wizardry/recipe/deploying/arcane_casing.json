@@ -1,0 +1,16 @@
+{
+  "type": "create:deploying",
+  "ingredients": [
+    {
+      "item": "minecraft:lapis_block"
+    },
+    {
+      "item": "irons_spellbooks:arcane_ingot"
+    }
+  ],
+  "results": [
+    {
+      "id": "create_wizardry:arcane_casing"
+    }
+  ]
+}

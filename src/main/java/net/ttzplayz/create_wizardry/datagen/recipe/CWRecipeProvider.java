@@ -62,6 +62,7 @@ import static net.minecraft.world.item.Items.DIRT;
 import static net.neoforged.neoforge.common.Tags.Fluids.EXPERIENCE;
 import static net.neoforged.neoforge.common.Tags.Items.*;
 import static net.neoforged.neoforge.common.Tags.Items.FENCES;
+import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_CASING;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.BLAZE_CASTER;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.CHANNELER;
 import static net.ttzplayz.create_wizardry.fluids.CWFluidRegistry.*;
@@ -595,6 +596,11 @@ public class CWRecipeProvider extends RecipeProvider {
     }
 
     private void buildBlockRecipes(RecipeOutput output) {
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, ARCANE_CASING.get())
+                .requires(LAPIS_BLOCK)
+                .requires(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "arcane_ingot")))
+                .unlockedBy("has_lapis_block", has(LAPIS_BLOCK))
+                .save(output);
         baseDeployingRecipe(output, BOOK_STACK_BLOCK_ITEM.get(), BOOK, BOOK);
         baseDeployingRecipe(output, FIREFLY_JAR_ITEM.get(), GLASS_BOTTLE, LANTERN);
         baseDeployingRecipe(output, BRAZIER_ITEM.get(), LOGS, IRON_NUGGET);
@@ -658,6 +664,12 @@ public class CWRecipeProvider extends RecipeProvider {
                 .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output);
+        manualApplication(ARCANE_CASING.getId())
+                .require(LAPIS_BLOCK)
+                .require(ARCANE_INGOT.get())
+                .output(ARCANE_CASING.get(), 1)
+                .build(output);
+        baseDeployingRecipe(output, ARCANE_CASING.get(), LAPIS_BLOCK, ARCANE_INGOT.get());
     }
 
     private void buildStaffRecipes(RecipeOutput output) {

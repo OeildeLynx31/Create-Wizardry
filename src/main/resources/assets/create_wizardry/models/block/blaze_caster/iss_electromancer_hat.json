@@ -1,0 +1,49 @@
+{
+	"credit": "Converted from irons_spellbooks:geo/electromancer_armor.geo.json armorHead bone",
+	"texture_size": [96, 96],
+	"textures": {
+		"0": "irons_spellbooks:models/armor/electromancer"
+	},
+	"elements": [
+		{
+			"name": "brim",
+			"from": [8, 15, 8],
+			"to": [24, 16, 24],
+			"faces": {
+				"north": {"uv": [80, 15, 96, 16], "texture": "#0"},
+				"east":  {"uv": [80, 15, 96, 16], "texture": "#0"},
+				"south": {"uv": [80, 15, 96, 16], "texture": "#0"},
+				"west":  {"uv": [80, 15, 96, 16], "texture": "#0"},
+				"up":    {"uv": [96, 16, 80, 0],  "texture": "#0"},
+				"down":  {"uv": [96, 16, 80, 0],  "texture": "#0"}
+			}
+		},
+		{
+			"name": "crown",
+			"from": [11.25, 15.25, 11.25],
+			"to": [20.75, 20, 20.75],
+			"faces": {
+				"north": {"uv": [32, 11, 40, 15], "texture": "#0"},
+				"east":  {"uv": [40, 11, 48, 15], "texture": "#0"},
+				"south": {"uv": [48, 11, 56, 15], "texture": "#0"},
+				"west":  {"uv": [56, 11, 64, 15], "texture": "#0"},
+				"up":    {"uv": [41, 9, 33, 1],   "texture": "#0"},
+				"down":  {"uv": [41, 9, 33, 1],   "texture": "#0"}
+			}
+		},
+		{
+			"name": "tip",
+			"from": [13.25, 19.75, 13.25],
+			"to": [18.75, 28.25, 18.75],
+			"rotation": {"angle": -22.5, "axis": "x", "origin": [16, 20, 14]},
+			"faces": {
+				"north": {"uv": [54, 8, 59, 16], "texture": "#0"},
+				"east":  {"uv": [52, 8, 57, 16], "texture": "#0"},
+				"south": {"uv": [63, 8, 68, 16], "texture": "#0"},
+				"west":  {"uv": [60, 8, 65, 16], "texture": "#0"},
+				"up":    {"uv": [37, 6, 33, 2],  "texture": "#0"},
+				"down":  {"uv": [37, 6, 33, 2],  "texture": "#0"}
+			}
+		}
+	]
+}

@@ -31,8 +31,9 @@ public class CWLangProvider extends LanguageProvider {
                 "The liquid essence of magic. Can be used to form arcane essence when combined with dust.");
         add("jei.create_wizardry.blood",
                 "The lifeblood of all organisms. Can be obtained by compressing meat or boiling mobs.");
-        add("block.create_wizardry.blaze_caster",
-                "Blaze Caster");
+        add("block.create_wizardry.blaze_caster", "Blaze Caster");
+        add("block.create_wizardry.arcane_casing", "Arcane Casing");
+        add("create_wizardry.tooltip.must_be_superheated", "(Must be superheated)");
         //TODO: make easier in a single method type
     }
 }

@@ -1,7 +1,10 @@
 package net.ttzplayz.create_wizardry;
 
 import com.simibubi.create.AllCreativeModeTabs;
+import com.simibubi.create.CreateClient;
 import com.simibubi.create.api.effect.OpenPipeEffectHandler;
+import com.simibubi.create.foundation.block.connected.CTModel;
+import com.simibubi.create.foundation.block.connected.SimpleCTBehaviour;
 import io.redspace.ironsspellbooks.fluids.SimpleClientFluidType;
 import io.redspace.ironsspellbooks.fluids.SimpleTintedClientFluidType;
 import net.minecraft.core.Holder;
@@ -9,6 +12,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.level.block.state.BlockState;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
@@ -21,6 +25,7 @@ import net.ttzplayz.create_wizardry.advancement.CWTriggers;
 import net.ttzplayz.create_wizardry.block.CWBlocks;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import net.ttzplayz.create_wizardry.client.CWPartialModels;
+import net.ttzplayz.create_wizardry.client.CWSpriteShifts;
 import net.ttzplayz.create_wizardry.client.rendering.BlazeCasterRenderer;
 import net.ttzplayz.create_wizardry.client.rendering.BlazeCasterVisual;
 import net.ttzplayz.create_wizardry.client.rendering.ChannelerRenderer;
@@ -30,6 +35,8 @@ import net.ttzplayz.create_wizardry.fluids.CWEffectHandlers;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import net.ttzplayz.create_wizardry.item.CWItems;
 import org.slf4j.Logger;
+
+import java.util.UUID;
 
 import com.mojang.logging.LogUtils;
 
@@ -44,8 +51,12 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 import net.neoforged.neoforge.event.entity.EntityStruckByLightningEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.ttzplayz.create_wizardry.block.blaze_caster.BlazeCasterBlockEntity;
 
 import static com.simibubi.create.AllBlocks.BLAZE_BURNER;
 import static com.simibubi.create.AllBlocks.STEAM_WHISTLE;
@@ -74,6 +85,7 @@ public class CreateWizardry {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(CWEvents::registerCapabilities);
+        modEventBus.addListener(CreateWizardry::modifyEntityAttributes);
 
         NeoForge.EVENT_BUS.register(this);
 
@@ -135,6 +147,7 @@ public class CreateWizardry {
         if (event.getTabKey() == CWCreativeTabs.CREATE_WIZARDRY_TAB.getKey()) {
             event.accept(BLAZE_CASTER.get());
             event.accept(CHANNELER.get());
+            event.accept(CWBlocks.ARCANE_CASING.get());
             event.accept(INCOMPLETE_BLAZE_CASTER.get());
             event.accept(CRUSHED_MITHRIL.get());
             event.accept(MITHRIL_NUGGET.get());
@@ -144,11 +157,21 @@ public class CreateWizardry {
         }
     }
 
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event)
-    {
+    public static void modifyEntityAttributes(EntityAttributeModificationEvent event) {
+        event.add(EntityType.ARMOR_STAND, Attributes.ATTACK_DAMAGE);
+    }
 
+    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {}
+
+    @SubscribeEvent
+    public void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+        UUID immuneUuid = BlazeCasterBlockEntity.ACTIVE_PLACER.get();
+        if (immuneUuid != null
+                && event.getEntity() instanceof net.minecraft.world.entity.player.Player player
+                && player.getUUID().equals(immuneUuid)) {
+            event.setCanceled(true);
+        }
     }
     public static void onRegister(final RegisterEvent event) {
         if (event.getRegistry() == BuiltInRegistries.TRIGGER_TYPES) {
@@ -178,10 +201,16 @@ public class CreateWizardry {
         public static void onClientSetup(FMLClientSetupEvent event)
         {
             CWPartialModels.register();
-            event.enqueueWork(() -> SimpleBlockEntityVisualizer.builder(CWBlockEntities.BLAZE_CASTER_BE.get())
-                    .factory(BlazeCasterVisual::new)
-                    .skipVanillaRender(be -> true)
-                    .apply());
+            CWSpriteShifts.register();
+            event.enqueueWork(() -> {
+                SimpleBlockEntityVisualizer.builder(CWBlockEntities.BLAZE_CASTER_BE.get())
+                        .factory(BlazeCasterVisual::new)
+                        .skipVanillaRender(be -> true)
+                        .apply();
+                CreateClient.MODEL_SWAPPER.getCustomBlockModels()
+                        .register(CreateWizardry.id("arcane_casing"),
+                                model -> new CTModel(model, new SimpleCTBehaviour(CWSpriteShifts.ARCANE_CASING)));
+            });
         }
 
         @SubscribeEvent

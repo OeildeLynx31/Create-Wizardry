@@ -60,6 +60,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
+    public static final ThreadLocal<UUID> ACTIVE_PLACER = new ThreadLocal<>();
     protected ItemStack heldItem = ItemStack.EMPTY;
     protected ItemStack heldHat = ItemStack.EMPTY;
     public SmartFluidTankBehaviour internalTank;
@@ -71,6 +72,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     protected int cooldownTicksRemaining = 0;
     @Nullable protected UUID placerUuid;
     protected boolean wasPowered = false;
+    protected boolean lockedHead = false;
+    protected float lockedYaw = 0f;
 
     public boolean isActive() {
         return castTicksRemaining > 0;
@@ -125,9 +128,9 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     @Nullable
     public PartialModel getHatModel(BlazeBurnerBlock.HeatLevel heatLevel) {
         if (heldHat.isEmpty()) return null;
-        return heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING)
-                ? CWPartialModels.ELECTROMANCER_HAT
-                : CWPartialModels.ELECTROMANCER_HAT_SMALL;
+        String itemPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(heldHat.getItem()).getPath();
+        return CWPartialModels.HAT_BY_ITEM.get(itemPath);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -159,6 +162,11 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                     tooltip.add(Component.translatable("create_wizardry.tooltip.spell",
                             Component.translatable(sd.getSpell().getComponentId()))
                             .withStyle(ChatFormatting.GRAY));
+                    SchoolType school = sd.getSpell().getSchoolType();
+                    if (school != null && "eldritch".equals(school.getId().getPath())) {
+                        tooltip.add(Component.translatable("create_wizardry.tooltip.must_be_superheated")
+                                .withStyle(ChatFormatting.DARK_GRAY));
+                    }
                     showed = true;
                 }
             }
@@ -175,8 +183,28 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         }
 
         CasterMode mode = getBlockState().getValue(BlazeCasterBlock.MODE);
-        tooltip.add(Component.translatable("create_wizardry.tooltip.mode." + mode.getSerializedName())
-                .withStyle(ChatFormatting.AQUA));
+        if (mode == CasterMode.IMPULSE) {
+            String lockKey = lockedHead
+                    ? "create_wizardry.tooltip.mode.impulse.locked"
+                    : "create_wizardry.tooltip.mode.impulse.unlocked";
+            tooltip.add(Component.translatable(lockKey).withStyle(ChatFormatting.AQUA));
+        } else {
+            tooltip.add(Component.translatable("create_wizardry.tooltip.mode." + mode.getSerializedName())
+                    .withStyle(ChatFormatting.AQUA));
+        }
+
+        if (cooldownTicksRemaining > 0) {
+            float seconds = cooldownTicksRemaining / 20f;
+            tooltip.add(Component.translatable("create_wizardry.tooltip.cooldown",
+                    String.format("%.1f", seconds))
+                    .withStyle(ChatFormatting.YELLOW));
+            showed = true;
+        } else if (!heldItem.isEmpty()) {
+            tooltip.add(Component.translatable("create_wizardry.tooltip.ready")
+                    .withStyle(ChatFormatting.GREEN));
+            showed = true;
+        }
+
         if (creative) {
             tooltip.add(Component.translatable("create_wizardry.tooltip.creative_mode")
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
@@ -196,6 +224,20 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
         float targetAngle = 0;
         boolean foundMob = false;
+
+        // In impulse mode with locked head, snap to the locked angle instead of tracking
+        if (!isVirtual() && level != null) {
+            CasterMode mode = getBlockState().getValue(BlazeCasterBlock.MODE);
+            if (mode == CasterMode.IMPULSE && lockedHead) {
+                float lockedHeadAngle = -lockedYaw - 180f;
+                float adjusted = headAngle.getValue() + AngleHelper.getShortestAngleDiff(headAngle.getValue(), lockedHeadAngle);
+                headAngle.chase(adjusted, .25f, LerpedFloat.Chaser.exp(5));
+                headAngle.tickChaser();
+                headAnimation.chase(active ? 1 : 0, .25f, LerpedFloat.Chaser.exp(.25f));
+                headAnimation.tickChaser();
+                return;
+            }
+        }
 
         // In sentry mode, track the nearest non-player entity in the world
         if (!isVirtual() && level != null) {
@@ -260,9 +302,12 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             return;
         }
 
-        // Cooldown ticks down unconditionally
-        if (cooldownTicksRemaining > 0)
+        // Cooldown ticks down unconditionally; sync every second so goggle tooltip stays accurate
+        if (cooldownTicksRemaining > 0) {
             cooldownTicksRemaining--;
+            if (cooldownTicksRemaining == 0 || cooldownTicksRemaining % 20 == 0)
+                notifyUpdate();
+        }
 
         // Resolve spell from held scroll
         if (heldItem.isEmpty()) { cancelCast(); return; }
@@ -317,6 +362,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
     private void tryStartCast(AbstractSpell spell, int spellLevel) {
         if (cooldownTicksRemaining > 0) return;
+        SchoolType school = spell.getSchoolType();
+        if (school != null && "eldritch".equals(school.getId().getPath())) return;
         int manaCost = spell.getManaCost(spellLevel) * 10;
         IFluidHandler handler = internalTank.getPrimaryHandler();
         if (!creative && handler.getFluidInTank(0).getAmount() < manaCost) return;
@@ -352,12 +399,19 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (!(level instanceof ServerLevel serverLevel)) return;
         ArmorStand proxy = new ArmorStand(EntityType.ARMOR_STAND, serverLevel);
         proxy.setPos(worldPosition.getX() + 0.5, worldPosition.getY() - 0.25, worldPosition.getZ() + 0.5);
+        proxy.setCustomName(Component.translatable("block.create_wizardry.blaze_caster"));
+        proxy.setNoGravity(true);
+        proxy.setSilent(true);
+        proxy.setInvisible(true);
         if (target != null) {
             double dx = target.getX() - proxy.getX();
             double dy = target.getEyeY() - proxy.getEyeY();
             double dz = target.getZ() - proxy.getZ();
             proxy.setYRot((float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90f);
             proxy.setXRot((float) (-Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * (180.0 / Math.PI)));
+        } else if (lockedHead) {
+            proxy.setYRot(lockedYaw);
+            proxy.setXRot(0f);
         } else {
             Direction facing = getBlockState().getValue(BlazeCasterBlock.FACING);
             proxy.setYRot(switch (facing) {
@@ -368,7 +422,14 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             });
             proxy.setXRot(0f);
         }
-        spell.onCast(serverLevel, spellLevel, proxy, CastSource.MOB, new MagicData(true));
+        serverLevel.addFreshEntity(proxy);
+        if (placerUuid != null) ACTIVE_PLACER.set(placerUuid);
+        try {
+            spell.onCast(serverLevel, spellLevel, proxy, CastSource.MOB, new MagicData(true));
+        } finally {
+            proxy.discard();
+            ACTIVE_PLACER.remove();
+        }
     }
 
     public void updateBlockState() {
@@ -432,6 +493,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (placerUuid != null)
             compound.putUUID("PlacerUuid", placerUuid);
         compound.putBoolean("WasPowered", wasPowered);
+        compound.putBoolean("LockedHead", lockedHead);
+        compound.putFloat("LockedYaw", lockedYaw);
         super.write(compound, registries, clientPacket);
     }
 
@@ -448,6 +511,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         cooldownTicksRemaining = compound.getInt("CooldownTicks");
         placerUuid = compound.hasUUID("PlacerUuid") ? compound.getUUID("PlacerUuid") : null;
         wasPowered = compound.getBoolean("WasPowered");
+        lockedHead = compound.getBoolean("LockedHead");
+        lockedYaw = compound.getFloat("LockedYaw");
         super.read(compound, registries, clientPacket);
         updateTankCapacity();
     }

@@ -1,0 +1,18 @@
+{
+	"sources": [
+		{
+			"type": "directory",
+			"source": "block/blaze_caster/scroll",
+			"prefix": "block/blaze_caster/scroll/"
+		},
+		{
+			"type": "single",
+			"resource": "create_wizardry:block/arcane_casing_connected"
+		},
+		{
+			"type": "directory",
+			"source": "models/armor",
+			"prefix": "models/armor/"
+		}
+	]
+}

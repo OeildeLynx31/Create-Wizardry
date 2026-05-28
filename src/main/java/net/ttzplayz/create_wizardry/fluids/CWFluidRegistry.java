@@ -70,9 +70,9 @@ public class CWFluidRegistry {
                             .lightLevel(15), MANA_TEXTURE, MANA_TEXTURE){
                         @Override
                         public void onVaporize(@Nullable Player player, Level level, BlockPos pos, FluidStack stack) {
-                            level.playSound(player, pos, SoundRegistry.EVOCATION_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
-                            MagicManager.spawnParticles(level, ParticleTypes.GLOW_SQUID_INK, pos.getX(), pos.getY(), pos.getZ(), 10, 0.1, 0.1, 0.1, 0.1, false);
                             if (level instanceof ServerLevel) {
+                                level.playSound(player, pos, SoundRegistry.EVOCATION_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
+                                MagicManager.spawnParticles(level, ParticleTypes.GLOW_SQUID_INK, pos.getX(), pos.getY(), pos.getZ(), 10, 0.1, 0.1, 0.1, 0.1, false);
                                 AABB area = new AABB(pos).inflate(1.5, 1.5, 1.5);
                                 List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, area, LivingEntity::isAffectedByPotions);
                                 for(LivingEntity entity : entities) {
@@ -117,8 +117,8 @@ public class CWFluidRegistry {
                     {
                         @Override
                         public void onVaporize(@Nullable Player player, Level level, BlockPos pos, FluidStack stack) {
-                            level.playSound(player, pos, SoundRegistry.LIGHTNING_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
                             if (level instanceof ServerLevel) {
+                                level.playSound(player, pos, SoundRegistry.LIGHTNING_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
                                 AABB area = new AABB(pos).inflate(1.5, 1.5, 1.5);
                                 List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, area);
                                 List<Creeper> creepers = level.getEntitiesOfClass(Creeper.class, area, c -> c != null && c.isAlive() && !c.isPowered());

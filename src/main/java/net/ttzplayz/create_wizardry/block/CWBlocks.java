@@ -1,6 +1,5 @@
 package net.ttzplayz.create_wizardry.block;
 
-import io.redspace.ironsspellbooks.registries.FluidRegistry;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.*;
@@ -31,6 +30,14 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
                         .lightLevel(powered -> 4)
                         .noOcclusion()
         ));
+
+    public static final DeferredBlock<ArcaneCasingBlock> ARCANE_CASING =
+            registerBlock("arcane_casing", () -> new ArcaneCasingBlock(
+                    Block.Properties.of()
+                            .mapColor(MapColor.COLOR_PURPLE)
+                            .strength(1.5F)
+                            .sound(SoundType.DEEPSLATE)
+            ));
 
     public static final DeferredBlock<BlazeCasterBlock> BLAZE_CASTER =
             registerBlock("blaze_caster", () -> new BlazeCasterBlock(

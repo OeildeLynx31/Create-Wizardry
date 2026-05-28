@@ -1,8 +1,9 @@
 package net.ttzplayz.create_wizardry.client.rendering;
 
 import com.simibubi.create.AllPartialModels;
-import com.simibubi.create.AllSpriteShifts;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
+import net.ttzplayz.create_wizardry.client.CWPartialModels;
+import net.ttzplayz.create_wizardry.client.CWSpriteShifts;
 import com.simibubi.create.content.processing.burner.ScrollInstance;
 import com.simibubi.create.foundation.render.AllInstanceTypes;
 import dev.engine_room.flywheel.api.instance.Instance;
@@ -68,18 +69,20 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
             eyes.light(LightTexture.FULL_BRIGHT);
         }
 
+        currentElement = blockEntity.getElementId();
+
         if (heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING)) {
             smallRods = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(AllPartialModels.BLAZE_BURNER_RODS))
+                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(
+                        CWPartialModels.ROD_SMALL_BY_ELEMENT.getOrDefault(currentElement, AllPartialModels.BLAZE_BURNER_RODS)))
                     .createInstance();
             smallRods.light(LightTexture.FULL_BRIGHT);
             largeRods = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(AllPartialModels.BLAZE_BURNER_RODS_2))
+                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(
+                        CWPartialModels.ROD_LARGE_BY_ELEMENT.getOrDefault(currentElement, AllPartialModels.BLAZE_BURNER_RODS_2)))
                     .createInstance();
             largeRods.light(LightTexture.FULL_BRIGHT);
         }
-
-        currentElement = blockEntity.getElementId();
         animate(partialTick);
     }
 
@@ -130,6 +133,28 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
                 eyes.delete();
                 eyes = null;
             }
+
+            // Rods must be recreated with the new element's model
+            if (smallRods != null) { smallRods.delete(); smallRods = null; }
+            if (largeRods != null) { largeRods.delete(); largeRods = null; }
+
+            // Flame must be recreated with the new element's sprite shift
+            if (flame != null) {
+                flame.delete();
+                flame = null;
+            }
+        }
+
+        // Hat lifecycle — reconcile independently of heat/element changes
+        PartialModel currentHatModel = blockEntity.getHatModel(newHeatLevel);
+        if (currentHatModel != null && hat == null) {
+            hat = instancerProvider()
+                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(currentHatModel))
+                    .createInstance();
+            hat.light(LightTexture.FULL_BRIGHT);
+        } else if (currentHatModel == null && hat != null) {
+            hat.delete();
+            hat = null;
         }
 
         // Eyes lifecycle
@@ -147,11 +172,13 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         // Rod lifecycle — created at FADING+, removed below FADING
         if (newHeatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) && smallRods == null) {
             smallRods = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(AllPartialModels.BLAZE_BURNER_RODS))
+                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(
+                        CWPartialModels.ROD_SMALL_BY_ELEMENT.getOrDefault(newElement, AllPartialModels.BLAZE_BURNER_RODS)))
                     .createInstance();
             smallRods.light(LightTexture.FULL_BRIGHT);
             largeRods = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(AllPartialModels.BLAZE_BURNER_RODS_2))
+                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(
+                        CWPartialModels.ROD_LARGE_BY_ELEMENT.getOrDefault(newElement, AllPartialModels.BLAZE_BURNER_RODS_2)))
                     .createInstance();
             largeRods.light(LightTexture.FULL_BRIGHT);
         } else if (!newHeatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) && smallRods != null) {
@@ -168,7 +195,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         float renderTick = AnimationTickHolder.getRenderTime(level) + (blockEntity.hashCode() % 13) * 16f;
         float offsetMult = heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) ? 64 : 16;
         float offset = Mth.sin((float) ((renderTick / 16f) % (2 * Math.PI))) / offsetMult;
-        float headY = offset - (animation * .75f);
+        float headY = offset + (animation * 1.5f);
         float horizontalAngle = AngleHelper.rad(blockEntity.headAngle.getValue(partialTicks));
 
         head.setIdentityTransform()
@@ -183,7 +210,8 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
             hat.setIdentityTransform()
                     .translate(getVisualPosition())
                     .translateY(headY)
-                    .translateY(.75f);
+                    .translateY(-.25f)
+                    .translate(-1.0, 0.0, -1.0);
             hat.rotateCentered(horizontalAngle + Mth.PI, Direction.UP)
                     .translate(0.5f, 0, 0.5f)
                     .light(LightTexture.FULL_BRIGHT);
@@ -231,7 +259,8 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
                 .createInstance();
         flame.position(getVisualPosition()).light(LightTexture.FULL_BRIGHT);
 
-        SpriteShiftEntry spriteShift = AllSpriteShifts.BURNER_FLAME;
+        SpriteShiftEntry spriteShift = CWSpriteShifts.BY_ELEMENT.getOrDefault(
+                blockEntity.getElementId(), CWSpriteShifts.NONE);
         float spriteWidth  = spriteShift.getTarget().getU1() - spriteShift.getTarget().getU0();
         float spriteHeight = spriteShift.getTarget().getV1() - spriteShift.getTarget().getV0();
         float speed = 1 / 32f + 1 / 64f * BlazeBurnerBlock.HeatLevel.FADING.ordinal();

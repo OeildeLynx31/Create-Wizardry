@@ -5,6 +5,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.AllSpriteShifts;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
+import net.ttzplayz.create_wizardry.client.CWPartialModels;
+import net.ttzplayz.create_wizardry.client.CWSpriteShifts;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
@@ -47,13 +49,15 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         PartialModel hatModel = blockEntity.getHatModel(heatLevel);
         PartialModel gogglesModel = blockEntity.getGogglesModel(heatLevel);
         PartialModel eyesModel = blockEntity.getEyesModel(heatLevel);
+        String elementId = blockEntity.getElementId();
+        SpriteShiftEntry elementFlame = CWSpriteShifts.BY_ELEMENT.getOrDefault(elementId, CWSpriteShifts.NONE);
         renderBlaze(
                 blockState, heatLevel, renderTime,
                 poseStack, null, bufferSource,
                 light, overlay, seed,
                 animation, horizontalAngle,
                 active && heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING),
-                blazeModel, hatModel, gogglesModel, eyesModel);
+                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId);
     }
 
     protected void renderGoggles(
@@ -79,7 +83,7 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         SuperByteBuffer hatBuffer = CachedBuffers.partial(hatModel, blockState);
         if (transformStack != null)
             hatBuffer.transform(transformStack);
-        hatBuffer.translate(0f, headY + .75f, 0f);
+        hatBuffer.translate(-1f, headY - .25f, -1f);
         RenderType renderType = getRenderType(blockState, hatModel);
         drawCentered(hatBuffer, horizontalAngle + Mth.PI, poseStack, bufferSource.getBuffer(renderType));
     }
@@ -99,13 +103,27 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
             int light, int overlay, int seed,
             float animation, float horizontalAngle, boolean active,
             PartialModel blazeModel, @Nullable PartialModel hatModel, @Nullable PartialModel gogglesModel,
-            @Nullable PartialModel eyesModel) {
+            @Nullable PartialModel eyesModel,
+            @Nullable SpriteShiftEntry elementFlame) {
+        renderBlaze(blockState, heatLevel, renderTime, poseStack, transformStack, bufferSource,
+                light, overlay, seed, animation, horizontalAngle, active,
+                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, null);
+    }
+
+    public void renderBlaze(
+            BlockState blockState, BlazeBurnerBlock.HeatLevel heatLevel, float renderTime,
+            PoseStack poseStack, @Nullable PoseStack transformStack, MultiBufferSource bufferSource,
+            int light, int overlay, int seed,
+            float animation, float horizontalAngle, boolean active,
+            PartialModel blazeModel, @Nullable PartialModel hatModel, @Nullable PartialModel gogglesModel,
+            @Nullable PartialModel eyesModel,
+            @Nullable SpriteShiftEntry elementFlame, @Nullable String elementId) {
         float seededRenderTime = renderTime + (seed % 13) * 16f;
         float offsetScale = heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) ? 64 : 16;
         float offset = Mth.sin((seededRenderTime / 16f) % (2 * Mth.PI)) / offsetScale;
         float rodsOffset1 = Mth.sin((seededRenderTime / 16f + Mth.PI) % (2 * Mth.PI)) / offsetScale;
         float rodsOffset2 = Mth.sin((seededRenderTime / 16f + Mth.PI / 2) % (2 * Mth.PI)) / offsetScale;
-        float headY = offset - (animation * .75f);
+        float headY = offset + (animation * 1.5f);
 
         poseStack.pushPose();
         // Blaze Head
@@ -136,9 +154,9 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         // Blaze Rods
         if (heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING)) {
             PartialModel rodsModel = heatLevel == BlazeBurnerBlock.HeatLevel.SEETHING ? AllPartialModels.BLAZE_BURNER_SUPER_RODS
-                    : AllPartialModels.BLAZE_BURNER_RODS;
+                    : CWPartialModels.ROD_SMALL_BY_ELEMENT.getOrDefault(elementId, AllPartialModels.BLAZE_BURNER_RODS);
             PartialModel rodsModel2 = heatLevel == BlazeBurnerBlock.HeatLevel.SEETHING ? AllPartialModels.BLAZE_BURNER_SUPER_RODS_2
-                    : AllPartialModels.BLAZE_BURNER_RODS_2;
+                    : CWPartialModels.ROD_LARGE_BY_ELEMENT.getOrDefault(elementId, AllPartialModels.BLAZE_BURNER_RODS_2);
 
             SuperByteBuffer rodsBuffer = CachedBuffers.partial(rodsModel, blockState);
             if (transformStack != null)
@@ -156,9 +174,10 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         }
         // Blaze Flame
         if (active) {
-            SpriteShiftEntry spriteShift = heatLevel == BlazeBurnerBlock.HeatLevel.SEETHING
-                    ? AllSpriteShifts.SUPER_BURNER_FLAME
-                    : AllSpriteShifts.BURNER_FLAME;
+            SpriteShiftEntry spriteShift = elementFlame != null ? elementFlame :
+                    (heatLevel == BlazeBurnerBlock.HeatLevel.SEETHING
+                            ? AllSpriteShifts.SUPER_BURNER_FLAME
+                            : AllSpriteShifts.BURNER_FLAME);
 
             float spriteWidth = spriteShift.getTarget().getU1() - spriteShift.getTarget().getU0();
 

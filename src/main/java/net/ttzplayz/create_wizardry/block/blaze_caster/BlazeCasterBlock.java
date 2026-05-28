@@ -13,6 +13,7 @@ import io.redspace.ironsspellbooks.api.item.IScroll;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.util.Mth;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
@@ -103,6 +104,22 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
 
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        if (state.getValue(MODE) == CasterMode.IMPULSE) {
+            if (!level.isClientSide) {
+                Player player = context.getPlayer();
+                double dx = player != null ? player.getX() - (pos.getX() + 0.5) : 0;
+                double dz = player != null ? player.getZ() - (pos.getZ() + 0.5) : 0;
+                final float yaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90f;
+                withBlockEntityDo(level, pos, be -> {
+                    be.lockedHead = !be.lockedHead;
+                    if (be.lockedHead) be.lockedYaw = yaw;
+                    be.notifyUpdate();
+                });
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         return IWrenchable.super.onWrenched(state, context);
     }
 
@@ -113,8 +130,14 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
 
     @Override
     public InteractionResult onSneakWrenched(BlockState state, UseOnContext context) {
-        if (!context.getLevel().isClientSide) {
-            context.getLevel().setBlockAndUpdate(context.getClickedPos(), state.cycle(MODE));
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        if (!level.isClientSide) {
+            level.setBlockAndUpdate(pos, state.cycle(MODE));
+            withBlockEntityDo(level, pos, be -> {
+                be.lockedHead = false;
+                be.notifyUpdate();
+            });
         }
         return InteractionResult.SUCCESS;
     }
@@ -169,6 +192,21 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
                 }
             }
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+
+        // Insert a hat into the hat slot (non-shift right-click)
+        if (!stack.isEmpty() && isHat(stack)) {
+            if (!level.isClientSide) {
+                withBlockEntityDo(level, pos, be -> {
+                    if (be.heldHat.isEmpty()) {
+                        be.heldHat = stack.copyWithCount(1);
+                        if (!player.isCreative()) stack.shrink(1);
+                        be.updateTankCapacity();
+                        be.notifyUpdate();
+                    }
+                });
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
 
         // Insert a spell scroll into the held slot

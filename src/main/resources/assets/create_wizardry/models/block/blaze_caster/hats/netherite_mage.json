@@ -1,0 +1,79 @@
+{
+	"texture_size": [
+		96,
+		96
+	],
+	"textures": {
+		"0": "irons_spellbooks:models/armor/netherite"
+	},
+	"elements": [
+		{
+			"from": [
+				11.35,
+				9.35,
+				11.35
+			],
+			"to": [
+				20.65,
+				18.65,
+				20.65
+			],
+			"faces": {
+				"south": {
+					"uv": [
+						24,
+						8,
+						32,
+						16
+					],
+					"texture": "#0"
+				},
+				"north": {
+					"uv": [
+						8,
+						8,
+						16,
+						16
+					],
+					"texture": "#0"
+				},
+				"west": {
+					"uv": [
+						16,
+						8,
+						24,
+						16
+					],
+					"texture": "#0"
+				},
+				"east": {
+					"uv": [
+						0,
+						8,
+						8,
+						16
+					],
+					"texture": "#0"
+				},
+				"up": {
+					"uv": [
+						16,
+						8,
+						8,
+						0
+					],
+					"texture": "#0"
+				},
+				"down": {
+					"uv": [
+						24,
+						8,
+						16,
+						0
+					],
+					"texture": "#0"
+				}
+			}
+		}
+	]
+}

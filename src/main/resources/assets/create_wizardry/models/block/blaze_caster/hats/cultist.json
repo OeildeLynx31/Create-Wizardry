@@ -1,0 +1,79 @@
+{
+	"texture_size": [
+		96,
+		96
+	],
+	"textures": {
+		"0": "irons_spellbooks:models/armor/cultist"
+	},
+	"elements": [
+		{
+			"from": [
+				11.15,
+				9.15,
+				11.15
+			],
+			"to": [
+				20.85,
+				18.85,
+				20.85
+			],
+			"faces": {
+				"south": {
+					"uv": [
+						24,
+						8,
+						32,
+						16
+					],
+					"texture": "#0"
+				},
+				"north": {
+					"uv": [
+						8,
+						8,
+						16,
+						16
+					],
+					"texture": "#0"
+				},
+				"west": {
+					"uv": [
+						16,
+						8,
+						24,
+						16
+					],
+					"texture": "#0"
+				},
+				"east": {
+					"uv": [
+						0,
+						8,
+						8,
+						16
+					],
+					"texture": "#0"
+				},
+				"up": {
+					"uv": [
+						8,
+						1,
+						16,
+						8
+					],
+					"texture": "#0"
+				},
+				"down": {
+					"uv": [
+						16,
+						8,
+						24,
+						0
+					],
+					"texture": "#0"
+				}
+			}
+		}
+	]
+}

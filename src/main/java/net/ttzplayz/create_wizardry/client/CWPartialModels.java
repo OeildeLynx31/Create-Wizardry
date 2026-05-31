@@ -7,9 +7,7 @@ import net.ttzplayz.create_wizardry.CreateWizardry;
 import java.util.Map;
 
 public class CWPartialModels {
-    public static final PartialModel ELECTROMANCER_HAT       = block("blaze_caster/electromancer_hat");
-    public static final PartialModel ELECTROMANCER_HAT_SMALL = block("blaze_caster/electromancer_hat_small");
-    public static final PartialModel ISS_ELECTROMANCER_HAT   = block("blaze_caster/iss_electromancer_hat");
+    public static final PartialModel ISS_ELECTROMANCER_HAT   = block("blaze_caster/hats/electromancer");
     public static final PartialModel ISS_ARCHEVOKER_HAT        = block("blaze_caster/hats/archevoker");
     public static final PartialModel ISS_CRYOMANCER_HAT        = block("blaze_caster/hats/cryomancer");
     public static final PartialModel ISS_CULTIST_HAT           = block("blaze_caster/hats/cultist");
@@ -22,8 +20,8 @@ public class CWPartialModels {
     public static final PartialModel ISS_PUMPKIN_HAT           = block("blaze_caster/hats/pumpkin");
     public static final PartialModel ISS_WIZARD_HAT            = block("blaze_caster/hats/wizard");
     public static final PartialModel ISS_NETHERITE_MAGE_HAT    = block("blaze_caster/hats/netherite_mage");
-    public static final PartialModel BLAZE_CASTER_INERT = block("blaze_caster/blaze/inert");
 
+    public static final PartialModel BLAZE_CASTER_INERT = block("blaze_caster/blaze/inert");
     public static final PartialModel BLAZE_CASTER_NONE      = block("blaze_caster/blaze/none");
     public static final PartialModel BLAZE_CASTER_FIRE      = block("blaze_caster/blaze/fire");
     public static final PartialModel BLAZE_CASTER_LIGHTNING = block("blaze_caster/blaze/lightning");
@@ -33,7 +31,6 @@ public class CWPartialModels {
     public static final PartialModel BLAZE_CASTER_BLOOD     = block("blaze_caster/blaze/blood");
     public static final PartialModel BLAZE_CASTER_EVOCATION = block("blaze_caster/blaze/evocation");
     public static final PartialModel BLAZE_CASTER_NATURE    = block("blaze_caster/blaze/nature");
-    public static final PartialModel BLAZE_CASTER_EYES        = block("blaze_caster/blaze/eyes");
     public static final PartialModel BLAZE_CASTER_IDLE_EYES   = block("blaze_caster/blaze/idle_eyes");
     public static final PartialModel BLAZE_CASTER_ACTIVE_EYES = block("blaze_caster/blaze/active_eyes");
 
@@ -93,7 +90,7 @@ public class CWPartialModels {
         "nature",    ROD_LARGE_NATURE
     );
 
-    /** Maps ISS helmet item registry path (e.g. "electromancer_helmet") → hat model. */
+
     public static final Map<String, PartialModel> HAT_BY_ITEM = Map.ofEntries(
         Map.entry("electromancer_helmet",    ISS_ELECTROMANCER_HAT),
         Map.entry("archevoker_helmet",       ISS_ARCHEVOKER_HAT),

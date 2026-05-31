@@ -8,11 +8,6 @@
 		{
 			"type": "single",
 			"resource": "create_wizardry:block/arcane_casing_connected"
-		},
-		{
-			"type": "directory",
-			"source": "models/armor",
-			"prefix": "models/armor/"
 		}
 	]
 }

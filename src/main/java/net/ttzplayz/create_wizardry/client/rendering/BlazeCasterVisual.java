@@ -207,14 +207,11 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
                 .setChanged();
 
         if (hat != null) {
-            // ISS hat models are centered at (16, ?, 16) pixel = (1.0, ?, 1.0) block space.
-            // translate(-0.5, 0, -0.5) shifts them to (0.5, ?, 0.5) for any rotation angle.
-            // 5/16 Y offset places the hat bottom just above the blaze head top (14/16 block).
             hat.setIdentityTransform()
                     .translate(getVisualPosition())
                     .translateY(headY + 5 / 16f);
             hat.rotateCentered(horizontalAngle + Mth.PI, Direction.UP)
-                    .translate(-0.5f, 0, -0.5f)
+                    .translate(0.5f, 0, 0.5f)
                     .light(LightTexture.FULL_BRIGHT);
             hat.setChanged();
         }

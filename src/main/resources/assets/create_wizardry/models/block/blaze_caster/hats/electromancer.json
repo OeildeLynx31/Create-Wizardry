@@ -1,70 +1,9 @@
 {
-	"format_version": "1.9.0",
-	"credit": "Made with Blockbench",
-	"render_type": "minecraft:cutout_mipped",
-	"texture_size": [32, 32],
-	"textures": {
-		"1": "create_wizardry:block/blaze_caster/hats/electromancer"
-	},
-	"elements": [
-		{
-			"name": "armorHead",
-			"from": [8, 8, 8],
-			"to": [24, 9, 24],
-			"rotation": {"angle": 0, "axis": "x", "origin": [16, 8.5, 16]},
-			"faces": {
-				"north": {"uv": [13.33334, 2.5, 16, 2.66667], "texture": "#1"},
-				"east": {"uv": [13.33334, 2.5, 16, 2.66667], "texture": "#1"},
-				"south": {"uv": [13.33334, 2.5, 16, 2.66667], "texture": "#1"},
-				"west": {"uv": [13.33334, 2.5, 16, 2.66667], "texture": "#1"},
-				"up": {"uv": [13.33334, 0, 16, 2.66667], "rotation": 180, "texture": "#1"},
-				"down": {"uv": [13.33334, 0, 16, 2.66667], "rotation": 180, "texture": "#1"}
-			}
-		},
-		{
-			"name": "armorHead",
-			"from": [11.25, 8.5, 11.25],
-			"to": [20.75, 13.25, 20.75],
-			"rotation": {"angle": 0, "axis": "y", "origin": [16, 10.625, 16]},
-			"faces": {
-				"north": {"uv": [8, 1.83334, 9.33334, 2.5], "texture": "#1"},
-				"east": {"uv": [9.33334, 1.83334, 10.66667, 2.5], "texture": "#1"},
-				"south": {"uv": [5.33334, 1.83334, 6.66667, 2.5], "texture": "#1"},
-				"west": {"uv": [6.66667, 1.83334, 8, 2.5], "texture": "#1"},
-				"up": {"uv": [5.5, 0.16667, 6.83334, 1.5], "rotation": 180, "texture": "#1"},
-				"down": {"uv": [5.5, 0.16667, 6.83334, 1.5], "rotation": 180, "texture": "#1"}
-			}
-		},
-		{
-			"name": "armorHead",
-			"from": [13.25, 10.99507, 18.07264],
-			"to": [18.75, 19.49507, 23.57264],
-			"rotation": {"angle": -22.5, "axis": "x", "origin": [16, 0, 16]},
-			"faces": {
-				"north": {"uv": [10.33334, 1.33334, 11.16667, 2.66667], "texture": "#1"},
-				"east": {"uv": [10, 1.33334, 10.83334, 2.66667], "texture": "#1"},
-				"south": {"uv": [9, 1.33334, 9.83334, 2.66667], "texture": "#1"},
-				"west": {"uv": [8.66667, 1.33334, 9.5, 2.66667], "texture": "#1"},
-				"up": {"uv": [5.5, 0.33334, 6.16667, 1], "rotation": 180, "texture": "#1"},
-				"down": {"uv": [5.5, 0.33334, 6.16667, 1], "rotation": 180, "texture": "#1"}
-			}
-		}
-	],
-	"groups": [
-		{
-			"name": "bipedHead",
-			"origin": [0, 5, 0],
-			"scope": 0,
-			"color": 0,
-			"children": [
-				{
-					"name": "armorHead",
-					"origin": [0, 5, 0],
-					"scope": 0,
-					"color": 1,
-					"children": [0, 1, 2]
-				}
-			]
-		}
-	]
+  "loader": "neoforge:obj",
+  "model": "create_wizardry:models/obj/hat/electromancer.geo.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout_mipped",
+  "textures": {
+    "none": "create_wizardry:block/blaze_caster/hats/electromancer"
+  }
 }

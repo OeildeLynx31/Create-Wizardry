@@ -209,8 +209,8 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         if (hat != null) {
             hat.setIdentityTransform()
                     .translate(getVisualPosition())
-                    .translateY(headY + 5 / 16f);
-            hat.rotateCentered(horizontalAngle + Mth.PI, Direction.UP)
+                    .translateY(headY + 7 / 16f);
+            hat.rotateCentered(horizontalAngle, Direction.UP)
                     .translate(0.5f, 0, 0.5f)
                     .light(LightTexture.FULL_BRIGHT);
             hat.setChanged();

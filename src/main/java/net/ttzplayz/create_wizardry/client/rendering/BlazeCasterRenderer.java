@@ -83,9 +83,9 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         SuperByteBuffer hatBuffer = CachedBuffers.partial(hatModel, blockState);
         if (transformStack != null)
             hatBuffer.transform(transformStack);
-        hatBuffer.translate(0, headY + 5 / 16f, 0);
+        hatBuffer.translate(0, headY + 7 / 16f, 0);
         RenderType renderType = getRenderType(blockState, hatModel);
-        hatBuffer.rotateCentered(horizontalAngle + Mth.PI, Direction.UP)
+        hatBuffer.rotateCentered(horizontalAngle, Direction.UP)
                  .translate(0.5f, 0, 0.5f)
                  .light(LightTexture.FULL_BRIGHT)
                  .renderInto(poseStack, bufferSource.getBuffer(renderType));

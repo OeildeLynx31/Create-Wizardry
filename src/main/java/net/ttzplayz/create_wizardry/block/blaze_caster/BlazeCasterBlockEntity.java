@@ -8,6 +8,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTank
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
+import io.redspace.ironsspellbooks.api.registry.AttributeRegistry;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastSource;
 import io.redspace.ironsspellbooks.api.spells.ISpellContainer;
@@ -17,6 +18,11 @@ import net.createmod.catnip.animation.LerpedFloat;
 import net.createmod.catnip.math.AngleHelper;
 import net.createmod.catnip.math.VecHelper;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -49,6 +55,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.ttzplayz.create_wizardry.CreateWizardry;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import net.ttzplayz.create_wizardry.client.CWPartialModels;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
@@ -56,11 +63,40 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
     public static final ThreadLocal<UUID> ACTIVE_PLACER = new ThreadLocal<>();
+
+    private static final Set<String> SPELL_BLACKLIST = Set.of(
+        // Melee / physical-contact spells
+        "echoing_strikes", "flaming_strike", "blood_slash", "shadow_slash",
+        "volt_strike", "divine_smite", "acupuncture", "touch_dig",
+        "stomp", "devour", "heartstop",
+        // Caster-movement spells
+        "teleport", "recall", "blood_step", "frost_step", "burning_dash",
+        "thunder_step", "evasion", "charge", "ascension", "angel_wings", "portal",
+        // Inventory / mount utilities
+        "summon_ender_chest", "summon_horse", "summon_polar_bear",
+        // Self-only effects with no meaningful block interaction
+        "ice_block", "sacrifice", "invisibility", "haste", "spider_aspect"
+    );
+
+    private static final Map<String, String> HAT_TO_SCHOOL = Map.ofEntries(
+        Map.entry("pyromancer_helmet",       "fire"),
+        Map.entry("electromancer_helmet",    "lightning"),
+        Map.entry("cryomancer_helmet",       "ice"),
+        Map.entry("archevoker_helmet",       "evocation"),
+        Map.entry("cultist_helmet",          "blood"),
+        Map.entry("plagued_helmet",          "nature"),
+        Map.entry("priest_helmet",           "holy"),
+        Map.entry("shadowwalker_helmet",     "ender"),
+        Map.entry("tarnished_helmet",        "blood"),
+        Map.entry("netherite_mage_helmet",   "fire")
+    );
     protected ItemStack heldItem = ItemStack.EMPTY;
     protected ItemStack heldHat = ItemStack.EMPTY;
     public SmartFluidTankBehaviour internalTank;
@@ -166,6 +202,9 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                     if (school != null && "eldritch".equals(school.getId().getPath())) {
                         tooltip.add(Component.translatable("create_wizardry.tooltip.must_be_superheated")
                                 .withStyle(ChatFormatting.DARK_GRAY));
+                    } else if (SPELL_BLACKLIST.contains(sd.getSpell().getSpellResource().getPath())) {
+                        tooltip.add(Component.translatable("create_wizardry.tooltip.spell_incompatible")
+                                .withStyle(ChatFormatting.RED));
                     }
                     showed = true;
                 }
@@ -364,6 +403,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (cooldownTicksRemaining > 0) return;
         SchoolType school = spell.getSchoolType();
         if (school != null && "eldritch".equals(school.getId().getPath())) return;
+        if (SPELL_BLACKLIST.contains(spell.getSpellResource().getPath())) return;
         int manaCost = spell.getManaCost(spellLevel) * 10;
         IFluidHandler handler = internalTank.getPrimaryHandler();
         if (!creative && handler.getFluidInTank(0).getAmount() < manaCost) return;
@@ -423,6 +463,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             proxy.setXRot(0f);
         }
         serverLevel.addFreshEntity(proxy);
+        applyHatSpellPowerBoost(proxy, spell);
         if (placerUuid != null) ACTIVE_PLACER.set(placerUuid);
         try {
             spell.onCast(serverLevel, spellLevel, proxy, CastSource.MOB, new MagicData(true));
@@ -430,6 +471,40 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             proxy.discard();
             ACTIVE_PLACER.remove();
         }
+    }
+
+    private void applyHatSpellPowerBoost(ArmorStand proxy, AbstractSpell spell) {
+        if (heldHat.isEmpty()) return;
+        String hatItemPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(heldHat.getItem()).getPath();
+        String hatSchool = HAT_TO_SCHOOL.get(hatItemPath);
+        if (hatSchool == null) return;
+        SchoolType spellSchool = spell.getSchoolType();
+        if (spellSchool == null || !hatSchool.equals(spellSchool.getId().getPath())) return;
+        Holder<Attribute> schoolAttr = getSchoolSpellPowerAttribute(hatSchool);
+        if (schoolAttr == null) return;
+        AttributeInstance attrInstance = proxy.getAttribute(schoolAttr);
+        if (attrInstance == null) return;
+        attrInstance.addTransientModifier(new AttributeModifier(
+            ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "hat_spell_power_boost"),
+            0.15,
+            AttributeModifier.Operation.ADD_MULTIPLIED_BASE
+        ));
+    }
+
+    @Nullable
+    private static Holder<Attribute> getSchoolSpellPowerAttribute(String schoolPath) {
+        return switch (schoolPath) {
+            case "fire"      -> AttributeRegistry.FIRE_SPELL_POWER;
+            case "ice"       -> AttributeRegistry.ICE_SPELL_POWER;
+            case "lightning" -> AttributeRegistry.LIGHTNING_SPELL_POWER;
+            case "holy"      -> AttributeRegistry.HOLY_SPELL_POWER;
+            case "ender"     -> AttributeRegistry.ENDER_SPELL_POWER;
+            case "blood"     -> AttributeRegistry.BLOOD_SPELL_POWER;
+            case "evocation" -> AttributeRegistry.EVOCATION_SPELL_POWER;
+            case "nature"    -> AttributeRegistry.NATURE_SPELL_POWER;
+            default          -> null;
+        };
     }
 
     public void updateBlockState() {

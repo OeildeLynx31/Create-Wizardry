@@ -1,6 +1,6 @@
 {
   "loader": "neoforge:obj",
-  "model": "create_wizardry:models/obj/hat/wizard_hood.geo.obj",
+  "model": "create_wizardry:models/obj/hat/wizard_base.geo.obj",
   "flip_v": true,
   "render_type": "minecraft:cutout_mipped",
   "textures": {

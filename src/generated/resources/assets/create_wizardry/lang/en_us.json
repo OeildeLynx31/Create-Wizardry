@@ -40,5 +40,11 @@
   "create_wizardry.tooltip.must_be_superheated": "(Must be superheated)",
   "create_wizardry.tooltip.spell_incompatible": "(Incompatible with Blaze Caster)",
   "create_wizardry.message.spell_incompatible": "This spell cannot be cast from the Blaze Caster",
-  "block.create_wizardry.arcane_casing": "Arcane Casing"
+  "block.create_wizardry.arcane_casing": "Arcane Casing",
+  "create_wizardry.tooltip.hat.spell_power_boost": "+5% Spell Power",
+  "create_wizardry.tooltip.hat.mana_boost": "+1,250 Mana",
+  "create_wizardry.tooltip.hat.school_power_boost": "+10% %s Spell Power",
+  "create_wizardry.tooltip.hat.tarnished_penalty": "-15% Spell Power",
+  "create_wizardry.tooltip.hat.tarnished_mana": "+1,500 Mana",
+  "create_wizardry.tooltip.hat.mana_cost": "-25% Mana Cost"
 }

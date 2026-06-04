@@ -166,12 +166,22 @@ public class CreateWizardry {
 
     @SubscribeEvent
     public void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof net.minecraft.world.entity.player.Player player)) return;
+
+        // Synchronous cast protection (covers direct spell damage during onCast())
         UUID immuneUuid = BlazeCasterBlockEntity.ACTIVE_PLACER.get();
-        if (immuneUuid != null
-                && event.getEntity() instanceof net.minecraft.world.entity.player.Player player
-                && player.getUUID().equals(immuneUuid)) {
+        if (immuneUuid != null && player.getUUID().equals(immuneUuid)) {
             event.setCanceled(true);
+            return;
         }
+
+        // Persistent entity protection: Black Hole, summoned mobs retaliating, etc.
+        net.minecraft.world.entity.Entity attacker = event.getSource().getEntity();
+        if (attacker == null) attacker = event.getSource().getDirectEntity();
+        if (attacker == null) return;
+        UUID spawnedByPlacer = BlazeCasterBlockEntity.SPAWNED_ENTITY_PLACER.get(attacker.getUUID());
+        if (spawnedByPlacer != null && player.getUUID().equals(spawnedByPlacer))
+            event.setCanceled(true);
     }
     public static void onRegister(final RegisterEvent event) {
         if (event.getRegistry() == BuiltInRegistries.TRIGGER_TYPES) {

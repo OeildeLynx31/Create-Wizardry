@@ -48,6 +48,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -74,9 +75,21 @@ import java.util.stream.Collectors;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.DyedItemColor;
+import io.redspace.ironsspellbooks.api.spells.CastType;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import com.mojang.authlib.GameProfile;
 
 public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
     public static final ThreadLocal<UUID> ACTIVE_PLACER = new ThreadLocal<>();
+    // Maps entity UUID → placer UUID for persistent spell entities (Black Hole, summons, etc.)
+    public static final java.util.concurrent.ConcurrentHashMap<UUID, UUID> SPAWNED_ENTITY_PLACER
+            = new java.util.concurrent.ConcurrentHashMap<>();
+
+    // Spells whose getRecastCount() > 0 for reasons unrelated to multi-target firing
+    // (e.g. raise_dead uses recastCount to raise multiple corpses per cast, not to target extra mobs)
+    private static final Set<String> NO_EXTRA_RECAST_SPELLS = Set.of(
+        "raise_dead"
+    );
 
     private static final Set<String> SPELL_BLACKLIST = Set.of(
         // Melee / physical-contact spells
@@ -121,6 +134,11 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     protected boolean lockedHead = false;
     protected float lockedYaw = 0f;
     protected final Set<UUID> trackedSummons = new HashSet<>();
+    @Nullable private ArmorStand channelProxy;
+    @Nullable private MagicData channelMagicData;
+    @Nullable private AbstractSpell channelSpell;
+    private int channelSpellLevel;
+    private int channelTicksRemaining;
 
     public boolean isActive() {
         return castTicksRemaining > 0;
@@ -189,6 +207,24 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         return CWPartialModels.HAT_BY_ITEM.get(itemPath);
     }
 
+    @OnlyIn(Dist.CLIENT)
+    @Nullable
+    public PartialModel getHatBaseModel(BlazeBurnerBlock.HeatLevel heatLevel) {
+        if (heldHat.isEmpty()) return null;
+        String itemPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(heldHat.getItem()).getPath();
+        if ("wizard_helmet".equals(itemPath)) {
+            @SuppressWarnings("unchecked")
+            DataComponentType<String> variantType = (DataComponentType<String>)
+                (DataComponentType<?>) net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE
+                    .get(ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "clothing_variant"));
+            if (variantType != null && "hat".equals(heldHat.get(variantType)))
+                return CWPartialModels.ISS_WIZARD_HAT_BASE;
+            return null;
+        }
+        return CWPartialModels.HAT_BASE_BY_ITEM.get(itemPath);
+    }
+
     public int getHatDyeColor() {
         DyedItemColor dyed = heldHat.get(DataComponents.DYED_COLOR);
         return dyed != null ? dyed.rgb() : 0xFFFFFF;
@@ -243,6 +279,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (!heldHat.isEmpty()) {
             tooltip.add(Component.translatable("create_wizardry.tooltip.hat",
                     heldHat.getHoverName()).withStyle(ChatFormatting.GRAY));
+            appendHatBonusLines(tooltip);
             showed = true;
         }
 
@@ -385,6 +422,29 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
         CasterMode mode = getBlockState().getValue(BlazeCasterBlock.MODE);
 
+        // Handle active continuous channel (before mode-specific logic)
+        if (channelProxy != null && channelSpell != null) {
+            LivingEntity chTarget = (mode == CasterMode.SENTRY) ? findTarget(16.0) : null;
+            if (chTarget != null) {
+                double cdx = chTarget.getX() - channelProxy.getX();
+                double cdy = chTarget.getEyeY() - channelProxy.getEyeY();
+                double cdz = chTarget.getZ() - channelProxy.getZ();
+                channelProxy.setYRot((float)(Mth.atan2(cdz, cdx) * 180.0/Math.PI) - 90f);
+                channelProxy.setXRot((float)(-Mth.atan2(cdy, Math.sqrt(cdx*cdx+cdz*cdz)) * 180.0/Math.PI));
+            }
+            if (level.getGameTime() % 10 == 0) retargetSummons(chTarget);
+            channelSpell.onServerCastTick(level, channelSpellLevel, channelProxy, channelMagicData);
+            if (--channelTicksRemaining <= 0) {
+                int chCooldown = channelSpell.getSpellCooldown();
+                endChannel();
+                cooldownTicksRemaining = chCooldown;
+                if (mode == CasterMode.SENTRY && chTarget != null)
+                    tryStartCast(spell, spellLevel);
+            }
+            updateBlockState();
+            return;
+        }
+
         if (mode == CasterMode.IMPULSE) {
             boolean powered = level.hasNeighborSignal(worldPosition);
             boolean risingEdge = powered && !wasPowered;
@@ -410,9 +470,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             castTicksRemaining--;
             if (castTicksRemaining == 0) {
                 executeCast(spell, spellLevel, target);
-                cooldownTicksRemaining = spell.getSpellCooldown();
-                if (target != null)
-                    tryStartCast(spell, spellLevel);
+                // Enforce minimum 1-tick cooldown to prevent zero-cooldown spam
+                cooldownTicksRemaining = Math.max(1, spell.getSpellCooldown());
             }
         } else if (target != null) {
             tryStartCast(spell, spellLevel);
@@ -421,10 +480,17 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     private void cancelCast() {
+        endChannel();
         if (castTicksRemaining > 0) {
             castTicksRemaining = 0;
             updateBlockState();
         }
+    }
+
+    private void endChannel() {
+        if (channelProxy != null) { channelProxy.discard(); channelProxy = null; }
+        channelMagicData = null;
+        channelSpell = null;
     }
 
     private void tryStartCast(AbstractSpell spell, int spellLevel) {
@@ -453,7 +519,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         return level.getEntitiesOfClass(LivingEntity.class, box, e ->
                 e.isAlive()
                 && !(e instanceof ArmorStand)
-                && !(e instanceof Player p && (placerUuid == null || p.getUUID().equals(placerUuid)))
+                && !(e instanceof Player p && placerUuid != null && p.getUUID().equals(placerUuid))
                 && !trackedSummons.contains(e.getUUID())
         ).stream()
          .filter(this::hasLineOfSight)
@@ -472,7 +538,6 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
     private void executeCast(AbstractSpell spell, int spellLevel, @Nullable LivingEntity target) {
         if (!(level instanceof ServerLevel serverLevel)) return;
-        despawnTrackedSummons();
         ArmorStand proxy = new ArmorStand(EntityType.ARMOR_STAND, serverLevel);
         proxy.setPos(worldPosition.getX() + 0.5, worldPosition.getY() - 0.25, worldPosition.getZ() + 0.5);
         proxy.setCustomName(Component.translatable("block.create_wizardry.blaze_caster"));
@@ -505,26 +570,88 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (target != null)
             magicData.setAdditionalCastData(new TargetEntityCastData(target));
 
-        // Snapshot mobs before cast so we can track and redirect any newly summoned ones
-        Set<UUID> preCastMobs = serverLevel.getEntitiesOfClass(Mob.class, new AABB(worldPosition).inflate(32.0))
+        // Snapshot all nearby entities before the cast so we can identify newly spawned ones
+        Set<UUID> preCastEntities = serverLevel.getEntitiesOfClass(
+                net.minecraft.world.entity.Entity.class, new AABB(worldPosition).inflate(64.0))
                 .stream().map(net.minecraft.world.entity.Entity::getUUID)
                 .collect(Collectors.toSet());
+
+        boolean keepAlive = spell.getCastType() == CastType.CONTINUOUS;
 
         if (placerUuid != null) ACTIVE_PLACER.set(placerUuid);
         try {
             spell.onCast(serverLevel, spellLevel, proxy, CastSource.MOB, magicData);
 
-            final LivingEntity finalTarget = target;
-            serverLevel.getEntitiesOfClass(Mob.class, new AABB(worldPosition).inflate(32.0))
-                .forEach(mob -> {
-                    if (!preCastMobs.contains(mob.getUUID())) {
-                        trackedSummons.add(mob.getUUID());
-                        if (finalTarget != null)
-                            mob.setTarget(finalTarget);
+            if (keepAlive) {
+                // Start continuous channel — proxy stays alive and is ticked each server tick
+                channelProxy = proxy;
+                channelMagicData = magicData;
+                channelSpell = spell;
+                channelSpellLevel = spellLevel;
+                channelTicksRemaining = spell.getCastTime(spellLevel);
+            } else {
+                // Multi-targeting for burst/barrage spells (e.g. Flame Barrage)
+                int recastCount = spell.getRecastCount(spellLevel, proxy);
+                if (recastCount > 0 && !NO_EXTRA_RECAST_SPELLS.contains(spell.getSpellResource().getPath())) {
+                    List<LivingEntity> extraTargets = level.getEntitiesOfClass(LivingEntity.class,
+                        new AABB(worldPosition).inflate(32.0), e ->
+                            e.isAlive()
+                            && !(e instanceof ArmorStand)
+                            && !(e instanceof Player p2 && placerUuid != null && p2.getUUID().equals(placerUuid))
+                            && !trackedSummons.contains(e.getUUID())
+                            && !e.equals(target)
+                    ).stream()
+                     .sorted(Comparator.comparingDouble(e -> e.distanceToSqr(
+                             worldPosition.getX()+0.5, worldPosition.getY()+0.5, worldPosition.getZ()+0.5)))
+                     .limit(recastCount)
+                     .toList();
+
+                    for (LivingEntity extra : extraTargets) {
+                        double exdx = extra.getX() - proxy.getX();
+                        double exdy = extra.getEyeY() - proxy.getEyeY();
+                        double exdz = extra.getZ() - proxy.getZ();
+                        proxy.setYRot((float)(Mth.atan2(exdz, exdx) * (180.0/Math.PI)) - 90f);
+                        proxy.setXRot((float)(-Mth.atan2(exdy, Math.sqrt(exdx*exdx+exdz*exdz)) * (180.0/Math.PI)));
+                        magicData.setAdditionalCastData(new TargetEntityCastData(extra));
+                        spell.onCast(serverLevel, spellLevel, proxy, CastSource.MOB, magicData);
                     }
-                });
+                }
+            }
+
+            // Spectral Hammer: inject a FakePlayer owner so entity.tick() doesn't NPE on null owner
+            if ("spectral_hammer".equals(spell.getSpellResource().getPath())) {
+                FakePlayer fp = FakePlayerFactory.get(serverLevel,
+                    new GameProfile(placerUuid != null ? placerUuid : UUID.randomUUID(), "BlazeCaster"));
+                fp.setPos(worldPosition.getX() + 0.5, worldPosition.getY() - 0.25, worldPosition.getZ() + 0.5);
+                serverLevel.getEntitiesOfClass(net.minecraft.world.entity.Entity.class,
+                    new AABB(worldPosition).inflate(16))
+                    .stream()
+                    .filter(e -> e.getClass().getSimpleName().equals("SpectralHammer"))
+                    .forEach(e -> {
+                        try {
+                            java.lang.reflect.Field f = e.getClass().getDeclaredField("owner");
+                            f.setAccessible(true);
+                            if (f.get(e) == null) f.set(e, fp); // only fix null owners (ArmorStand-cast)
+                        } catch (Exception ex) {
+                            org.slf4j.LoggerFactory.getLogger(BlazeCasterBlockEntity.class)
+                                .warn("SpectralHammer owner inject failed: {}", ex.getMessage());
+                        }
+                    });
+            }
+
+            // Track newly spawned entities (summons, projectiles, Black Hole, etc.)
+            final LivingEntity finalTarget = target;
+            final UUID capturedPlacer = placerUuid;
+            final BlockPos capturedPos = worldPosition;
+            trackNewEntities(serverLevel, preCastEntities, finalTarget, capturedPlacer);
+
+            // Also schedule a next-tick scan — ISS may spawn entities with a 1-tick delay (e.g. Raise Dead)
+            serverLevel.getServer().execute(() -> {
+                if (level == null || level.isClientSide) return;
+                trackNewEntities((ServerLevel) level, preCastEntities, finalTarget, capturedPlacer);
+            });
         } finally {
-            proxy.discard();
+            if (!keepAlive) proxy.discard();
             ACTIVE_PLACER.remove();
         }
     }
@@ -684,7 +811,11 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
     @Override
     public void destroy() {
+        endChannel();
         despawnTrackedSummons();
+        // Remove any remaining caster-spawned entities from the protection map
+        if (placerUuid != null)
+            SPAWNED_ENTITY_PLACER.values().removeIf(placer -> placer.equals(placerUuid));
         super.destroy();
         if (level != null) {
             Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), heldItem);
@@ -692,24 +823,69 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         }
     }
 
+    private void appendHatBonusLines(List<Component> tooltip) {
+        if (heldHat.isEmpty()) return;
+        String hatPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(heldHat.getItem()).getPath();
+        if ("tarnished_helmet".equals(hatPath)) {
+            tooltip.add(Component.translatable("create_wizardry.tooltip.hat.tarnished_penalty")
+                    .withStyle(ChatFormatting.RED));
+            tooltip.add(Component.translatable("create_wizardry.tooltip.hat.tarnished_mana")
+                    .withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.translatable("create_wizardry.tooltip.hat.mana_cost")
+                    .withStyle(ChatFormatting.GREEN));
+            return;
+        }
+        tooltip.add(Component.translatable("create_wizardry.tooltip.hat.spell_power_boost")
+                .withStyle(ChatFormatting.GREEN));
+        tooltip.add(Component.translatable("create_wizardry.tooltip.hat.mana_boost")
+                .withStyle(ChatFormatting.AQUA));
+        String school = HAT_TO_SCHOOL.get(hatPath);
+        if (school != null) {
+            String schoolDisplay = school.substring(0, 1).toUpperCase() + school.substring(1);
+            tooltip.add(Component.translatable("create_wizardry.tooltip.hat.school_power_boost",
+                    schoolDisplay).withStyle(ChatFormatting.GREEN));
+        }
+    }
+
+    private void trackNewEntities(ServerLevel sl, Set<UUID> preCastEntities,
+                                   @Nullable LivingEntity target, @Nullable UUID placer) {
+        sl.getEntitiesOfClass(net.minecraft.world.entity.Entity.class,
+                new AABB(worldPosition).inflate(64.0)).forEach(e -> {
+            if (preCastEntities.contains(e.getUUID())) return;
+            // Register in placer-protection map for ALL new entities
+            if (placer != null) SPAWNED_ENTITY_PLACER.put(e.getUUID(), placer);
+            // Track mobs as summons for despawn-on-break and retargeting
+            if (e instanceof Mob mob) {
+                trackedSummons.add(mob.getUUID());
+                if (target != null) mob.setTarget(target);
+            }
+        });
+    }
+
     private void despawnTrackedSummons() {
         if (!(level instanceof ServerLevel sl)) return;
         for (UUID id : trackedSummons) {
             net.minecraft.world.entity.Entity e = sl.getEntity(id);
-            if (e != null) e.discard();
+            if (e instanceof LivingEntity le) le.kill();
+            else if (e != null) e.discard();
+            SPAWNED_ENTITY_PLACER.remove(id);
         }
         trackedSummons.clear();
     }
 
     private void retargetSummons(@Nullable LivingEntity target) {
         if (!(level instanceof ServerLevel sl)) return;
+        if (target instanceof Player p && placerUuid != null && p.getUUID().equals(placerUuid))
+            target = null;
         trackedSummons.removeIf(id -> {
             net.minecraft.world.entity.Entity e = sl.getEntity(id);
             return e == null || !e.isAlive();
         });
+        final LivingEntity safeTarget = target;
         for (UUID id : trackedSummons) {
             net.minecraft.world.entity.Entity e = sl.getEntity(id);
-            if (e instanceof Mob mob) mob.setTarget(target);
+            if (e instanceof Mob mob) mob.setTarget(safeTarget);
         }
     }
 

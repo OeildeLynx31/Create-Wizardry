@@ -10,7 +10,10 @@ import com.simibubi.create.content.schematics.requirement.ItemRequirement;
 import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
 import com.simibubi.create.foundation.block.IBE;
 import io.redspace.ironsspellbooks.api.item.IScroll;
+import io.redspace.ironsspellbooks.api.spells.ISpellContainer;
+import io.redspace.ironsspellbooks.api.spells.SpellData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.util.Mth;
@@ -214,6 +217,18 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
             boolean hasSlot = getBlockEntityOptional(level, pos)
                     .map(be -> be.heldItem.isEmpty()).orElse(false);
             if (hasSlot) {
+                // Block insertion of spells incompatible with the Blaze Caster
+                ISpellContainer container = ISpellContainer.get(stack);
+                if (container != null && !container.isEmpty()) {
+                    SpellData sd = container.getSpellAtIndex(0);
+                    if (sd != null && sd != SpellData.EMPTY
+                            && BlazeCasterBlockEntity.isSpellBlacklisted(sd.getSpell())) {
+                        if (!level.isClientSide)
+                            player.displayClientMessage(
+                                Component.translatable("create_wizardry.message.spell_incompatible"), true);
+                        return ItemInteractionResult.FAIL;
+                    }
+                }
                 if (!level.isClientSide) {
                     withBlockEntityDo(level, pos, be -> {
                         be.heldItem = stack.copyWithCount(1);

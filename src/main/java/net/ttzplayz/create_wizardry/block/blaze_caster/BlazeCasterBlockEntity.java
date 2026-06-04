@@ -14,6 +14,7 @@ import io.redspace.ironsspellbooks.api.spells.CastSource;
 import io.redspace.ironsspellbooks.api.spells.ISpellContainer;
 import io.redspace.ironsspellbooks.api.spells.SchoolType;
 import io.redspace.ironsspellbooks.api.spells.SpellData;
+import io.redspace.ironsspellbooks.capabilities.magic.TargetEntityCastData;
 import net.createmod.catnip.animation.LerpedFloat;
 import net.createmod.catnip.math.AngleHelper;
 import net.createmod.catnip.math.VecHelper;
@@ -37,6 +38,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -62,28 +64,38 @@ import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.DyedItemColor;
 
 public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
     public static final ThreadLocal<UUID> ACTIVE_PLACER = new ThreadLocal<>();
 
     private static final Set<String> SPELL_BLACKLIST = Set.of(
         // Melee / physical-contact spells
-        "echoing_strikes", "flaming_strike", "blood_slash", "shadow_slash",
-        "volt_strike", "divine_smite", "acupuncture", "touch_dig",
-        "stomp", "devour", "heartstop",
+        "echoing_strikes", "flaming_strike", "shadow_slash",
+        "volt_strike", "divine_smite", "touch_dig", "heartstop",
         // Caster-movement spells
         "teleport", "recall", "blood_step", "frost_step", "burning_dash",
         "thunder_step", "evasion", "charge", "ascension", "angel_wings", "portal",
         // Inventory / mount utilities
         "summon_ender_chest", "summon_horse", "summon_polar_bear",
         // Self-only effects with no meaningful block interaction
-        "ice_block", "sacrifice", "invisibility", "haste", "spider_aspect"
+        "sacrifice", "invisibility", "haste", "spider_aspect",
+        // Healing (block cannot benefit; heals proxy which is immediately discarded)
+        "heal", "greater_heal", "ice_tomb"
     );
+
+    public static boolean isSpellBlacklisted(AbstractSpell spell) {
+        return SPELL_BLACKLIST.contains(spell.getSpellResource().getPath());
+    }
 
     private static final Map<String, String> HAT_TO_SCHOOL = Map.ofEntries(
         Map.entry("pyromancer_helmet",       "fire"),
@@ -93,9 +105,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         Map.entry("cultist_helmet",          "blood"),
         Map.entry("plagued_helmet",          "nature"),
         Map.entry("priest_helmet",           "holy"),
-        Map.entry("shadowwalker_helmet",     "ender"),
-        Map.entry("tarnished_helmet",        "blood"),
-        Map.entry("netherite_mage_helmet",   "fire")
+        Map.entry("shadowwalker_helmet",     "ender")
     );
     protected ItemStack heldItem = ItemStack.EMPTY;
     protected ItemStack heldHat = ItemStack.EMPTY;
@@ -110,6 +120,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     protected boolean wasPowered = false;
     protected boolean lockedHead = false;
     protected float lockedYaw = 0f;
+    protected final Set<UUID> trackedSummons = new HashSet<>();
 
     public boolean isActive() {
         return castTicksRemaining > 0;
@@ -166,7 +177,21 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (heldHat.isEmpty()) return null;
         String itemPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
                 .getKey(heldHat.getItem()).getPath();
+        if ("wizard_helmet".equals(itemPath)) {
+            @SuppressWarnings("unchecked")
+            DataComponentType<String> variantType = (DataComponentType<String>)
+                (DataComponentType<?>) net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE
+                    .get(ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "clothing_variant"));
+            if (variantType != null && "hat".equals(heldHat.get(variantType)))
+                return CWPartialModels.ISS_WIZARD_HAT;
+            return CWPartialModels.ISS_WIZARD_HOOD;
+        }
         return CWPartialModels.HAT_BY_ITEM.get(itemPath);
+    }
+
+    public int getHatDyeColor() {
+        DyedItemColor dyed = heldHat.get(DataComponents.DYED_COLOR);
+        return dyed != null ? dyed.rgb() : 0xFFFFFF;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -284,7 +309,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             if (mode == CasterMode.SENTRY) {
                 AABB box = new AABB(worldPosition).inflate(16.0);
                 LivingEntity nearest = level.getEntitiesOfClass(LivingEntity.class, box, e ->
-                        e.isAlive() && !(e instanceof Player) && !(e instanceof ArmorStand))
+                        e.isAlive() && !(e instanceof Player) && !(e instanceof ArmorStand)
+                        && !trackedSummons.contains(e.getUUID()))
                     .stream()
                     .min(Comparator.comparingDouble(e -> e.distanceToSqr(
                             worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5)))
@@ -378,6 +404,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
         // Sentry mode
         LivingEntity target = findTarget(16.0);
+        if (level.getGameTime() % 10 == 0)
+            retargetSummons(target);
         if (castTicksRemaining > 0) {
             castTicksRemaining--;
             if (castTicksRemaining == 0) {
@@ -405,6 +433,12 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (school != null && "eldritch".equals(school.getId().getPath())) return;
         if (SPELL_BLACKLIST.contains(spell.getSpellResource().getPath())) return;
         int manaCost = spell.getManaCost(spellLevel) * 10;
+        if (!heldHat.isEmpty()) {
+            String hatPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                    .getKey(heldHat.getItem()).getPath();
+            if ("tarnished_helmet".equals(hatPath))
+                manaCost = (int) (manaCost * 0.75);
+        }
         IFluidHandler handler = internalTank.getPrimaryHandler();
         if (!creative && handler.getFluidInTank(0).getAmount() < manaCost) return;
         if (!creative)
@@ -420,6 +454,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 e.isAlive()
                 && !(e instanceof ArmorStand)
                 && !(e instanceof Player p && (placerUuid == null || p.getUUID().equals(placerUuid)))
+                && !trackedSummons.contains(e.getUUID())
         ).stream()
          .filter(this::hasLineOfSight)
          .min(Comparator.comparingDouble(e -> e.distanceToSqr(
@@ -437,6 +472,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
     private void executeCast(AbstractSpell spell, int spellLevel, @Nullable LivingEntity target) {
         if (!(level instanceof ServerLevel serverLevel)) return;
+        despawnTrackedSummons();
         ArmorStand proxy = new ArmorStand(EntityType.ARMOR_STAND, serverLevel);
         proxy.setPos(worldPosition.getX() + 0.5, worldPosition.getY() - 0.25, worldPosition.getZ() + 0.5);
         proxy.setCustomName(Component.translatable("block.create_wizardry.blaze_caster"));
@@ -464,9 +500,29 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         }
         serverLevel.addFreshEntity(proxy);
         applyHatSpellPowerBoost(proxy, spell);
+
+        MagicData magicData = new MagicData(true);
+        if (target != null)
+            magicData.setAdditionalCastData(new TargetEntityCastData(target));
+
+        // Snapshot mobs before cast so we can track and redirect any newly summoned ones
+        Set<UUID> preCastMobs = serverLevel.getEntitiesOfClass(Mob.class, new AABB(worldPosition).inflate(32.0))
+                .stream().map(net.minecraft.world.entity.Entity::getUUID)
+                .collect(Collectors.toSet());
+
         if (placerUuid != null) ACTIVE_PLACER.set(placerUuid);
         try {
-            spell.onCast(serverLevel, spellLevel, proxy, CastSource.MOB, new MagicData(true));
+            spell.onCast(serverLevel, spellLevel, proxy, CastSource.MOB, magicData);
+
+            final LivingEntity finalTarget = target;
+            serverLevel.getEntitiesOfClass(Mob.class, new AABB(worldPosition).inflate(32.0))
+                .forEach(mob -> {
+                    if (!preCastMobs.contains(mob.getUUID())) {
+                        trackedSummons.add(mob.getUUID());
+                        if (finalTarget != null)
+                            mob.setTarget(finalTarget);
+                    }
+                });
         } finally {
             proxy.discard();
             ACTIVE_PLACER.remove();
@@ -475,21 +531,39 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
     private void applyHatSpellPowerBoost(ArmorStand proxy, AbstractSpell spell) {
         if (heldHat.isEmpty()) return;
+
         String hatItemPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
                 .getKey(heldHat.getItem()).getPath();
+
+        // Tarnished Crown: -15% spell power, no school boost
+        if ("tarnished_helmet".equals(hatItemPath)) {
+            AttributeInstance generalAttr = proxy.getAttribute(AttributeRegistry.SPELL_POWER);
+            if (generalAttr != null)
+                generalAttr.addTransientModifier(new AttributeModifier(
+                    ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "hat_spell_power_general"),
+                    -0.15, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+            return;
+        }
+
+        // 5% general boost for all spells whenever a hat is equipped
+        AttributeInstance generalAttr = proxy.getAttribute(AttributeRegistry.SPELL_POWER);
+        if (generalAttr != null)
+            generalAttr.addTransientModifier(new AttributeModifier(
+                ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "hat_spell_power_general"),
+                0.05, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+
+        // Extra 10% when the hat's school matches the spell's school
         String hatSchool = HAT_TO_SCHOOL.get(hatItemPath);
         if (hatSchool == null) return;
         SchoolType spellSchool = spell.getSchoolType();
         if (spellSchool == null || !hatSchool.equals(spellSchool.getId().getPath())) return;
         Holder<Attribute> schoolAttr = getSchoolSpellPowerAttribute(hatSchool);
         if (schoolAttr == null) return;
-        AttributeInstance attrInstance = proxy.getAttribute(schoolAttr);
-        if (attrInstance == null) return;
-        attrInstance.addTransientModifier(new AttributeModifier(
-            ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "hat_spell_power_boost"),
-            0.15,
-            AttributeModifier.Operation.ADD_MULTIPLIED_BASE
-        ));
+        AttributeInstance schoolAttrInstance = proxy.getAttribute(schoolAttr);
+        if (schoolAttrInstance == null) return;
+        schoolAttrInstance.addTransientModifier(new AttributeModifier(
+            ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "hat_spell_power_school"),
+            0.10, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
     }
 
     @Nullable
@@ -512,7 +586,10 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     private int getEffectiveTankCapacity() {
-        return heldHat.isEmpty() ? 4000 : 5250;
+        if (heldHat.isEmpty()) return 4000;
+        String hatPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(heldHat.getItem()).getPath();
+        return "tarnished_helmet".equals(hatPath) ? 5500 : 5250;
     }
 
     public void updateTankCapacity() {
@@ -570,6 +647,13 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         compound.putBoolean("WasPowered", wasPowered);
         compound.putBoolean("LockedHead", lockedHead);
         compound.putFloat("LockedYaw", lockedYaw);
+        net.minecraft.nbt.ListTag summonList = new net.minecraft.nbt.ListTag();
+        for (UUID id : trackedSummons) {
+            net.minecraft.nbt.CompoundTag entry = new net.minecraft.nbt.CompoundTag();
+            entry.putUUID("UUID", id);
+            summonList.add(entry);
+        }
+        compound.put("TrackedSummons", summonList);
         super.write(compound, registries, clientPacket);
     }
 
@@ -588,16 +672,44 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         wasPowered = compound.getBoolean("WasPowered");
         lockedHead = compound.getBoolean("LockedHead");
         lockedYaw = compound.getFloat("LockedYaw");
+        trackedSummons.clear();
+        if (compound.contains("TrackedSummons")) {
+            net.minecraft.nbt.ListTag summonList = compound.getList("TrackedSummons", net.minecraft.nbt.Tag.TAG_COMPOUND);
+            for (int i = 0; i < summonList.size(); i++)
+                trackedSummons.add(summonList.getCompound(i).getUUID("UUID"));
+        }
         super.read(compound, registries, clientPacket);
         updateTankCapacity();
     }
 
     @Override
     public void destroy() {
+        despawnTrackedSummons();
         super.destroy();
         if (level != null) {
             Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), heldItem);
             Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), heldHat);
+        }
+    }
+
+    private void despawnTrackedSummons() {
+        if (!(level instanceof ServerLevel sl)) return;
+        for (UUID id : trackedSummons) {
+            net.minecraft.world.entity.Entity e = sl.getEntity(id);
+            if (e != null) e.discard();
+        }
+        trackedSummons.clear();
+    }
+
+    private void retargetSummons(@Nullable LivingEntity target) {
+        if (!(level instanceof ServerLevel sl)) return;
+        trackedSummons.removeIf(id -> {
+            net.minecraft.world.entity.Entity e = sl.getEntity(id);
+            return e == null || !e.isAlive();
+        });
+        for (UUID id : trackedSummons) {
+            net.minecraft.world.entity.Entity e = sl.getEntity(id);
+            if (e instanceof Mob mob) mob.setTarget(target);
         }
     }
 

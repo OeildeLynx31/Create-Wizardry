@@ -19,6 +19,7 @@ public class CWPartialModels {
     public static final PartialModel ISS_WANDERING_MAGICIAN_HAT= block("blaze_caster/hats/wandering_magician");
     public static final PartialModel ISS_PUMPKIN_HAT           = block("blaze_caster/hats/pumpkin");
     public static final PartialModel ISS_WIZARD_HAT            = block("blaze_caster/hats/wizard");
+    public static final PartialModel ISS_WIZARD_HOOD           = block("blaze_caster/hats/wizard_hood");
     public static final PartialModel ISS_NETHERITE_MAGE_HAT    = block("blaze_caster/hats/netherite_mage");
 
     public static final PartialModel BLAZE_CASTER_INERT = block("blaze_caster/blaze/inert");
@@ -103,8 +104,6 @@ public class CWPartialModels {
         Map.entry("tarnished_helmet",        ISS_TARNISHED_HAT),
         Map.entry("wandering_magician_helmet", ISS_WANDERING_MAGICIAN_HAT),
         Map.entry("pumpkin_helmet",          ISS_PUMPKIN_HAT),
-        Map.entry("wizard_hat",              ISS_WIZARD_HAT),
-        Map.entry("wizard_helmet_hat",       ISS_WIZARD_HAT),
         Map.entry("netherite_mage_helmet",   ISS_NETHERITE_MAGE_HAT)
     );
 

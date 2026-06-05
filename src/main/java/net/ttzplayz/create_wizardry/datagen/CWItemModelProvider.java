@@ -14,7 +14,6 @@ public class CWItemModelProvider extends ItemModelProvider {
 
     @Override
     protected void registerModels() {
-        basicItem(CWItems.INCOMPLETE_BLAZE_CASTER.get());
         basicItem(CWItems.CRUSHED_MITHRIL.get());
         basicItem(CWItems.MITHRIL_NUGGET.get());
         basicItem(CWItems.MANA_BUCKET.get());

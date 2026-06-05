@@ -31,9 +31,29 @@ public class CWLangProvider extends LanguageProvider {
                 "The liquid essence of magic. Can be used to form arcane essence when combined with dust.");
         add("jei.create_wizardry.blood",
                 "The lifeblood of all organisms. Can be obtained by compressing meat or boiling mobs.");
+        add("item.create_wizardry.incomplete_blaze_caster", "Incomplete Blaze Caster");
+        add("itemGroup.create_wizardry.main", "Create: Wizardry");
         add("block.create_wizardry.blaze_caster", "Blaze Caster");
         add("block.create_wizardry.arcane_casing", "Arcane Casing");
         add("create_wizardry.tooltip.must_be_superheated", "(Must be superheated)");
+        add("create_wizardry.tooltip.spell", "Spell: %s");
+        add("create_wizardry.tooltip.no_scroll", "No scroll equipped");
+        add("create_wizardry.tooltip.hat", "Hat: %s");
+        add("create_wizardry.tooltip.mode.sentry", "Mode: Sentry");
+        add("create_wizardry.tooltip.mode.impulse", "Mode: Impulse");
+        add("create_wizardry.tooltip.mode.impulse.locked", "Impulse (Locked)");
+        add("create_wizardry.tooltip.mode.impulse.unlocked", "Impulse (Unlocked)");
+        add("create_wizardry.tooltip.cooldown", "Cooldown: %ss");
+        add("create_wizardry.tooltip.ready", "Ready");
+        add("create_wizardry.tooltip.creative_mode", "Creative Mode: ON (right-click with Creative Blaze Cake to toggle)");
+        add("create_wizardry.tooltip.spell_incompatible", "(Incompatible with Blaze Caster)");
+        add("create_wizardry.message.spell_incompatible", "This spell cannot be cast from the Blaze Caster");
+        add("create_wizardry.tooltip.hat.spell_power_boost", "+5%% Spell Power");
+        add("create_wizardry.tooltip.hat.mana_boost", "+1,250 Mana");
+        add("create_wizardry.tooltip.hat.school_power_boost", "+10%% %s Spell Power");
+        add("create_wizardry.tooltip.hat.tarnished_penalty", "-15% Spell Power");
+        add("create_wizardry.tooltip.hat.tarnished_mana", "+1,500 Mana");
+        add("create_wizardry.tooltip.hat.mana_cost", "-25% Mana Cost");
         //TODO: make easier in a single method type
     }
 }

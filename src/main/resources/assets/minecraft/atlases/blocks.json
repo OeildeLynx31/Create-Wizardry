@@ -1,0 +1,17 @@
+{
+	"sources": [
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/electromancer" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/archevoker" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/cryomancer" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/cultist" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/netherite" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/plagued" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/priest" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/pumpkin" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/pyromancer" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/shadowwalker" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/tarnished" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/wandering_magician" },
+		{ "type": "single", "resource": "irons_spellbooks:models/armor/wizard" }
+	]
+}

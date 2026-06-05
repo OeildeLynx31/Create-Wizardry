@@ -36,6 +36,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
     private BlazeBurnerBlock.HeatLevel heatLevel;
     private final TransformedInstance head;
     @Nullable private TransformedInstance hat;
+    @Nullable private TransformedInstance hatBase;
     @Nullable private TransformedInstance eyes;
     @Nullable private TransformedInstance smallRods;
     @Nullable private TransformedInstance largeRods;
@@ -59,6 +60,14 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
                     .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatModel))
                     .createInstance();
             hat.light(LightTexture.FULL_BRIGHT);
+        }
+
+        PartialModel hatBaseModel = blockEntity.getHatBaseModel(heatLevel);
+        if (hatBaseModel != null) {
+            hatBase = instancerProvider()
+                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatBaseModel))
+                    .createInstance();
+            hatBase.light(LightTexture.FULL_BRIGHT);
         }
 
         PartialModel eyesModel = blockEntity.getEyesModel(heatLevel);
@@ -129,6 +138,23 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
                 hat = null;
             }
 
+            PartialModel hatBaseModel = blockEntity.getHatBaseModel(heatLevel);
+            if (hatBaseModel != null) {
+                if (hatBase == null) {
+                    hatBase = instancerProvider()
+                            .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatBaseModel))
+                            .createInstance();
+                    hatBase.light(LightTexture.FULL_BRIGHT);
+                } else {
+                    instancerProvider()
+                            .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatBaseModel))
+                            .stealInstance(hatBase);
+                }
+            } else if (hatBase != null) {
+                hatBase.delete();
+                hatBase = null;
+            }
+
             if (eyes != null) {
                 eyes.delete();
                 eyes = null;
@@ -155,6 +181,18 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         } else if (currentHatModel == null && hat != null) {
             hat.delete();
             hat = null;
+        }
+
+        // Hat base lifecycle (non-dyeable metal parts)
+        PartialModel currentHatBaseModel = blockEntity.getHatBaseModel(newHeatLevel);
+        if (currentHatBaseModel != null && hatBase == null) {
+            hatBase = instancerProvider()
+                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(currentHatBaseModel))
+                    .createInstance();
+            hatBase.light(LightTexture.FULL_BRIGHT);
+        } else if (currentHatBaseModel == null && hatBase != null) {
+            hatBase.delete();
+            hatBase = null;
         }
 
         // Eyes lifecycle
@@ -215,6 +253,17 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
                     .light(LightTexture.FULL_BRIGHT)
                     .colorRgb(blockEntity.getHatDyeColor());
             hat.setChanged();
+        }
+
+        if (hatBase != null) {
+            hatBase.setIdentityTransform()
+                    .translate(getVisualPosition())
+                    .translateY(headY + 7 / 16f);
+            hatBase.rotateCentered(horizontalAngle, Direction.UP)
+                    .translate(0.5f, 0, 0.5f)
+                    .light(LightTexture.FULL_BRIGHT)
+                    .colorRgb(0xFFFFFF);
+            hatBase.setChanged();
         }
 
         if (eyes != null) {
@@ -281,6 +330,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
     protected void _delete() {
         head.delete();
         if (hat != null) hat.delete();
+        if (hatBase != null) hatBase.delete();
         if (eyes != null) eyes.delete();
         if (smallRods != null) smallRods.delete();
         if (largeRods != null) largeRods.delete();

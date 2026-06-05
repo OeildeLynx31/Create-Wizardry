@@ -207,6 +207,26 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         return CWPartialModels.HAT_BY_ITEM.get(itemPath);
     }
 
+    // Non-dyeable "base" parts (metal buckle, helmet) rendered untinted alongside the dyeable hat model
+    @OnlyIn(Dist.CLIENT)
+    @Nullable
+    public PartialModel getHatBaseModel(BlazeBurnerBlock.HeatLevel heatLevel) {
+        if (heldHat.isEmpty()) return null;
+        String itemPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(heldHat.getItem()).getPath();
+        if ("wizard_helmet".equals(itemPath)) {
+            @SuppressWarnings("unchecked")
+            DataComponentType<String> variantType = (DataComponentType<String>)
+                (DataComponentType<?>) net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE
+                    .get(ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "clothing_variant"));
+            // Only the hat variant has a metal buckle; the hood variant is all cloth
+            if (variantType != null && "hat".equals(heldHat.get(variantType)))
+                return CWPartialModels.ISS_WIZARD_HAT_BASE;
+            return null;
+        }
+        return CWPartialModels.HAT_BASE_BY_ITEM.get(itemPath);
+    }
+
     public int getHatDyeColor() {
         DyedItemColor dyed = heldHat.get(DataComponents.DYED_COLOR);
         return dyed != null ? dyed.rgb() : 0xFFFFFF;

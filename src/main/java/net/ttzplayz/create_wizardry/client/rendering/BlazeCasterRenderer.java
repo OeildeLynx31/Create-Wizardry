@@ -51,6 +51,7 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         PartialModel eyesModel = blockEntity.getEyesModel(heatLevel);
         String elementId = blockEntity.getElementId();
         int hatDyeColor = blockEntity.getHatDyeColor();
+        PartialModel hatBaseModel = blockEntity.getHatBaseModel(heatLevel);
         SpriteShiftEntry elementFlame = CWSpriteShifts.BY_ELEMENT.getOrDefault(elementId, CWSpriteShifts.NONE);
         renderBlaze(
                 blockState, heatLevel, renderTime,
@@ -58,7 +59,7 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
                 light, overlay, seed,
                 animation, horizontalAngle,
                 active && heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING),
-                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, hatDyeColor);
+                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, hatDyeColor, hatBaseModel);
     }
 
     protected void renderGoggles(
@@ -128,7 +129,7 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
             @Nullable SpriteShiftEntry elementFlame, @Nullable String elementId) {
         renderBlaze(blockState, heatLevel, renderTime, poseStack, transformStack, bufferSource,
                 light, overlay, seed, animation, horizontalAngle, active,
-                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, 0xFFFFFF);
+                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, 0xFFFFFF, null);
     }
 
     public void renderBlaze(
@@ -139,6 +140,20 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
             PartialModel blazeModel, @Nullable PartialModel hatModel, @Nullable PartialModel gogglesModel,
             @Nullable PartialModel eyesModel,
             @Nullable SpriteShiftEntry elementFlame, @Nullable String elementId, int hatDyeColor) {
+        renderBlaze(blockState, heatLevel, renderTime, poseStack, transformStack, bufferSource,
+                light, overlay, seed, animation, horizontalAngle, active,
+                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, hatDyeColor, null);
+    }
+
+    public void renderBlaze(
+            BlockState blockState, BlazeBurnerBlock.HeatLevel heatLevel, float renderTime,
+            PoseStack poseStack, @Nullable PoseStack transformStack, MultiBufferSource bufferSource,
+            int light, int overlay, int seed,
+            float animation, float horizontalAngle, boolean active,
+            PartialModel blazeModel, @Nullable PartialModel hatModel, @Nullable PartialModel gogglesModel,
+            @Nullable PartialModel eyesModel,
+            @Nullable SpriteShiftEntry elementFlame, @Nullable String elementId, int hatDyeColor,
+            @Nullable PartialModel hatBaseModel) {
         float seededRenderTime = renderTime + (seed % 13) * 16f;
         float offsetScale = heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) ? 64 : 16;
         float offset = Mth.sin((seededRenderTime / 16f) % (2 * Mth.PI)) / offsetScale;
@@ -164,7 +179,7 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
                     light, overlay, seed,
                     animation, horizontalAngle, headY,
                     blazeModel, gogglesModel);
-        // Hat
+        // Hat (dyeable cloth parts, tinted with the dye color)
         if (hatModel != null)
             renderHat(
                     blockState, heatLevel, renderTime,
@@ -172,6 +187,14 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
                     light, overlay, seed,
                     animation, horizontalAngle, headY,
                     blazeModel, hatModel, hatDyeColor);
+        // Hat base (non-dyeable metal parts: buckle, helmet — rendered untinted)
+        if (hatBaseModel != null)
+            renderHat(
+                    blockState, heatLevel, renderTime,
+                    poseStack, transformStack, bufferSource,
+                    light, overlay, seed,
+                    animation, horizontalAngle, headY,
+                    blazeModel, hatBaseModel, 0xFFFFFF);
         // Blaze Rods
         if (heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING)) {
             PartialModel rodsModel = heatLevel == BlazeBurnerBlock.HeatLevel.SEETHING ? AllPartialModels.BLAZE_BURNER_SUPER_RODS

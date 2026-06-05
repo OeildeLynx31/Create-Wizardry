@@ -19,10 +19,8 @@ public class CWPartialModels {
     public static final PartialModel ISS_WANDERING_MAGICIAN_HAT= block("blaze_caster/hats/wandering_magician");
     public static final PartialModel ISS_PUMPKIN_HAT           = block("blaze_caster/hats/pumpkin");
     public static final PartialModel ISS_WIZARD_HAT            = block("blaze_caster/hats/wizard");
-    public static final PartialModel ISS_WIZARD_HAT_BASE       = block("blaze_caster/hats/wizard_base");
     public static final PartialModel ISS_WIZARD_HOOD           = block("blaze_caster/hats/wizard_hood");
     public static final PartialModel ISS_NETHERITE_MAGE_HAT      = block("blaze_caster/hats/netherite_mage");
-    public static final PartialModel ISS_NETHERITE_MAGE_HAT_BASE = block("blaze_caster/hats/netherite_mage_base");
 
     public static final PartialModel BLAZE_CASTER_INERT = block("blaze_caster/blaze/inert");
     public static final PartialModel BLAZE_CASTER_NONE      = block("blaze_caster/blaze/none");
@@ -91,12 +89,6 @@ public class CWPartialModels {
         "blood",     ROD_LARGE_BLOOD,
         "evocation", ROD_LARGE_EVOCATION,
         "nature",    ROD_LARGE_NATURE
-    );
-
-
-    public static final Map<String, PartialModel> HAT_BASE_BY_ITEM = Map.of(
-        "wizard_helmet",         ISS_WIZARD_HAT_BASE,
-        "netherite_mage_helmet", ISS_NETHERITE_MAGE_HAT_BASE
     );
 
     public static final Map<String, PartialModel> HAT_BY_ITEM = Map.ofEntries(

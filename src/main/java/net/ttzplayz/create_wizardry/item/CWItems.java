@@ -24,11 +24,11 @@ public class CWItems {
     public static final DeferredHolder<Item, Item> INCOMPLETE_BLAZE_CASTER = ITEMS.register("incomplete_blaze_caster",
             () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
     public static final DeferredHolder<Item, Item> MANA_BUCKET = ITEMS.register("mana_bucket",
-            () -> new BucketItem(CWFluidRegistry.MANA.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
+            () -> new BucketItem(CWFluidRegistry.MANA.get(), new Item.Properties().rarity(Rarity.UNCOMMON).stacksTo(1)));
     public static final DeferredHolder<Item, Item> LIGHTNING_BUCKET = ITEMS.register("lightning_bucket",
-            () -> new BucketItem(CWFluidRegistry.LIGHTNING.get(), new Item.Properties().rarity(Rarity.UNCOMMON)));
+            () -> new BucketItem(CWFluidRegistry.LIGHTNING.get(), new Item.Properties().rarity(Rarity.UNCOMMON).stacksTo(1)));
     public static final DeferredHolder<Item, Item> BLOOD_BUCKET = ITEMS.register("blood_bucket",
-            () -> new BucketItem(BLOOD.get(), new Item.Properties()));
+            () -> new BucketItem(BLOOD.get(), new Item.Properties().stacksTo(1)));
 
 
     public static void register(IEventBus eventBus){

@@ -9,7 +9,7 @@ import io.redspace.ironsspellbooks.registries.MobEffectRegistry;
 import io.redspace.ironsspellbooks.registries.SoundRegistry;
 import io.redspace.ironsspellbooks.util.ParticleHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -44,6 +44,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.ttzplayz.create_wizardry.CreateWizardry;
 import net.ttzplayz.create_wizardry.advancement.CWAdvancements;
 import net.ttzplayz.create_wizardry.item.CWItems;
+import net.ttzplayz.create_wizardry.particle.CWParticles;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class CWFluidRegistry {
     // TEXTURES
     public static final ResourceLocation LIGHTNING_TEXTURE = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/lightning");
     public static final ResourceLocation LIGHTNING_TEXTURE_FLOWING = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/lightning_flow");
-    public static final ResourceLocation MANA_TEXTURE = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/mana");
+    public static final ResourceLocation MANA_TEXTURE = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/mana_still");
     public static final ResourceLocation MANA_TEXTURE_FLOWING = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/mana_flow");
 
     public static final DeferredHolder<FluidType, FluidType> MANA_TYPE =
@@ -71,8 +72,11 @@ public class CWFluidRegistry {
                         @Override
                         public void onVaporize(@Nullable Player player, Level level, BlockPos pos, FluidStack stack) {
                             if (level instanceof ServerLevel) {
-                                level.playSound(player, pos, SoundRegistry.EVOCATION_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
-                                MagicManager.spawnParticles(level, ParticleTypes.GLOW_SQUID_INK, pos.getX(), pos.getY(), pos.getZ(), 10, 0.1, 0.1, 0.1, 0.1, false);
+                                level.playSound(null, pos, SoundRegistry.EVOCATION_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
+                                for (int i = 0; i < 12; i++) {
+                                    SimpleParticleType rune = CWParticles.RUNES.get(level.random.nextInt(CWParticles.RUNES.size())).get();
+                                    MagicManager.spawnParticles(level, rune, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 1, 0.25, 0.25, 0.25, 0.05, false);
+                                }
                                 AABB area = new AABB(pos).inflate(1.5, 1.5, 1.5);
                                 List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, area, LivingEntity::isAffectedByPotions);
                                 for(LivingEntity entity : entities) {
@@ -118,7 +122,7 @@ public class CWFluidRegistry {
                         @Override
                         public void onVaporize(@Nullable Player player, Level level, BlockPos pos, FluidStack stack) {
                             if (level instanceof ServerLevel) {
-                                level.playSound(player, pos, SoundRegistry.LIGHTNING_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
+                                level.playSound(null, pos, SoundRegistry.LIGHTNING_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
                                 AABB area = new AABB(pos).inflate(1.5, 1.5, 1.5);
                                 List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, area);
                                 List<Creeper> creepers = level.getEntitiesOfClass(Creeper.class, area, c -> c != null && c.isAlive() && !c.isPowered());
@@ -180,6 +184,13 @@ public class CWFluidRegistry {
                     FIRE_ALE_TYPE,
                     FIRE_ALE_FLUID,
                     FIRE_ALE_FLUID_FLOWING);
+
+    // BLOOD (Iron's Spells 'n Spellbooks) — supply a world block so the existing blood bucket can place it.
+    // The fluid itself stays irons_spellbooks:blood; a NoopFluidMixin wires this block to it.
+    public static final DeferredBlock<BloodFluidBlock> BLOOD_FLUID_BLOCK =
+            FLUID_BLOCKS.register("blood_fluid_block", () -> new BloodFluidBlock(
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.WATER)
+                            .noLootTable()));
 
     public static final DeferredHolder<Fluid, FlowingFluid> NETHERWARD_TINCTURE_FLUID =
             FLUIDS.register("netherward_tincture", () -> new BaseFlowingFluid.Source(CWFluidRegistry.NETHERWARD_TINCTURE_PROPERTIES));

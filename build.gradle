@@ -163,6 +163,7 @@ dependencies {
     implementation("com.tterrag.registrate:Registrate:${registrate_version}")
 
     implementation "io.redspace:irons_spellbooks:${irons_spells_version}"
+    implementation "io.redspace:irons_lib:${irons_lib_version}"
     implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
     implementation "dev.kosmx.player-anim:player-animation-lib-forge:${project.player_anim}"
 

@@ -34,6 +34,9 @@ import net.ttzplayz.create_wizardry.event.CWEvents;
 import net.ttzplayz.create_wizardry.fluids.CWEffectHandlers;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import net.ttzplayz.create_wizardry.item.CWItems;
+import net.ttzplayz.create_wizardry.particle.CWParticles;
+import net.ttzplayz.create_wizardry.client.particle.RuneParticle;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import org.slf4j.Logger;
 
 import java.util.UUID;
@@ -93,6 +96,7 @@ public class CreateWizardry {
         CWBlocks.register(modEventBus);
         CWBlockEntities.register(modEventBus);
         CWItems.register(modEventBus);
+        CWParticles.register(modEventBus);
         CWCreativeTabs.register(modEventBus);
         CWBuiltInTriggers.register(modEventBus);
         CWAdvancements.registerTriggers();
@@ -225,10 +229,16 @@ public class CreateWizardry {
 
         @SubscribeEvent
         public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
-            event.registerFluidType(new SimpleClientFluidType(CreateWizardry.id("block/mana")), CWFluidRegistry.MANA_TYPE);
+            event.registerFluidType(new SimpleClientFluidType(CreateWizardry.id("block/mana_still")), CWFluidRegistry.MANA_TYPE);
             event.registerFluidType(new SimpleClientFluidType(CreateWizardry.id("block/lightning")), CWFluidRegistry.LIGHTNING_TYPE);
             event.registerFluidType(new SimpleTintedClientFluidType(ResourceLocation.withDefaultNamespace("block/water_still"), 0x00831312), FIRE_ALE_TYPE);
             event.registerFluidType(new SimpleTintedClientFluidType(ResourceLocation.fromNamespaceAndPath("neoforge", "block/milk_still"), 0x00D69D84), NETHERWARD_TINCTURE_TYPE);
+        }
+
+        @SubscribeEvent
+        public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
+            CWParticles.RUNES.forEach(holder ->
+                    event.registerSpriteSet(holder.get(), RuneParticle.Provider::new));
         }
 
         @SubscribeEvent

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.ttzplayz.create_wizardry.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "create_wizardry.refmap.json",
+  "mixins": [
+    "NoopFluidMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

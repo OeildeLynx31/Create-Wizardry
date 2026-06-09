@@ -45,6 +45,7 @@ public class CWLangProvider extends LanguageProvider {
         add("create_wizardry.tooltip.mode.impulse.unlocked", "Impulse (Unlocked)");
         add("create_wizardry.tooltip.cooldown", "Cooldown: %ss");
         add("create_wizardry.tooltip.ready", "Ready");
+        add("create_wizardry.tooltip.not_enough_mana", "Not enough Mana!");
         add("create_wizardry.tooltip.creative_mode", "Creative Mode: ON (right-click with Creative Blaze Cake to toggle)");
         add("create_wizardry.tooltip.spell_incompatible", "(Incompatible with Blaze Caster)");
         add("create_wizardry.message.spell_incompatible", "This spell cannot be cast from the Blaze Caster");

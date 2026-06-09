@@ -303,8 +303,13 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                     .withStyle(ChatFormatting.YELLOW));
             showed = true;
         } else if (!heldItem.isEmpty()) {
-            tooltip.add(Component.translatable("create_wizardry.tooltip.ready")
-                    .withStyle(ChatFormatting.GREEN));
+            if (hasEnoughManaFor(heldItem)) {
+                tooltip.add(Component.translatable("create_wizardry.tooltip.ready")
+                        .withStyle(ChatFormatting.GREEN));
+            } else {
+                tooltip.add(Component.translatable("create_wizardry.tooltip.not_enough_mana")
+                        .withStyle(ChatFormatting.RED));
+            }
             showed = true;
         }
 
@@ -435,9 +440,23 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 channelProxy.setXRot((float)(-Mth.atan2(cdy, Math.sqrt(cdx*cdx+cdz*cdz)) * 180.0/Math.PI));
             }
             if (level.getGameTime() % 10 == 0) retargetSummons(chTarget);
+            // Drive the cast state like ISS's MagicManager continuous branch: tick the
+            // duration, re-pulse onCast every CONTINUOUS_CAST_TICK_INTERVAL (10) ticks (re-arms
+            // Electrocute's cone; safe no-op for Starfall/BlazeStorm which guard on cast data),
+            // then run onServerCastTick each tick (which reads getCastDurationRemaining()).
+            channelMagicData.handleCastDuration();
+            if ((channelMagicData.getCastDurationRemaining() + 1) % 10 == 0) {
+                if (placerUuid != null) ACTIVE_PLACER.set(placerUuid);
+                try {
+                    channelSpell.onCast(level, channelSpellLevel, channelProxy, CastSource.MOB, channelMagicData);
+                } finally {
+                    ACTIVE_PLACER.remove();
+                }
+            }
             channelSpell.onServerCastTick(level, channelSpellLevel, channelProxy, channelMagicData);
             if (--channelTicksRemaining <= 0) {
                 int chCooldown = channelSpell.getSpellCooldown();
+                channelSpell.onServerCastComplete(level, channelSpellLevel, channelProxy, channelMagicData, false);
                 endChannel();
                 cooldownTicksRemaining = chCooldown;
                 if (mode == CasterMode.SENTRY && chTarget != null)
@@ -500,6 +519,20 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         SchoolType school = spell.getSchoolType();
         if (school != null && "eldritch".equals(school.getId().getPath())) return;
         if (SPELL_BLACKLIST.contains(spell.getSpellResource().getPath())) return;
+        int manaCost = computeManaCost(spell, spellLevel);
+        IFluidHandler handler = internalTank.getPrimaryHandler();
+        if (!creative && handler.getFluidInTank(0).getAmount() < manaCost) return;
+        if (!creative)
+            handler.drain(manaCost, IFluidHandler.FluidAction.EXECUTE);
+        // For CONTINUOUS spells the cast time IS the channel duration (handled by the
+        // channel loop), so use a minimal windup here instead of burning the whole cast time.
+        castTicksRemaining = spell.getCastType() == CastType.CONTINUOUS
+                ? 1
+                : Math.max(1, spell.getCastTime(spellLevel));
+    }
+
+    /** Mana cost for one cast: ISS base cost ×10, with the Tarnished Helmet's −25% discount. */
+    private int computeManaCost(AbstractSpell spell, int spellLevel) {
         int manaCost = spell.getManaCost(spellLevel) * 10;
         if (!heldHat.isEmpty()) {
             String hatPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
@@ -507,11 +540,26 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             if ("tarnished_helmet".equals(hatPath))
                 manaCost = (int) (manaCost * 0.75);
         }
-        IFluidHandler handler = internalTank.getPrimaryHandler();
-        if (!creative && handler.getFluidInTank(0).getAmount() < manaCost) return;
-        if (!creative)
-            handler.drain(manaCost, IFluidHandler.FluidAction.EXECUTE);
-        castTicksRemaining = Math.max(1, spell.getCastTime(spellLevel));
+        return manaCost;
+    }
+
+    /**
+     * Whether the caster currently holds enough mana to cast the held scroll's spell.
+     * Returns true for creative mode and for spells that aren't mana-gated here (eldritch /
+     * blacklisted), so those keep showing the normal "Ready" line rather than a false warning.
+     */
+    private boolean hasEnoughManaFor(ItemStack stack) {
+        if (creative || internalTank == null) return true;
+        ISpellContainer container = ISpellContainer.get(stack);
+        if (container == null || container.isEmpty()) return true;
+        SpellData sd = container.getSpellAtIndex(0);
+        if (sd == null || sd == SpellData.EMPTY) return true;
+        AbstractSpell spell = sd.getSpell();
+        SchoolType school = spell.getSchoolType();
+        if (school != null && "eldritch".equals(school.getId().getPath())) return true;
+        if (SPELL_BLACKLIST.contains(spell.getSpellResource().getPath())) return true;
+        int manaCost = computeManaCost(spell, sd.getLevel());
+        return internalTank.getPrimaryHandler().getFluidInTank(0).getAmount() >= manaCost;
     }
 
     @Nullable
@@ -585,12 +633,19 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             spell.onCast(serverLevel, spellLevel, proxy, CastSource.MOB, magicData);
 
             if (keepAlive) {
-                // Start continuous channel — proxy stays alive and is ticked each server tick
+                // Start continuous channel — proxy stays alive and is ticked each server tick.
+                // Prime the cast state so the per-tick spell logic (which keys off
+                // getCastDurationRemaining()/isCasting()) actually runs while channeling.
+                int castDuration = spell.getCastTime(spellLevel);
+                // Force lazy init of SyncedSpellData — initiateCast() touches the raw field
+                // directly and NPEs otherwise (no ServerPlayer backs this proxy MagicData).
+                magicData.getSyncedData();
+                magicData.initiateCast(spell, spellLevel, castDuration, CastSource.MOB, "mainhand");
                 channelProxy = proxy;
                 channelMagicData = magicData;
                 channelSpell = spell;
                 channelSpellLevel = spellLevel;
-                channelTicksRemaining = spell.getCastTime(spellLevel);
+                channelTicksRemaining = castDuration;
             } else {
                 // Multi-targeting for burst/barrage spells (e.g. Flame Barrage)
                 int recastCount = spell.getRecastCount(spellLevel, proxy);

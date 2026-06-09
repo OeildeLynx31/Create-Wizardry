@@ -185,12 +185,31 @@ public class CWFluidRegistry {
                     FIRE_ALE_FLUID,
                     FIRE_ALE_FLUID_FLOWING);
 
-    // BLOOD (Iron's Spells 'n Spellbooks) — supply a world block so the existing blood bucket can place it.
-    // The fluid itself stays irons_spellbooks:blood; a NoopFluidMixin wires this block to it.
-    public static final DeferredBlock<BloodFluidBlock> BLOOD_FLUID_BLOCK =
-            FLUID_BLOCKS.register("blood_fluid_block", () -> new BloodFluidBlock(
+    // BLOOD (Iron's Spells 'n Spellbooks) — a finite, lava-like flowing fluid for the in-world liquid.
+    // ISS's irons_spellbooks:blood is a stateless NoopFluid that cannot flow, so we register our own
+    // source/flowing pair but REUSE ISS's BLOOD_TYPE so it renders identically. The blood_bucket still
+    // wraps irons_spellbooks:blood (recipes/spells unchanged); NoopFluidMixin redirects placement here.
+    public static final DeferredHolder<Fluid, FlowingFluid> BLOOD_SOURCE =
+            FLUIDS.register("blood", () -> new BaseFlowingFluid.Source(CWFluidRegistry.BLOOD_PROPERTIES));
+    public static final DeferredHolder<Fluid, FlowingFluid> BLOOD_FLOWING =
+            FLUIDS.register("blood_flowing", () -> new BaseFlowingFluid.Flowing(CWFluidRegistry.BLOOD_PROPERTIES));
+    public static final DeferredBlock<LiquidBlock> BLOOD_FLUID_BLOCK =
+            FLUID_BLOCKS.register("blood_fluid_block", () -> new LiquidBlock(BLOOD_SOURCE.get(),
                     net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(Blocks.WATER)
                             .noLootTable()));
+
+    private static final BaseFlowingFluid.Properties BLOOD_PROPERTIES =
+            new BaseFlowingFluid.Properties(
+                    io.redspace.ironsspellbooks.registries.FluidRegistry.BLOOD_TYPE, // reuse ISS fluid type
+                    BLOOD_SOURCE,
+                    BLOOD_FLOWING)
+                    .bucket(CWItems.BLOOD_BUCKET)   // existing bucket; still wraps irons_spellbooks:blood
+                    .block(BLOOD_FLUID_BLOCK)
+                    // finite — no infinite source: BLOOD_TYPE (default FluidType) has canConvertToSource=false
+                    .slopeFindDistance(2)           // short horizontal spread (~lava)
+                    .levelDecreasePerBlock(2)       // depletes fast → ~3-4 block reach
+                    .tickRate(30)                   // slow flow (~lava)
+                    .explosionResistance(100f);
 
     public static final DeferredHolder<Fluid, FlowingFluid> NETHERWARD_TINCTURE_FLUID =
             FLUIDS.register("netherward_tincture", () -> new BaseFlowingFluid.Source(CWFluidRegistry.NETHERWARD_TINCTURE_PROPERTIES));

@@ -139,9 +139,13 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     @Nullable private AbstractSpell channelSpell;
     private int channelSpellLevel;
     private int channelTicksRemaining;
+    // Client-synced channel state (for the goggle "Casting..." line and the Ray of Siphoning beam)
+    private int clientChannelProxyId;
+    private String clientChannelSpellPath = "";
+    private int beamProxyIdInSet; // client only: proxy id currently registered in ClientBlazeBeams
 
     public boolean isActive() {
-        return castTicksRemaining > 0;
+        return castTicksRemaining > 0 || channelTicksRemaining > 0;
     }
 
     public boolean isCreative() {
@@ -149,7 +153,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     public BlazeBurnerBlock.HeatLevel getHeatLevel() {
-        if (castTicksRemaining > 0) return BlazeBurnerBlock.HeatLevel.FADING;
+        if (castTicksRemaining > 0 || channelTicksRemaining > 0) return BlazeBurnerBlock.HeatLevel.FADING;
         boolean hasMana = creative || (internalTank != null
                 && internalTank.getPrimaryHandler().getFluidInTank(0).getAmount() > 0);
         return hasMana ? BlazeBurnerBlock.HeatLevel.SMOULDERING : BlazeBurnerBlock.HeatLevel.NONE;
@@ -296,7 +300,11 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                     .withStyle(ChatFormatting.AQUA));
         }
 
-        if (cooldownTicksRemaining > 0) {
+        if (castTicksRemaining > 0 || channelTicksRemaining > 0) {
+            tooltip.add(Component.translatable("create_wizardry.tooltip.casting")
+                    .withStyle(ChatFormatting.GOLD));
+            showed = true;
+        } else if (cooldownTicksRemaining > 0) {
             float seconds = cooldownTicksRemaining / 20f;
             tooltip.add(Component.translatable("create_wizardry.tooltip.cooldown",
                     String.format("%.1f", seconds))
@@ -474,7 +482,10 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 castTicksRemaining--;
                 if (castTicksRemaining == 0) {
                     executeCast(spell, spellLevel, null);
-                    cooldownTicksRemaining = spell.getSpellCooldown();
+                    // Continuous spells start a channel (channelProxy != null); their cooldown
+                    // begins when the channel ends, not now.
+                    if (channelProxy == null)
+                        cooldownTicksRemaining = spell.getSpellCooldown();
                 }
             } else if (risingEdge) {
                 tryStartCast(spell, spellLevel);
@@ -491,8 +502,11 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             castTicksRemaining--;
             if (castTicksRemaining == 0) {
                 executeCast(spell, spellLevel, target);
-                // Enforce minimum 1-tick cooldown to prevent zero-cooldown spam
-                cooldownTicksRemaining = Math.max(1, spell.getSpellCooldown());
+                // Continuous spells start a channel (channelProxy != null); their cooldown
+                // begins when the channel ends, not now.
+                if (channelProxy == null)
+                    // Enforce minimum 1-tick cooldown to prevent zero-cooldown spam
+                    cooldownTicksRemaining = Math.max(1, spell.getSpellCooldown());
             }
         } else if (target != null) {
             tryStartCast(spell, spellLevel);
@@ -509,9 +523,14 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     private void endChannel() {
+        boolean wasChanneling = channelProxy != null || channelTicksRemaining > 0;
         if (channelProxy != null) { channelProxy.discard(); channelProxy = null; }
         channelMagicData = null;
         channelSpell = null;
+        channelTicksRemaining = 0;
+        // Sync the cleared channel state so the client drops the "Casting..." line and beam.
+        if (wasChanneling && level != null && !level.isClientSide)
+            notifyUpdate();
     }
 
     private void tryStartCast(AbstractSpell spell, int spellLevel) {
@@ -646,6 +665,9 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 channelSpell = spell;
                 channelSpellLevel = spellLevel;
                 channelTicksRemaining = castDuration;
+                // Sync channel state immediately so the client shows "Casting...", keeps the
+                // raised pose, and (for Ray of Siphoning) starts rendering the beam.
+                notifyUpdate();
             } else {
                 // Multi-targeting for burst/barrage spells (e.g. Flame Barrage)
                 int recastCount = spell.getRecastCount(spellLevel, proxy);
@@ -826,6 +848,14 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             compound.put("HeldHat", heldHat.save(registries));
         compound.putInt("CastTicks", castTicksRemaining);
         compound.putInt("CooldownTicks", cooldownTicksRemaining);
+        // Channel state is sync-only (never persisted): on a mid-channel save/reload the proxy
+        // is gone, so restoring channelTicksRemaining would leave the caster stuck "casting".
+        if (clientPacket) {
+            compound.putInt("ChannelTicks", channelTicksRemaining);
+            compound.putInt("ChannelProxyId", channelProxy != null ? channelProxy.getId() : 0);
+            compound.putString("ChannelSpell",
+                    channelSpell != null ? channelSpell.getSpellResource().getPath() : "");
+        }
         if (placerUuid != null)
             compound.putUUID("PlacerUuid", placerUuid);
         compound.putBoolean("WasPowered", wasPowered);
@@ -852,6 +882,13 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 : ItemStack.EMPTY;
         castTicksRemaining = compound.getInt("CastTicks");
         cooldownTicksRemaining = compound.getInt("CooldownTicks");
+        // Channel state is sync-only (see write); never read it back from disk on the server.
+        if (clientPacket) {
+            channelTicksRemaining = compound.getInt("ChannelTicks");
+            clientChannelProxyId = compound.getInt("ChannelProxyId");
+            clientChannelSpellPath = compound.getString("ChannelSpell");
+            updateClientBeam();
+        }
         placerUuid = compound.hasUUID("PlacerUuid") ? compound.getUUID("PlacerUuid") : null;
         wasPowered = compound.getBoolean("WasPowered");
         lockedHead = compound.getBoolean("LockedHead");
@@ -878,6 +915,28 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), heldItem);
             Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), heldHat);
         }
+    }
+
+    @Override
+    public void invalidate() {
+        super.invalidate();
+        // Drop any beam this caster registered on the client (chunk unload mid-channel, etc.)
+        if (level != null && level.isClientSide && beamProxyIdInSet != 0) {
+            net.ttzplayz.create_wizardry.client.ClientBlazeBeams.remove(beamProxyIdInSet);
+            beamProxyIdInSet = 0;
+        }
+    }
+
+    /** Client only: keep {@link net.ttzplayz.create_wizardry.client.ClientBlazeBeams} in sync with the synced channel state. */
+    private void updateClientBeam() {
+        boolean shouldBeam = clientChannelProxyId != 0 && "ray_of_siphoning".equals(clientChannelSpellPath);
+        int desired = shouldBeam ? clientChannelProxyId : 0;
+        if (desired == beamProxyIdInSet) return;
+        if (beamProxyIdInSet != 0)
+            net.ttzplayz.create_wizardry.client.ClientBlazeBeams.remove(beamProxyIdInSet);
+        if (desired != 0)
+            net.ttzplayz.create_wizardry.client.ClientBlazeBeams.put(desired);
+        beamProxyIdInSet = desired;
     }
 
     private void appendHatBonusLines(List<Component> tooltip) {

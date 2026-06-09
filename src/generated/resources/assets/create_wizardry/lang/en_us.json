@@ -30,6 +30,7 @@
   "create_wizardry.tooltip.no_scroll": "No scroll equipped",
   "create_wizardry.tooltip.ready": "Ready",
   "create_wizardry.tooltip.not_enough_mana": "Not enough Mana!",
+  "create_wizardry.tooltip.casting": "Casting...",
   "create_wizardry.tooltip.spell": "Spell: %s",
   "create_wizardry.tooltip.spell_incompatible": "(Incompatible with Blaze Caster)",
   "fluid_type.create_wizardry.fire_ale_type": "Fire Ale",

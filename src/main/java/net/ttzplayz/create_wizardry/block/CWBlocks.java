@@ -12,6 +12,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ttzplayz.create_wizardry.CreateWizardry;
 import net.ttzplayz.create_wizardry.block.blaze_caster.BlazeCasterBlock;
 import net.ttzplayz.create_wizardry.block.channeler.ChannelerBlock;
+import net.ttzplayz.create_wizardry.block.pipe.ArcaneGlassPipeBlock;
+import net.ttzplayz.create_wizardry.block.pipe.ArcanePipeBlock;
+import net.ttzplayz.create_wizardry.block.pipe.EncasedArcanePipeBlock;
+import net.ttzplayz.create_wizardry.block.pipe.SmartArcanePipeBlock;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import net.ttzplayz.create_wizardry.item.CWItems;
 
@@ -49,10 +53,40 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
                             .noOcclusion()
             ));
 
+    // ---- Arcane pipes (mirror Create's fluid pipe family) ----
+    public static final DeferredBlock<ArcanePipeBlock> ARCANE_PIPE =
+            registerBlock("arcane_pipe", () -> new ArcanePipeBlock(pipeProperties()));
+
+    public static final DeferredBlock<SmartArcanePipeBlock> SMART_ARCANE_PIPE =
+            registerBlock("smart_arcane_pipe", () -> new SmartArcanePipeBlock(
+                    pipeProperties().mapColor(MapColor.TERRACOTTA_YELLOW)));
+
+    // Glass + encased variants have no item of their own (obtained via wrench / encasing), mirroring Create.
+    public static final DeferredBlock<ArcaneGlassPipeBlock> GLASS_ARCANE_PIPE =
+            registerBlockNoItem("glass_arcane_pipe", () -> new ArcaneGlassPipeBlock(
+                    pipeProperties().noOcclusion()));
+
+    public static final DeferredBlock<EncasedArcanePipeBlock> ENCASED_ARCANE_PIPE =
+            registerBlockNoItem("encased_arcane_pipe", () -> new EncasedArcanePipeBlock(
+                    pipeProperties().noOcclusion().mapColor(MapColor.TERRACOTTA_LIGHT_GRAY)));
+
+    private static BlockBehaviour.Properties pipeProperties() {
+        return Block.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(0.5F)
+                .sound(SoundType.COPPER)
+                .requiresCorrectToolForDrops()
+                .forceSolidOff();
+    }
+
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);
         registerBlockItem(name, toReturn);
         return toReturn;
+    }
+
+    private static <T extends Block> DeferredBlock<T> registerBlockNoItem(String name, Supplier<T> block) {
+        return BLOCKS.register(name, block);
     }
     
 

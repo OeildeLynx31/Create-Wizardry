@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "irons_spellbooks:arcane_ingot"
+    },
+    "S": {
+      "item": "create_wizardry:arcane_sheet"
+    }
+  },
+  "pattern": [
+    "S",
+    "I",
+    "S"
+  ],
+  "result": {
+    "count": 4,
+    "id": "create_wizardry:arcane_pipe"
+  }
+}

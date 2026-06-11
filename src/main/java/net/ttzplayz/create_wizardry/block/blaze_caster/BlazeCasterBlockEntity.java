@@ -92,18 +92,18 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     );
 
     private static final Set<String> SPELL_BLACKLIST = Set.of(
-        // Melee / physical-contact spells
+        // Melee spells
         "echoing_strikes", "flaming_strike", "shadow_slash",
         "volt_strike", "divine_smite", "touch_dig", "heartstop",
-        // Caster-movement spells
+        // Movement spells
         "teleport", "recall", "blood_step", "frost_step", "burning_dash",
         "thunder_step", "evasion", "charge", "ascension", "angel_wings", "portal",
-        // Inventory / mount utilities
+        // Inventory/utility spells
         "summon_ender_chest", "summon_horse", "summon_polar_bear",
-        // Self-only effects with no meaningful block interaction
+        // Self-effect spells
         "sacrifice", "invisibility", "haste", "spider_aspect",
-        // Healing (block cannot benefit; heals proxy which is immediately discarded)
-        "heal", "greater_heal", "ice_tomb"
+        // Healing spells
+        "heal", "greater_heal", "ice_tomb", "healing_circle"
     );
 
     public static boolean isSpellBlacklisted(AbstractSpell spell) {

@@ -1,0 +1,13 @@
+{
+  "type": "create:pressing",
+  "ingredients": [
+    {
+      "item": "irons_spellbooks:arcane_ingot"
+    }
+  ],
+  "results": [
+    {
+      "id": "create_wizardry:arcane_sheet"
+    }
+  ]
+}

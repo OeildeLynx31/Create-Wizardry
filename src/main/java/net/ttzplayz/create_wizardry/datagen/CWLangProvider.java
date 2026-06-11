@@ -17,6 +17,11 @@ public class CWLangProvider extends LanguageProvider {
         add("fluid_type.create_wizardry.mana_type", "Mana");
         add("fluid_type.create_wizardry.fire_ale_type", "Fire Ale");
         add("fluid_type.create_wizardry.netherward_tincture_type", "Netherward Tincture");
+        add("item.create_wizardry.arcane_sheet", "Arcane Sheet");
+        add("block.create_wizardry.arcane_pipe", "Arcane Pipe");
+        add("block.create_wizardry.smart_arcane_pipe", "Smart Arcane Pipe");
+        add("block.create_wizardry.glass_arcane_pipe", "Glass Arcane Pipe");
+        add("block.create_wizardry.encased_arcane_pipe", "Encased Arcane Pipe");
         add("item.create_wizardry.crushed_mithril", "Crushed Raw Mithril");
         add("item.create_wizardry.mithril_nugget", "Mithril Nugget");
         add("item.create_wizardry.mana_bucket", "Bucket of Mana");

@@ -63,8 +63,10 @@ import static net.neoforged.neoforge.common.Tags.Fluids.EXPERIENCE;
 import static net.neoforged.neoforge.common.Tags.Items.*;
 import static net.neoforged.neoforge.common.Tags.Items.FENCES;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_CASING;
+import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_PIPE;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.BLAZE_CASTER;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.CHANNELER;
+import static net.ttzplayz.create_wizardry.block.CWBlocks.SMART_ARCANE_PIPE;
 import static net.ttzplayz.create_wizardry.fluids.CWFluidRegistry.*;
 import static net.ttzplayz.create_wizardry.item.CWItems.*;
 import static net.ttzplayz.create_wizardry.datagen.recipe.CreateRecipeHelpers.*;
@@ -99,6 +101,43 @@ public class CWRecipeProvider extends RecipeProvider {
         buildVanillaRecipes(output);
         buildMechanicalRecipes(output);
         buildSummoningRecipes(output);
+        buildPipeRecipes(output);
+    }
+
+    private void buildPipeRecipes(RecipeOutput output) {
+        // Arcane Sheet: pressed from an Arcane Ingot, mirroring Create's copper sheet.
+        pressing(ARCANE_SHEET.getId())
+                .require(ARCANE_INGOT.get())
+                .output(ARCANE_SHEET.get())
+                .build(output);
+
+        // Arcane Pipe: arcane sheets around an arcane ingot, just like the Copper Fluid Pipe.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ARCANE_PIPE.get(), 4)
+                .pattern("SCS")
+                .define('S', ARCANE_SHEET.get())
+                .define('C', ARCANE_INGOT.get())
+                .unlockedBy("has_arcane_sheet", has(ARCANE_SHEET.get()))
+                .save(output);
+        // Vertical arrangement for convenience (same as Create's vertical pipe recipe).
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ARCANE_PIPE.get(), 4)
+                .pattern("S")
+                .pattern("I")
+                .pattern("S")
+                .define('S', ARCANE_SHEET.get())
+                .define('I', ARCANE_INGOT.get())
+                .unlockedBy("has_arcane_sheet", has(ARCANE_SHEET.get()))
+                .save(output, itemId(ARCANE_PIPE.get()) + "_vertical");
+
+        // Smart Arcane Pipe: an arcane pipe given a brain (electron tube), like the Smart Fluid Pipe.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, SMART_ARCANE_PIPE.get(), 1)
+                .pattern("B")
+                .pattern("P")
+                .pattern("E")
+                .define('B', BRASS_SHEET.get())
+                .define('P', ARCANE_PIPE.get())
+                .define('E', ELECTRON_TUBE.get())
+                .unlockedBy("has_arcane_pipe", has(ARCANE_PIPE.get()))
+                .save(output);
     }
     private void buildVanillaRecipes(RecipeOutput output) {
         List<ItemLike> MITHRIL_SMELTABLES = List.of(CRUSHED_MITHRIL.get(), MITHRIL_ORE_BLOCK_ITEM.get(), MITHRIL_ORE_DEEPSLATE_BLOCK_ITEM.get());

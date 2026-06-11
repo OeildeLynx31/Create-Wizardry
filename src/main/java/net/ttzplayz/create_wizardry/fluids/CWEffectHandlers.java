@@ -39,6 +39,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.ttzplayz.create_wizardry.advancement.CWAdvancements;
+import net.ttzplayz.create_wizardry.entity.CWManaTransformations;
+import net.ttzplayz.create_wizardry.particle.CWParticles;
 
 import java.util.List;
 
@@ -48,10 +50,11 @@ public class CWEffectHandlers {
         @Override
         public void apply(Level level, AABB area, FluidStack fluid) {
             if (level.getGameTime() % 5L == 0L) {
-                MagicManager.spawnParticles(level, ParticleTypes.GLOW_SQUID_INK, area.getCenter().x, area.getCenter().y, area.getCenter().z, 10, 0.2, 0.2, 0.2, 0.3, false);
+                // Same mana burst as when a mana bucket is placed/vaporizes.
+                CWParticles.spawnManaRunes(level, area.getCenter().x, area.getCenter().y, area.getCenter().z, 12, 0.25, 0.05);
                 level.playLocalSound(
                         area.getCenter().x, area.getCenter().y, area.getCenter().z,
-                        SoundRegistry.EVOCATION_CAST.get(),
+                        SoundEvents.BEACON_AMBIENT,
                         SoundSource.BLOCKS,
                         0.5F,
                         0.8F,
@@ -59,12 +62,17 @@ public class CWEffectHandlers {
                 );
                 List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, area, LivingEntity::isAffectedByPotions);
                 for(LivingEntity entity : entities) {
-                    MagicManager.spawnParticles(level, ParticleTypes.GLOW_SQUID_INK, entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(), 10, entity.getBbWidth() / 3, entity.getBbHeight() / 3, entity.getBbWidth() / 3, 0.1, false);
-                    level.playSound(entity, entity.getOnPos(), SoundRegistry.EVOCATION_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
+                    CWParticles.spawnManaRunes(level, entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(), 10, entity.getBbWidth() / 3, 0.1);
+                    level.playSound(entity, entity.getOnPos(), SoundEvents.BEACON_AMBIENT, SoundSource.BLOCKS, 0.5F, 1.0F);
                     if (entity instanceof AbstractSpellCastingMob) {
                         ((AbstractSpellCastingMob) entity).getMagicData().addMana(5);
                     } else {
                         entity.addEffect(new MobEffectInstance(MobEffectRegistry.INSTANT_MANA, 1, 3, true, false));
+                    }
+                    // Mana exposure can transform vanilla mobs into Iron's Spells casters (drop/deploy path).
+                    if (level instanceof ServerLevel serverLevel) {
+                        CWManaTransformations.markManaExposed(entity);
+                        CWManaTransformations.tryConvertViaDrop(serverLevel, entity);
                     }
                 }
             }

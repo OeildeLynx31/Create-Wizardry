@@ -73,10 +73,7 @@ public class CWFluidRegistry {
                         public void onVaporize(@Nullable Player player, Level level, BlockPos pos, FluidStack stack) {
                             if (level instanceof ServerLevel) {
                                 level.playSound(null, pos, SoundRegistry.EVOCATION_CAST.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
-                                for (int i = 0; i < 12; i++) {
-                                    SimpleParticleType rune = CWParticles.RUNES.get(level.random.nextInt(CWParticles.RUNES.size())).get();
-                                    MagicManager.spawnParticles(level, rune, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 1, 0.25, 0.25, 0.25, 0.05, false);
-                                }
+                                CWParticles.spawnManaRunes(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 12, 0.25, 0.05);
                                 AABB area = new AABB(pos).inflate(1.5, 1.5, 1.5);
                                 List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, area, LivingEntity::isAffectedByPotions);
                                 for(LivingEntity entity : entities) {

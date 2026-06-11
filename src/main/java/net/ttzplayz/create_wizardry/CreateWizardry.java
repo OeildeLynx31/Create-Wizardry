@@ -12,20 +12,35 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.fluids.FluidInteractionRegistry;
+import net.ttzplayz.create_wizardry.entity.CWManaTransformations;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.registries.GameData;
 import net.neoforged.neoforge.registries.RegisterEvent;
+import com.simibubi.create.content.decoration.encasing.EncasingRegistry;
+import com.simibubi.create.content.fluids.pipes.GlassPipeVisual;
+import com.simibubi.create.content.fluids.pipes.TransparentStraightPipeRenderer;
+import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import net.ttzplayz.create_wizardry.advancement.CWAdvancements;
 import net.ttzplayz.create_wizardry.advancement.CWTriggers;
 import net.ttzplayz.create_wizardry.block.CWBlocks;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import net.ttzplayz.create_wizardry.client.CWPartialModels;
 import net.ttzplayz.create_wizardry.client.CWSpriteShifts;
+import net.ttzplayz.create_wizardry.client.pipe.ArcanePartialModels;
+import net.ttzplayz.create_wizardry.client.pipe.ArcanePipeAttachmentModel;
 import net.ttzplayz.create_wizardry.client.rendering.BlazeCasterRenderer;
 import net.ttzplayz.create_wizardry.client.rendering.BlazeCasterVisual;
 import net.ttzplayz.create_wizardry.client.rendering.ChannelerRenderer;
@@ -118,6 +133,25 @@ public class CreateWizardry {
         event.enqueueWork(() -> OpenPipeEffectHandler.REGISTRY.register(ICE_VENOM_FLUID.get(), new CWEffectHandlers.IceVenomEffectHandler()));
         event.enqueueWork(() -> OpenPipeEffectHandler.REGISTRY.register(BLOOD.get(), new CWEffectHandlers.BloodEffectHandler()));
 
+        // Register the arcane pipe as encasable into the arcane encased pipe (mirrors Create's copper casing flow)
+        event.enqueueWork(() -> EncasingRegistry.addVariant(
+                CWBlocks.ARCANE_PIPE.get(), CWBlocks.ENCASED_ARCANE_PIPE.get()));
+
+        // Lava meeting Blood reacts like lava meeting water: flowing lava -> crimsite, source lava -> obsidian.
+        event.enqueueWork(() -> {
+            BlockState crimsite = BuiltInRegistries.BLOCK
+                    .getOptional(ResourceLocation.fromNamespaceAndPath("create", "crimsite"))
+                    .map(Block::defaultBlockState)
+                    .orElse(Blocks.OBSIDIAN.defaultBlockState());
+            FluidInteractionRegistry.addInteraction(
+                    NeoForgeMod.LAVA_TYPE.value(),
+                    new FluidInteractionRegistry.InteractionInformation(
+                            io.redspace.ironsspellbooks.registries.FluidRegistry.BLOOD_TYPE.value(),
+                            lavaState -> lavaState.isSource()
+                                    ? Blocks.OBSIDIAN.defaultBlockState()
+                                    : crimsite));
+        });
+
         event.enqueueWork(() -> {
             Holder<PoiType> lightningRod =
                     BuiltInRegistries.POINT_OF_INTEREST_TYPE.getHolderOrThrow(PoiTypes.LIGHTNING_ROD);
@@ -152,6 +186,9 @@ public class CreateWizardry {
             event.accept(BLAZE_CASTER.get());
             event.accept(CHANNELER.get());
             event.accept(CWBlocks.ARCANE_CASING.get());
+            event.accept(CWBlocks.ARCANE_PIPE.get());
+            event.accept(CWBlocks.SMART_ARCANE_PIPE.get());
+            event.accept(ARCANE_SHEET.get());
             event.accept(INCOMPLETE_BLAZE_CASTER.get());
             event.accept(CRUSHED_MITHRIL.get());
             event.accept(MITHRIL_NUGGET.get());
@@ -167,6 +204,25 @@ public class CreateWizardry {
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {}
+
+    @SubscribeEvent
+    public void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (event.getLevel().isClientSide()) return;
+        if (!(event.getTarget() instanceof Mob mob)) return;
+        // Give/deploy path: using a spellbook on a Mana-exposed mob arms an Iron's Spells caster transformation.
+        if (CWManaTransformations.tryConvertViaInteract(event.getEntity(), mob, event.getItemStack())) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+        }
+    }
+
+    @SubscribeEvent
+    public void onEntityTick(EntityTickEvent.Post event) {
+        // Drives the 5-second "admire" delay and completes armed mana transformations.
+        if (event.getEntity() instanceof Mob mob && !mob.level().isClientSide()) {
+            CWManaTransformations.tickPendingConversion(mob);
+        }
+    }
 
     @SubscribeEvent
     public void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
@@ -216,14 +272,32 @@ public class CreateWizardry {
         {
             CWPartialModels.register();
             CWSpriteShifts.register();
+            ArcanePartialModels.register();
             event.enqueueWork(() -> {
                 SimpleBlockEntityVisualizer.builder(CWBlockEntities.BLAZE_CASTER_BE.get())
                         .factory(BlazeCasterVisual::new)
                         .skipVanillaRender(be -> true)
                         .apply();
+                // Glass arcane pipe renders its flowing fluid through Flywheel (BER fallback below).
+                SimpleBlockEntityVisualizer.builder(CWBlockEntities.GLASS_ARCANE_PIPE.get())
+                        .factory(GlassPipeVisual::new)
+                        .skipVanillaRender(be -> true)
+                        .apply();
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("arcane_casing"),
                                 model -> new CTModel(model, new SimpleCTBehaviour(CWSpriteShifts.ARCANE_CASING)));
+
+                // Dynamic pipe connection rims / casings, mirroring Create's PipeAttachmentModel
+                CreateClient.MODEL_SWAPPER.getCustomBlockModels()
+                        .register(CreateWizardry.id("arcane_pipe"), ArcanePipeAttachmentModel::withAO);
+                CreateClient.MODEL_SWAPPER.getCustomBlockModels()
+                        .register(CreateWizardry.id("smart_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
+                // NOTE: glass_arcane_pipe is intentionally NOT wrapped with the attachment model.
+                // Like Create's GLASS_FLUID_PIPE, it's a plain straight window model; wrapping it
+                // would union the casing's SOLID render layer in and draw the glass in the solid
+                // pass, rendering its transparent pixels as opaque black.
+                CreateClient.MODEL_SWAPPER.getCustomBlockModels()
+                        .register(CreateWizardry.id("encased_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
             });
         }
 
@@ -245,6 +319,9 @@ public class CreateWizardry {
         public static void registerBER(EntityRenderersEvent.RegisterRenderers event) {
             event.registerBlockEntityRenderer(CWBlockEntities.CHANNELER_BE.get(), ChannelerRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.BLAZE_CASTER_BE.get(), BlazeCasterRenderer::new);
+            // Smart arcane pipe renders its filter value box; glass arcane pipe renders fluid when Flywheel is off.
+            event.registerBlockEntityRenderer(CWBlockEntities.SMART_ARCANE_PIPE.get(), SmartBlockEntityRenderer::new);
+            event.registerBlockEntityRenderer(CWBlockEntities.GLASS_ARCANE_PIPE.get(), TransparentStraightPipeRenderer::new);
         }
 
     }

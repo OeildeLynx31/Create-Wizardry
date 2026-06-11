@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "create:brass_sheet"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "P": {
+      "item": "create_wizardry:arcane_pipe"
+    }
+  },
+  "pattern": [
+    "B",
+    "P",
+    "E"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_wizardry:smart_arcane_pipe"
+  }
+}

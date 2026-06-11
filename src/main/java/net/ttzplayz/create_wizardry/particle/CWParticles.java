@@ -1,8 +1,10 @@
 package net.ttzplayz.create_wizardry.particle;
 
+import io.redspace.ironsspellbooks.capabilities.magic.MagicManager;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -32,6 +34,17 @@ public class CWParticles {
 
     private static DeferredHolder<ParticleType<?>, SimpleParticleType> rune(String name) {
         return PARTICLES.register(name, () -> new SimpleParticleType(false) {});
+    }
+
+    /**
+     * Spawns the signature mana burst of randomly-chosen rune particles. Shared by mana bucket vaporization
+     * and mana spilling out of an open-ended pipe / pump so they look identical.
+     */
+    public static void spawnManaRunes(Level level, double x, double y, double z, int count, double spread, double speed) {
+        for (int i = 0; i < count; i++) {
+            SimpleParticleType rune = RUNES.get(level.random.nextInt(RUNES.size())).get();
+            MagicManager.spawnParticles(level, rune, x, y, z, 1, spread, spread, spread, speed, false);
+        }
     }
 
     public static void register(IEventBus eventBus) {

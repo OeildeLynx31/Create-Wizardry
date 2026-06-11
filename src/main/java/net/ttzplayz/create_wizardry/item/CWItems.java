@@ -17,6 +17,8 @@ public class CWItems {
 //    public static final DeferredHolder<Item, BlockItem> BLAZE_CASTER =
 //            ITEMS.register("blaze_caster", () ->
 //                    new BlockItem(ModBlocks.BLAZE_CASTER.get(), new Item.Properties()));
+    public static final DeferredHolder<Item, Item> ARCANE_SHEET = ITEMS.register("arcane_sheet",
+            () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
     public static final DeferredHolder<Item, Item> CRUSHED_MITHRIL = ITEMS.register("crushed_mithril",
             () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
     public static final DeferredHolder<Item, Item> MITHRIL_NUGGET = ITEMS.register("mithril_nugget",

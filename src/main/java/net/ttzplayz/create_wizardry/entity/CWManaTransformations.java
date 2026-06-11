@@ -37,9 +37,11 @@ import java.util.function.Supplier;
  *
  * Trigger paths:
  *  - drop/deploy: a matching item dropped onto the mob while it is in a Mana spout/pool (from
- *    {@code ManaEffectHandler}). The only path for the Tarnished Crown, since Create's Deployer can't apply armor.
+ *    {@code ManaEffectHandler}).
  *  - give/deploy: a player or Deployer uses the matching item on the mob while it is Mana-exposed (from
- *    the {@code PlayerInteractEvent.EntityInteract} hook).
+ *    the {@code PlayerInteractEvent.EntityInteract} hook). The Tarnished Crown works here too: a Deployer
+ *    normally self-equips armor, but {@code EquipableNoDeployerSelfEquipMixin} keeps it in hand so it can
+ *    be applied to the Skeleton.
  */
 public final class CWManaTransformations {
 

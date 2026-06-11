@@ -91,10 +91,15 @@ public class ArcanePipeAttachmentModel extends BakedModelWrapperWithData {
     @Override
     public List<BakedQuad> getQuads(BlockState state, Direction side, RandomSource rand, ModelData data,
         RenderType renderType) {
-        List<BakedQuad> quads = super.getQuads(state, side, rand, data, renderType);
+        List<BakedQuad> quads = new ArrayList<>();
+        // Only emit the base model's quads into the render layers it actually declares. For the glass
+        // window (cutout_mipped) this keeps the transparent tube out of the solid pass, which would
+        // otherwise draw its see-through pixels as opaque black. Opaque pipes only declare solid, so
+        // this guard is a no-op for them.
+        if (super.getRenderTypes(state, rand, data).contains(renderType))
+            quads.addAll(super.getQuads(state, side, rand, data, renderType));
         if (data.has(PIPE_PROPERTY)) {
             PipeModelData pipeData = data.get(PIPE_PROPERTY);
-            quads = new ArrayList<>(quads);
             addQuads(quads, state, side, rand, data, pipeData, renderType);
         }
         return quads;
@@ -114,16 +119,24 @@ public class ArcanePipeAttachmentModel extends BakedModelWrapperWithData {
         PipeModelData pipeData, RenderType renderType) {
         BakedModel bracket = pipeData.getBracket();
         if (bracket != null)
-            quads.addAll(bracket.getQuads(state, side, rand, data, renderType));
+            addModelQuads(quads, bracket, state, side, rand, data, renderType);
         for (Direction d : Iterate.directions) {
             AttachmentTypes type = pipeData.getAttachment(d);
             for (ComponentPartials partial : type.partials) {
-                quads.addAll(ArcanePartialModels.PIPE_ATTACHMENTS.get(partial).get(d).get()
-                    .getQuads(state, side, rand, data, renderType));
+                addModelQuads(quads, ArcanePartialModels.PIPE_ATTACHMENTS.get(partial).get(d).get(),
+                    state, side, rand, data, renderType);
             }
         }
         if (pipeData.isEncased())
-            quads.addAll(ArcanePartialModels.FLUID_PIPE_CASING.get().getQuads(state, side, rand, data, renderType));
+            addModelQuads(quads, ArcanePartialModels.FLUID_PIPE_CASING.get(), state, side, rand, data, renderType);
+    }
+
+    /** Adds a sub-model's quads only for the render layers it declares, so e.g. solid rims never bleed
+     *  into the cutout pass (and the cutout glass never bleeds into the solid pass). */
+    private static void addModelQuads(List<BakedQuad> quads, BakedModel model, BlockState state, Direction side,
+        RandomSource rand, ModelData data, RenderType renderType) {
+        if (model.getRenderTypes(state, rand, data).contains(renderType))
+            quads.addAll(model.getQuads(state, side, rand, data, renderType));
     }
 
     private static class PipeModelData {

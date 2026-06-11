@@ -6,6 +6,8 @@
   "refmap": "create_wizardry.refmap.json",
   "mixins": [
     "BasinInkMixingMixin",
+    "EquipableNoDeployerSelfEquipMixin",
+    "ManualApplicationAdvancementMixin",
     "NoopFluidMixin"
   ],
   "injectors": {

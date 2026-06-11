@@ -189,7 +189,6 @@ public class CreateWizardry {
             event.accept(CWBlocks.ARCANE_PIPE.get());
             event.accept(CWBlocks.SMART_ARCANE_PIPE.get());
             event.accept(ARCANE_SHEET.get());
-            event.accept(INCOMPLETE_BLAZE_CASTER.get());
             event.accept(CRUSHED_MITHRIL.get());
             event.accept(MITHRIL_NUGGET.get());
             event.accept(MANA_BUCKET.get());
@@ -292,10 +291,12 @@ public class CreateWizardry {
                         .register(CreateWizardry.id("arcane_pipe"), ArcanePipeAttachmentModel::withAO);
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("smart_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
-                // NOTE: glass_arcane_pipe is intentionally NOT wrapped with the attachment model.
-                // Like Create's GLASS_FLUID_PIPE, it's a plain straight window model; wrapping it
-                // would union the casing's SOLID render layer in and draw the glass in the solid
-                // pass, rendering its transparent pixels as opaque black.
+                // glass_arcane_pipe is wrapped too, exactly like Create's GLASS_FLUID_PIPE, so its
+                // connection rims render. ArcanePipeAttachmentModel emits each sub-model only into the
+                // render layers it declares, so the cutout glass stays out of the solid pass (no black
+                // glass) while the solid rims/casing still draw.
+                CreateClient.MODEL_SWAPPER.getCustomBlockModels()
+                        .register(CreateWizardry.id("glass_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("encased_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
             });

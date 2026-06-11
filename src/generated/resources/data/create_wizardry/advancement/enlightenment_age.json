@@ -1,15 +1,8 @@
 {
   "parent": "create_wizardry:root",
   "criteria": {
-    "0": {
-      "conditions": {
-        "items": [
-          {
-            "items": "create_wizardry:arcane_casing"
-          }
-        ]
-      },
-      "trigger": "minecraft:inventory_changed"
+    "builtin": {
+      "trigger": "create_wizardry:enlightenment_age"
     }
   },
   "display": {
@@ -28,7 +21,7 @@
   },
   "requirements": [
     [
-      "0"
+      "builtin"
     ]
   ],
   "sends_telemetry_event": true

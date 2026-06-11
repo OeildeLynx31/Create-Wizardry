@@ -85,7 +85,7 @@ public class CWFluidRegistry {
                                 }
                             }
                         }
-                    }); //TODO: MAKE TEXTURE
+                    });
     public static final DeferredHolder<Fluid, FlowingFluid> MANA =
             FLUIDS.register("mana", () -> new BaseFlowingFluid.Source(CWFluidRegistry.MANA_PROPERTIES));
     public static final DeferredHolder<Fluid, FlowingFluid> MANA_FLOWING =

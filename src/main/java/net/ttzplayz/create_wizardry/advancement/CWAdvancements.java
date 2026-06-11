@@ -46,7 +46,7 @@ public class CWAdvancements implements DataProvider {
                     .description("Yeah, SHOCKING...")
                     .after(CHANNELER)
                     .special(CWAdvancement.TaskType.SECRET)),
-            UNLIMITED_POWER = create("unlimited_power", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "lightning_bucket"))) //todo: change?
+            UNLIMITED_POWER = create("unlimited_power", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "lightning_bucket")))
                     .title("UNLIMITED POWER!!!")
                     .description("Safe? No. Fun? Yes.")
                     .special(CWAdvancement.TaskType.SUPER_SECRET)
@@ -80,7 +80,6 @@ public class CWAdvancements implements DataProvider {
             ENLIGHTENMENT_AGE = create("enlightenment_age", b -> b.icon(itemFromRegistry(CreateWizardry.id("arcane_casing")))
                     .title("The Enlightenment Age")
                     .description("Make an Arcane Casing.")
-                    .whenIconCollected()
                     .special(CWAdvancement.TaskType.NORMAL)
                     .after(ROOT));
 

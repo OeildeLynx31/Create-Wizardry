@@ -55,12 +55,34 @@ public class CWAdvancements implements DataProvider {
                     .title("Vampire Shower")
                     .description("Bathe in the blood of your enemies.")
                     .special(CWAdvancement.TaskType.SECRET)
+                    .after(ROOT)),
+            I_CAST_FIREBALL = create("i_cast_fireball", b -> b.icon(itemFromRegistry(CreateWizardry.id("blaze_caster")))
+                    .title("I CAST FIREBALL!!!")
+                    .description("Forge the Blaze Caster. And you don't care how big the room is.")
+                    .whenIconCollected()
+                    .special(CWAdvancement.TaskType.NOISY)
+                    .after(ROOT)),
+            MEGA_LASER = create("mega_laser", b -> b.icon(itemFromRegistry(CreateWizardry.id("blaze_caster")))
+                    .title("AND MEGA LASER!")
+                    .description("Cast Black Hole with the Blaze Caster.")
+                    .special(CWAdvancement.TaskType.SUPER_SECRET)
+                    .after(I_CAST_FIREBALL)),
+            DO_YOU_FEEL_DIFFERENT = create("do_you_feel_different", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "blaze_spell_book")))
+                    .title("Do You Feel Different?")
+                    .description("Convert a mob to its casting counterpart.")
+                    .special(CWAdvancement.TaskType.SECRET)
+                    .after(ROOT)),
+            INDUSTRIAL_INK = create("industrial_ink", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(IronsSpellbooks.MODID, "legendary_ink")))
+                    .title("Industrial Ink")
+                    .description("Mix ink using Create contraptions.")
+                    .special(CWAdvancement.TaskType.NOISY)
+                    .after(ROOT)),
+            ENLIGHTENMENT_AGE = create("enlightenment_age", b -> b.icon(itemFromRegistry(CreateWizardry.id("arcane_casing")))
+                    .title("The Enlightenment Age")
+                    .description("Make an Arcane Casing.")
+                    .whenIconCollected()
+                    .special(CWAdvancement.TaskType.NORMAL)
                     .after(ROOT));
-//            INDUSTRIAL_INK = create("industrial_ink", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(IronsSpellbooks.MODID, "legendary_ink")))
-//                    .title("Industrial Ink")
-//                    .description("Mix ink using Create contraptions.")
-//                    .special(CWAdvancement.TaskType.SECRET)
-//                    .after(ROOT)); //todo
 
 
 

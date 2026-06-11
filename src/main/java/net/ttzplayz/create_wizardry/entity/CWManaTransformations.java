@@ -50,6 +50,8 @@ public final class CWManaTransformations {
     /** Persistent-data keys for an armed-but-not-yet-completed conversion. */
     private static final String CONVERT_TO_KEY = "cw:convert_to";
     private static final String CONVERT_AT_KEY = "cw:convert_at";
+    /** UUID of the player who armed the conversion, so the advancement can be awarded on completion. */
+    private static final String CONVERT_BY_KEY = "cw:convert_by";
 
     /** How long (ticks) a Mana touch keeps a mob "exposed" for the interaction path. */
     private static final int EXPOSURE_TICKS = 30;
@@ -124,7 +126,8 @@ public final class CWManaTransformations {
             ItemStack stack = itemEntity.getItem();
             Conversion c = findConversion(stack.getItem(), mob.getType());
             if (c == null) continue;
-            armConversion(mob, c, stack);
+            java.util.UUID byPlayer = itemEntity.getOwner() instanceof Player p ? p.getUUID() : null;
+            armConversion(mob, c, stack, byPlayer);
             stack.shrink(1);
             if (stack.isEmpty()) {
                 itemEntity.discard();
@@ -141,7 +144,7 @@ public final class CWManaTransformations {
         if (c == null || isPending(mob) || !isManaExposed(mob)) return false;
         if (!(mob.level() instanceof ServerLevel)) return false;
 
-        armConversion(mob, c, stack);
+        armConversion(mob, c, stack, player.getUUID());
         if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
@@ -154,11 +157,14 @@ public final class CWManaTransformations {
         return mob.getPersistentData().contains(CONVERT_AT_KEY);
     }
 
-    private static void armConversion(Mob mob, Conversion c, ItemStack triggerStack) {
+    private static void armConversion(Mob mob, Conversion c, ItemStack triggerStack, java.util.UUID byPlayer) {
         EntityType<? extends Mob> target = c.to().get();
         CompoundTag data = mob.getPersistentData();
         data.putString(CONVERT_TO_KEY, BuiltInRegistries.ENTITY_TYPE.getKey(target).toString());
         data.putLong(CONVERT_AT_KEY, mob.level().getGameTime() + CONVERSION_DELAY);
+        if (byPlayer != null) {
+            data.putUUID(CONVERT_BY_KEY, byPlayer);
+        }
 
         // Hold the book up for the duration; for piglins, the gold-style admire pose.
         mob.setItemSlot(EquipmentSlot.OFFHAND, triggerStack.copyWithCount(1));
@@ -199,8 +205,10 @@ public final class CWManaTransformations {
 
     private static void completeConversion(ServerLevel level, Mob mob, CompoundTag data) {
         ResourceLocation id = ResourceLocation.tryParse(data.getString(CONVERT_TO_KEY));
+        java.util.UUID byPlayer = data.hasUUID(CONVERT_BY_KEY) ? data.getUUID(CONVERT_BY_KEY) : null;
         data.remove(CONVERT_TO_KEY);
         data.remove(CONVERT_AT_KEY);
+        data.remove(CONVERT_BY_KEY);
         if (id == null) return;
 
         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id);
@@ -217,5 +225,12 @@ public final class CWManaTransformations {
                 result.getZ(), 16, result.getBbWidth() / 2, 0.1);
         level.playSound(null, result.blockPosition(), SoundRegistry.EVOCATION_CAST.get(),
                 SoundSource.HOSTILE, 1.0F, 1.0F);
+
+        if (byPlayer != null) {
+            net.minecraft.server.level.ServerPlayer caster = level.getServer().getPlayerList().getPlayer(byPlayer);
+            if (caster != null && !caster.isFakePlayer()) {
+                net.ttzplayz.create_wizardry.advancement.CWAdvancements.DO_YOU_FEEL_DIFFERENT.awardTo(caster);
+            }
+        }
     }
 }

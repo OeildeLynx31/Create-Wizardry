@@ -1,0 +1,27 @@
+{
+  "parent": "create_wizardry:root",
+  "criteria": {
+    "builtin": {
+      "trigger": "create_wizardry:industrial_ink"
+    }
+  },
+  "display": {
+    "description": {
+      "color": "#DBA213",
+      "translate": "advancement.create_wizardry.industrial_ink.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "irons_spellbooks:legendary_ink"
+    },
+    "title": {
+      "translate": "advancement.create_wizardry.industrial_ink"
+    }
+  },
+  "requirements": [
+    [
+      "builtin"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

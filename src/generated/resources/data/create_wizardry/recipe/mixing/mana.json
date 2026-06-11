@@ -16,13 +16,13 @@
     },
     {
       "type": "neoforge:tag",
-      "amount": 1000,
+      "amount": 100,
       "tag": "minecraft:water"
     }
   ],
   "results": [
     {
-      "amount": 1000,
+      "amount": 100,
       "id": "create_wizardry:mana"
     }
   ]

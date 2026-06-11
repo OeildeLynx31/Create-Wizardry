@@ -1,0 +1,37 @@
+{
+  "parent": "create_wizardry:root",
+  "criteria": {
+    "builtin": {
+      "trigger": "create_wizardry:do_you_feel_different"
+    }
+  },
+  "display": {
+    "description": {
+      "color": "#DBA213",
+      "translate": "advancement.create_wizardry.do_you_feel_different.desc"
+    },
+    "frame": "goal",
+    "hidden": true,
+    "icon": {
+      "components": {
+        "irons_spellbooks:spell_container": {
+          "data": [],
+          "maxSpells": 10,
+          "mustEquip": true,
+          "spellWheel": true
+        }
+      },
+      "count": 1,
+      "id": "irons_spellbooks:blaze_spell_book"
+    },
+    "title": {
+      "translate": "advancement.create_wizardry.do_you_feel_different"
+    }
+  },
+  "requirements": [
+    [
+      "builtin"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

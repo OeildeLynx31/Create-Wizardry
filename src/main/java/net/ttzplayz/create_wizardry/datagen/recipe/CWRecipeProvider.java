@@ -238,7 +238,7 @@ public class CWRecipeProvider extends RecipeProvider {
         runeSequence(output, PHANTOM_MEMBRANE, COOLDOWN_RUNE.get());
         runeSequence(output, PUFFERFISH, PROTECTION_RUNE.get());
 
-        runeFilling(output, MANA_RUNE.get(), MANA.get());
+        manaFilling(output, MANA_RUNE.get(), BLANK_RUNE.get(), 100);
         runeFilling(output, BLOOD_RUNE.get(), BLOOD.get());
         runeFilling(output, LIGHTNING_RUNE.get(), LIGHTNING.get());
         itemFilling(output, ICE_RUNE.get(), BLANK_RUNE.get(), ICE_VENOM_FLUID.get(), 250);
@@ -268,17 +268,17 @@ public class CWRecipeProvider extends RecipeProvider {
         armorDeploying(output, NETHERITE_INGOT, "netherite_mage");
         armorFilling(output, "wandering_magician");
 
-        manaFilling(output, PUMPKIN_BOOTS.get(), MAGIC_CLOTH.get(), 500);
-        manaFilling(output, PUMPKIN_CHESTPLATE.get(), LEATHER, 500);
-        manaFilling(output, PUMPKIN_HELMET.get(), CARVED_PUMPKIN, 500);
-        manaFilling(output, PUMPKIN_LEGGINGS.get(), HAY_BLOCK, 500);
+        manaFilling(output, PUMPKIN_BOOTS.get(), MAGIC_CLOTH.get(), 50);
+        manaFilling(output, PUMPKIN_CHESTPLATE.get(), LEATHER, 50);
+        manaFilling(output, PUMPKIN_HELMET.get(), CARVED_PUMPKIN, 50);
+        manaFilling(output, PUMPKIN_LEGGINGS.get(), HAY_BLOCK, 50);
         // UNIQUE ARMOR
         sequencedAssembly(TARNISHED_CROWN.getId())
                 .require(IRON_HELMET)
                 .transitionTo(IRON_HELMET)
                 .addOutput(TARNISHED_CROWN.get(), 1)
                 .loops(3)
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 500))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 50))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output);
         sequencedAssembly(INFERNAL_SORCERER_CHESTPLATE.getId())
@@ -314,9 +314,9 @@ public class CWRecipeProvider extends RecipeProvider {
     }
 
     private void buildMiscItemRecipes(RecipeOutput output) {
-        manaFilling(output, ARCANE_ESSENCE.get(), DUSTS, 250);
-        manaFilling(output, ARCANE_INGOT.get(), INGOTS, 1000);
-        manaFilling(output, MAGIC_CLOTH.get(), WOOL, 1000);
+        manaFilling(output, ARCANE_ESSENCE.get(), DUSTS, 25);
+        manaFilling(output, ARCANE_INGOT.get(), INGOTS, 100);
+        manaFilling(output, MAGIC_CLOTH.get(), WOOL, 100);
         itemFilling(output, ENERGIZED_CORE.get(), COPPER_BLOCK, LIGHTNING.get(), 1000);
         itemFilling(output, ICY_FANG.get(), FROZEN_BONE_SHARD.get(), ICE_VENOM_FLUID.get(), 500);
         itemFilling(output, FROZEN_BONE_SHARD.get(), BONES, ICE_VENOM_FLUID.get(), 500);
@@ -337,7 +337,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .addOutput(COBBLED_DEEPSLATE_SLAB, 5)
                 .addOutput(ARCANE_ESSENCE.get(), 5)
                 .loops(3)
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 100))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output);
         sequencedAssembly(WEAPON_PARTS.getId())
@@ -429,7 +429,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(AMETHYST_SHARD))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(ENDER_PEARL))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(GOLD_NUGGET))
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 100))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output);
         sequencedAssembly(UPGRADE_ORB.getId())
@@ -518,7 +518,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(ROTTEN_FLESH))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(BONE_MEAL))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(DIRT))
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 500))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 50))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output);
         sequencedAssembly(BLAZE_SPELL_BOOK.getId())
@@ -549,7 +549,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .loops(3)
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(DIVINE_PEARL.get()))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(EMERALD_BLOCK))
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 100))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output);
         sequencedAssembly(DRUIDIC_SPELL_BOOK.getId())
@@ -592,7 +592,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .transitionTo(COMPASS)
                 .addOutput(WAYWARD_COMPASS.get(), 1)
                 .loops(1)
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 100))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(SOUL_LANTERN))
                 .build(output);
         sequencedAssembly(CINDEROUS_SOULCALLER.getId())
@@ -664,7 +664,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .loops(1)
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(MITHRIL_SCRAP.get()))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(ENDER_PEARL))
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 250))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 25))
                 .build(output);
         sequencedAssembly(INSCRIPTION_TABLE_BLOCK_ITEM.getId())
                 .require(FENCES)
@@ -681,7 +681,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .loops(1)
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(IRON_INGOT))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(CINDER_ESSENCE.get()))
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 250))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 25))
                 .build(output);
         sequencedAssembly(SCROLL_FORGE_BLOCK.getId())
                 .require(CRYING_OBSIDIAN)
@@ -700,7 +700,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(SHRIVING_STONE.get()))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(ARCANE_INGOT.get()))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(MANA_RUNE.get()))
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 100))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output);
         manualApplication(ARCANE_CASING.getId())
@@ -726,7 +726,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .addOutput(GRAYBEARD_STAFF.get(), 1)
                 .loops(1)
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(IRON_NUGGET))
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 250))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 25))
                 .build(output);
         sequencedAssembly(ARTIFICER_STAFF.getId())
                 .require(CRIMSON_PLANKS)
@@ -906,18 +906,16 @@ public class CWRecipeProvider extends RecipeProvider {
                 .requiresHeat(HEATED)
                 .build(output);
         // OTHER FLUIDS
-        // TODO: 0.5.0/1.0.0: Mana recipes will only produce 100 mana (2.5 arcane essence per)
-        // basically, every recipe will be divided by 10
-        // this is for the **Blaze Caster**, which will accept up to 500 mana (equivalent to maxed-out player)
         mixing(MANA.getId())
-                .require(FluidTags.WATER, 1000)
+                .require(FluidTags.WATER, 100)
                 .require(ARCANE_ESSENCE.get())
                 .require(ARCANE_ESSENCE.get())
                 .require(ARCANE_ESSENCE.get())
                 .require(ARCANE_ESSENCE.get())
-                .output(MANA.get(), 1000)
+                .output(MANA.get(), 100)
                 .requiresHeat(HEATED)
                 .build(output);
+        // TODO: Possibly Remove this recipe? i mean its good for convenience
         mixing(ICE_VENOM_FLUID.getId())
                 .require(FluidTags.WATER, 1000)
                 .require(ICY_FANG.get())
@@ -1055,7 +1053,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .addOutput(MAGEHUNTER.get(), 1)
                 .loops(1)
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(DIAMOND))
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 100))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output);
     }
@@ -1236,7 +1234,7 @@ public class CWRecipeProvider extends RecipeProvider {
         manaFillingWithItem(output, ARCANE_ESSENCE.get(), CINDER_FLOUR, "cinder_flour");
         // MIXING
         mixing(ResourceLocation.parse(CINDER_ESSENCE.getRegisteredName() + "_mana_recipe"))
-                .require(MANA.get(), 1000)
+                .require(MANA.get(), 100)
                 .require(BLAZE_POWDER)
                 .require(BLAZE_POWDER)
                 .require(NETHERITE_SCRAP)
@@ -1247,20 +1245,20 @@ public class CWRecipeProvider extends RecipeProvider {
                 .require(COPPER_INGOT)
                 .require(COPPER_INGOT)
                 .require(INK_SAC)
-                .require(MANA.get(), 250)
+                .require(MANA.get(), 25)
                 .output(COMMON_INK.get(), 500)
                 .build(output);
         mixing(ResourceLocation.parse(UNCOMMON_INK.getRegisteredName() + "_mana_recipe"))
                 .require(IRON_INGOT)
                 .require(IRON_INGOT)
-                .require(MANA.get(), 500)
+                .require(MANA.get(), 50)
                 .require(COMMON_INK.get(), 1000)
                 .output(UNCOMMON_INK.get(), 500)
                 .build(output);
         mixing(ResourceLocation.parse(RARE_INK.getRegisteredName() + "_mana_recipe"))
                 .require(GOLD_INGOT)
                 .require(GOLD_INGOT)
-                .require(MANA.get(), 750)
+                .require(MANA.get(), 75)
                 .require(EXP_NUGGET)
                 .require(UNCOMMON_INK.get(), 1000)
                 .output(RARE_INK.get(), 500)
@@ -1268,7 +1266,7 @@ public class CWRecipeProvider extends RecipeProvider {
         mixing(ResourceLocation.parse(EPIC_INK.getRegisteredName() + "_mana_recipe"))
                 .require(DIAMOND)
                 .require(DIAMOND)
-                .require(MANA.get(), 1000)
+                .require(MANA.get(), 100)
                 .require(EXP_NUGGET)
                 .require(EXP_NUGGET)
                 .require(RARE_INK.get(), 1000)
@@ -1278,7 +1276,7 @@ public class CWRecipeProvider extends RecipeProvider {
         mixing(ResourceLocation.parse(LEGENDARY_INK.getRegisteredName() + "_mana_recipe"))
                 .require(AMETHYST_SHARD)
                 .require(AMETHYST_SHARD)
-                .require(MANA.get(), 1000)
+                .require(MANA.get(), 125)
                 .require(ARCANE_ESSENCE.get())
                 .require(EXP_NUGGET)
                 .require(EXP_NUGGET)
@@ -1387,7 +1385,7 @@ public class CWRecipeProvider extends RecipeProvider {
         ResourceLocation itemId1 = ResourceLocation.parse(result + "_" + prefix + "_" + "filling");
         filling(itemId1)
                 .require(input)
-                .require(MANA.get(), 250)
+                .require(MANA.get(), 25)
                 .output(result)
                 .build(output);
     }
@@ -1395,7 +1393,7 @@ public class CWRecipeProvider extends RecipeProvider {
         ResourceLocation itemId1 = ResourceLocation.parse(result + "_" + prefix + "_" + "filling");
         filling(itemId1)
                 .require(input)
-                .require(MANA.get(), 250)
+                .require(MANA.get(), 25)
                 .output(result)
                 .build(output);
     }
@@ -1411,7 +1409,7 @@ public class CWRecipeProvider extends RecipeProvider {
         for (Item baseArmor : leather_armors) {
             ResourceLocation itemId = ResourceLocation.fromNamespaceAndPath(IronsSpellbooks.MODID, String.format(armorName + "_" + ((ArmorItem) baseArmor).getType().getName()));
             ItemStack result = BuiltInRegistries.ITEM.get(itemId).getDefaultInstance();
-            manaFilling(output, result.getItem(), baseArmor, 250);
+            manaFilling(output, result.getItem(), baseArmor, 25);
         }
     }
 }

@@ -33,6 +33,8 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.ttzplayz.create_wizardry.advancement.CWAdvancements;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
@@ -650,6 +652,11 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (placerUuid != null) ACTIVE_PLACER.set(placerUuid);
         try {
             spell.onCast(serverLevel, spellLevel, proxy, CastSource.MOB, magicData);
+
+            if ("black_hole".equals(spell.getSpellResource().getPath()) && placerUuid != null) {
+                ServerPlayer caster = serverLevel.getServer().getPlayerList().getPlayer(placerUuid);
+                if (caster != null) CWAdvancements.MEGA_LASER.awardTo(caster);
+            }
 
             if (keepAlive) {
                 // Start continuous channel — proxy stays alive and is ticked each server tick.

@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "create_wizardry.refmap.json",
   "mixins": [
+    "BasinInkMixingMixin",
     "NoopFluidMixin"
   ],
   "injectors": {

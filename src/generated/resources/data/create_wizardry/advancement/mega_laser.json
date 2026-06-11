@@ -1,0 +1,29 @@
+{
+  "parent": "create_wizardry:i_cast_fireball",
+  "criteria": {
+    "builtin": {
+      "trigger": "create_wizardry:mega_laser"
+    }
+  },
+  "display": {
+    "description": {
+      "color": "#DBA213",
+      "translate": "advancement.create_wizardry.mega_laser.desc"
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "create_wizardry:blaze_caster"
+    },
+    "title": {
+      "translate": "advancement.create_wizardry.mega_laser"
+    }
+  },
+  "requirements": [
+    [
+      "builtin"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

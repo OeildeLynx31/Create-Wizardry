@@ -35,6 +35,15 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
                         .noOcclusion()
         ));
 
+    public static final DeferredBlock<Block> ARCANE_BLOCK =
+            registerBlock("arcane_block", () -> new Block(
+                    Block.Properties.of()
+                            .mapColor(MapColor.COLOR_PURPLE)
+                            .strength(5.0F, 6.0F)
+                            .sound(SoundType.METAL)
+                            .requiresCorrectToolForDrops()
+            ));
+
     public static final DeferredBlock<ArcaneCasingBlock> ARCANE_CASING =
             registerBlock("arcane_casing", () -> new ArcaneCasingBlock(
                     Block.Properties.of()

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
 
+import static net.neoforged.neoforge.common.Tags.Blocks.STORAGE_BLOCKS;
+
 public class CWBlockTagProvider extends BlockTagsProvider {
     public CWBlockTagProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, @Nullable ExistingFileHelper existingFileHelper) {
         super(output, lookupProvider, CreateWizardry.MOD_ID, existingFileHelper);
@@ -19,9 +21,11 @@ public class CWBlockTagProvider extends BlockTagsProvider {
     @Override
     protected void addTags(HolderLookup.Provider provider) {
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(
+                CWBlocks.ARCANE_BLOCK.get(),
                 CWBlocks.ARCANE_PIPE.get(),
                 CWBlocks.SMART_ARCANE_PIPE.get(),
                 CWBlocks.GLASS_ARCANE_PIPE.get(),
                 CWBlocks.ENCASED_ARCANE_PIPE.get());
+        tag(STORAGE_BLOCKS).add(CWBlocks.ARCANE_BLOCK.get());
     }
 }

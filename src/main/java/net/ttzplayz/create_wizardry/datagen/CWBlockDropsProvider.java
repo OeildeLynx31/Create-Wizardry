@@ -18,6 +18,7 @@ public class CWBlockDropsProvider extends BlockLootSubProvider {
     protected void generate() {
         dropSelf(CWBlocks.CHANNELER.get());
         dropSelf(CWBlocks.BLAZE_CASTER.get());
+        dropSelf(CWBlocks.ARCANE_BLOCK.get());
         dropSelf(CWBlocks.ARCANE_CASING.get());
         dropSelf(CWBlocks.ARCANE_PIPE.get());
         dropSelf(CWBlocks.SMART_ARCANE_PIPE.get());

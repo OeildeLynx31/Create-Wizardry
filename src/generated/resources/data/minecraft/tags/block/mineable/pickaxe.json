@@ -1,5 +1,6 @@
 {
   "values": [
+    "create_wizardry:arcane_block",
     "create_wizardry:arcane_pipe",
     "create_wizardry:smart_arcane_pipe",
     "create_wizardry:glass_arcane_pipe",

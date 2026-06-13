@@ -40,6 +40,7 @@ public class CWLangProvider extends LanguageProvider {
         add("itemGroup.create_wizardry.main", "Create: Wizardry");
         add("block.create_wizardry.blaze_caster", "Blaze Caster");
         add("block.create_wizardry.arcane_casing", "Arcane Casing");
+        add("block.create_wizardry.arcane_block", "Arcane Block");
         add("create_wizardry.tooltip.must_be_superheated", "(Must be superheated)");
         add("create_wizardry.tooltip.spell", "Spell: %s");
         add("create_wizardry.tooltip.no_scroll", "No scroll equipped");

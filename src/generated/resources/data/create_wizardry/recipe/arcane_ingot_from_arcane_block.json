@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "create_wizardry:arcane_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "irons_spellbooks:arcane_ingot"
+  }
+}

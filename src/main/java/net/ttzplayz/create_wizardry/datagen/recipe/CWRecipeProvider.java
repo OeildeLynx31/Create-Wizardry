@@ -62,6 +62,9 @@ import static net.minecraft.world.item.Items.DIRT;
 import static net.neoforged.neoforge.common.Tags.Fluids.EXPERIENCE;
 import static net.neoforged.neoforge.common.Tags.Items.*;
 import static net.neoforged.neoforge.common.Tags.Items.FENCES;
+import net.ttzplayz.create_wizardry.CreateWizardry;
+
+import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_BLOCK;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_CASING;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_PIPE;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.BLAZE_CASTER;
@@ -635,6 +638,17 @@ public class CWRecipeProvider extends RecipeProvider {
     }
 
     private void buildBlockRecipes(RecipeOutput output) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ARCANE_BLOCK.get())
+                .pattern("III")
+                .pattern("III")
+                .pattern("III")
+                .define('I', ARCANE_INGOT.get())
+                .unlockedBy("has_arcane_ingot", has(ARCANE_INGOT.get()))
+                .save(output);
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ARCANE_INGOT.get(), 9)
+                .requires(ARCANE_BLOCK.get())
+                .unlockedBy("has_arcane_block", has(ARCANE_BLOCK.get()))
+                .save(output, ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "arcane_ingot_from_arcane_block"));
         ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, ARCANE_CASING.get())
                 .requires(LAPIS_BLOCK)
                 .requires(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "arcane_ingot")))

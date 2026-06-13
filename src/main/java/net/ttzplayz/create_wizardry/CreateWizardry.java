@@ -185,6 +185,7 @@ public class CreateWizardry {
         if (event.getTabKey() == CWCreativeTabs.CREATE_WIZARDRY_TAB.getKey()) {
             event.accept(BLAZE_CASTER.get());
             event.accept(CHANNELER.get());
+            event.accept(CWBlocks.ARCANE_BLOCK.get());
             event.accept(CWBlocks.ARCANE_CASING.get());
             event.accept(CWBlocks.ARCANE_PIPE.get());
             event.accept(CWBlocks.SMART_ARCANE_PIPE.get());

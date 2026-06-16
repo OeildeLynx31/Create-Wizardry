@@ -12,6 +12,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ttzplayz.create_wizardry.CreateWizardry;
 import net.ttzplayz.create_wizardry.block.blaze_caster.BlazeCasterBlock;
 import net.ttzplayz.create_wizardry.block.channeler.ChannelerBlock;
+import net.ttzplayz.create_wizardry.block.mana_siphon.ArcaneEssenceClusterBlock;
+import net.ttzplayz.create_wizardry.block.mana_siphon.ManaSiphonBlock;
 import net.ttzplayz.create_wizardry.block.pipe.ArcaneGlassPipeBlock;
 import net.ttzplayz.create_wizardry.block.pipe.ArcanePipeBlock;
 import net.ttzplayz.create_wizardry.block.pipe.EncasedArcanePipeBlock;
@@ -60,6 +62,27 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
                             .sound(SoundType.METAL)
                             .lightLevel(BlazeCasterBlock::getLight)
                             .noOcclusion()
+            ));
+
+    public static final DeferredBlock<ManaSiphonBlock> MANA_SIPHON =
+            registerBlock("mana_siphon", () -> new ManaSiphonBlock(
+                    Block.Properties.of()
+                            .mapColor(MapColor.COLOR_PURPLE)
+                            .strength(3.5F)
+                            .sound(SoundType.METAL)
+                            .noOcclusion()
+            ));
+
+    // Arcane Essence cluster grows on Crystalline blocks near a Mana Siphon; no item of its own.
+    public static final DeferredBlock<ArcaneEssenceClusterBlock> ARCANE_ESSENCE_CLUSTER =
+            registerBlockNoItem("arcane_essence_cluster", () -> new ArcaneEssenceClusterBlock(
+                    Block.Properties.of()
+                            .mapColor(MapColor.COLOR_PURPLE)
+                            .strength(1.5F)
+                            .sound(SoundType.AMETHYST_CLUSTER)
+                            .lightLevel(s -> 5)
+                            .noOcclusion()
+                            .noCollission()
             ));
 
     // ---- Arcane pipes (mirror Create's fluid pipe family) ----

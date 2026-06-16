@@ -32,7 +32,7 @@
         },
         {
           "type": "neoforge:single",
-          "amount": 250,
+          "amount": 125,
           "fluid": "irons_spellbooks:timeless_slurry"
         }
       ],

@@ -33,7 +33,7 @@ public class CWLangProvider extends LanguageProvider {
         add("jei.create_wizardry.liquid_lightning",
                 "An extremely volatile fluid that is charged with electric energy. Can be obtained by channeling lightning bolts using the Channeler block or by extracting from charged creepers in a bottle.");
         add("jei.create_wizardry.mana",
-                "The liquid essence of magic. Can be used to form arcane essence when combined with dust.");
+                "The liquid essence of magic. Can be extracted from plpayers, spells, and mobs with the Mana Siphon, and can also be used to form arcane essence when combined with dust.");
         add("jei.create_wizardry.blood",
                 "The lifeblood of all organisms. Can be obtained by compressing meat or boiling mobs.");
         add("item.create_wizardry.incomplete_blaze_caster", "Incomplete Blaze Caster");
@@ -41,6 +41,9 @@ public class CWLangProvider extends LanguageProvider {
         add("block.create_wizardry.blaze_caster", "Blaze Caster");
         add("block.create_wizardry.arcane_casing", "Arcane Casing");
         add("block.create_wizardry.arcane_block", "Arcane Block");
+        add("block.create_wizardry.mana_siphon", "Mana Siphon");
+        add("block.create_wizardry.arcane_essence_cluster", "Arcane Essence Cluster");
+        add("effect.create_wizardry.depletion", "Depletion");
         add("create_wizardry.tooltip.must_be_superheated", "(Must be superheated)");
         add("create_wizardry.tooltip.spell", "Spell: %s");
         add("create_wizardry.tooltip.no_scroll", "No scroll equipped");

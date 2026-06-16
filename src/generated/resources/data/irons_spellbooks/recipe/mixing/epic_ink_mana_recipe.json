@@ -16,7 +16,7 @@
     },
     {
       "type": "neoforge:single",
-      "amount": 100,
+      "amount": 800,
       "fluid": "create_wizardry:mana"
     },
     {

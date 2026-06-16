@@ -5,6 +5,7 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -44,6 +45,22 @@ public class CWParticles {
         for (int i = 0; i < count; i++) {
             SimpleParticleType rune = RUNES.get(level.random.nextInt(RUNES.size())).get();
             MagicManager.spawnParticles(level, rune, x, y, z, 1, spread, spread, spread, speed, false);
+        }
+    }
+
+    /**
+     * Draws a trail of rune particles along the line from {@code from} to {@code to}, used to visually
+     * connect an entity being siphoned to the top of a Mana Siphon.
+     */
+    public static void spawnManaTrail(Level level, Vec3 from, Vec3 to, int count) {
+        for (int i = 0; i < count; i++) {
+            double t = (i + 1.0) / (count + 1.0);
+            double jx = (level.random.nextDouble() - 0.5) * 0.1;
+            double jy = (level.random.nextDouble() - 0.5) * 0.1;
+            double jz = (level.random.nextDouble() - 0.5) * 0.1;
+            Vec3 p = from.lerp(to, t);
+            SimpleParticleType rune = RUNES.get(level.random.nextInt(RUNES.size())).get();
+            MagicManager.spawnParticles(level, rune, p.x + jx, p.y + jy, p.z + jz, 1, 0, 0, 0, 0, false);
         }
     }
 

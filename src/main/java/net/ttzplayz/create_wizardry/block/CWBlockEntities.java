@@ -11,6 +11,7 @@ import com.simibubi.create.content.fluids.pipes.SmartFluidPipeBlockEntity;
 import com.simibubi.create.content.fluids.pipes.StraightPipeBlockEntity;
 import net.ttzplayz.create_wizardry.block.blaze_caster.BlazeCasterBlockEntity;
 import net.ttzplayz.create_wizardry.block.channeler.ChannelerBlockEntity;
+import net.ttzplayz.create_wizardry.block.mana_siphon.ManaSiphonBlockEntity;
 
 
 
@@ -30,6 +31,12 @@ public class CWBlockEntities {
             BLOCK_ENTITIES.register(
                     "blaze_caster_be",
                     () -> BlockEntityType.Builder.of(BlazeCasterBlockEntity::new, CWBlocks.BLAZE_CASTER.get()).build(null)
+            );
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ManaSiphonBlockEntity>> MANA_SIPHON_BE =
+            BLOCK_ENTITIES.register(
+                    "mana_siphon_be",
+                    () -> BlockEntityType.Builder.of(ManaSiphonBlockEntity::new, CWBlocks.MANA_SIPHON.get()).build(null)
             );
 
     // Arcane pipe family reuses Create's block entity implementations with our own block-bound types.

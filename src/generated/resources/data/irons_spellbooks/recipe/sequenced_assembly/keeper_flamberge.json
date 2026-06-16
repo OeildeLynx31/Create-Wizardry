@@ -31,6 +31,24 @@
           "id": "minecraft:netherite_sword"
         }
       ]
+    },
+    {
+      "type": "create:filling",
+      "ingredients": [
+        {
+          "item": "minecraft:netherite_sword"
+        },
+        {
+          "type": "neoforge:single",
+          "amount": 200,
+          "fluid": "create_wizardry:mana"
+        }
+      ],
+      "results": [
+        {
+          "id": "minecraft:netherite_sword"
+        }
+      ]
     }
   ],
   "transitional_item": {

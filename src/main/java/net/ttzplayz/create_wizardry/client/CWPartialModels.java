@@ -24,6 +24,8 @@ public class CWPartialModels {
     public static final PartialModel ISS_NETHERITE_MAGE_HAT      = block("blaze_caster/hats/netherite_mage");
     public static final PartialModel ISS_NETHERITE_MAGE_HAT_BASE = block("blaze_caster/hats/netherite_mage_base");
 
+    public static final PartialModel MANA_SIPHON_WHEEL = block("mana_siphon/wheel");
+
     public static final PartialModel BLAZE_CASTER_INERT = block("blaze_caster/blaze/inert");
     public static final PartialModel BLAZE_CASTER_NONE      = block("blaze_caster/blaze/none");
     public static final PartialModel BLAZE_CASTER_FIRE      = block("blaze_caster/blaze/fire");

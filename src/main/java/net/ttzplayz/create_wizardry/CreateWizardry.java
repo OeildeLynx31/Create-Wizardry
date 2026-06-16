@@ -43,10 +43,14 @@ import net.ttzplayz.create_wizardry.client.pipe.ArcanePartialModels;
 import net.ttzplayz.create_wizardry.client.pipe.ArcanePipeAttachmentModel;
 import net.ttzplayz.create_wizardry.client.rendering.BlazeCasterRenderer;
 import net.ttzplayz.create_wizardry.client.rendering.BlazeCasterVisual;
+import net.ttzplayz.create_wizardry.client.rendering.ManaSiphonRenderer;
+import net.ttzplayz.create_wizardry.client.rendering.ManaSiphonVisual;
 import net.ttzplayz.create_wizardry.client.rendering.ChannelerRenderer;
 import net.ttzplayz.create_wizardry.advancement.CWBuiltInTriggers;
+import net.ttzplayz.create_wizardry.effect.CWMobEffects;
 import net.ttzplayz.create_wizardry.event.CWEvents;
 import net.ttzplayz.create_wizardry.fluids.CWEffectHandlers;
+import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import net.ttzplayz.create_wizardry.item.CWItems;
 import net.ttzplayz.create_wizardry.particle.CWParticles;
@@ -111,6 +115,7 @@ public class CreateWizardry {
         CWBlocks.register(modEventBus);
         CWBlockEntities.register(modEventBus);
         CWItems.register(modEventBus);
+        CWMobEffects.register(modEventBus);
         CWParticles.register(modEventBus);
         CWCreativeTabs.register(modEventBus);
         CWBuiltInTriggers.register(modEventBus);
@@ -121,7 +126,6 @@ public class CreateWizardry {
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-        //TODO: Make Config
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
@@ -185,6 +189,7 @@ public class CreateWizardry {
         if (event.getTabKey() == CWCreativeTabs.CREATE_WIZARDRY_TAB.getKey()) {
             event.accept(BLAZE_CASTER.get());
             event.accept(CHANNELER.get());
+            event.accept(CWBlocks.MANA_SIPHON.get());
             event.accept(CWBlocks.ARCANE_BLOCK.get());
             event.accept(CWBlocks.ARCANE_CASING.get());
             event.accept(CWBlocks.ARCANE_PIPE.get());
@@ -221,6 +226,14 @@ public class CreateWizardry {
         // Drives the 5-second "admire" delay and completes armed mana transformations.
         if (event.getEntity() instanceof Mob mob && !mob.level().isClientSide()) {
             CWManaTransformations.tickPendingConversion(mob);
+        }
+    }
+
+    @SubscribeEvent
+    public void onSpellPreCast(SpellPreCastEvent event) {
+        // Depleted players (fully drained by a Mana Siphon) cannot cast spells.
+        if (event.getEntity() != null && event.getEntity().hasEffect(CWMobEffects.DEPLETION)) {
+            event.setCanceled(true);
         }
     }
 
@@ -278,6 +291,11 @@ public class CreateWizardry {
                         .factory(BlazeCasterVisual::new)
                         .skipVanillaRender(be -> true)
                         .apply();
+                // Mana Siphon wheel spins via Flywheel; the BER below is the no-Flywheel fallback.
+                SimpleBlockEntityVisualizer.builder(CWBlockEntities.MANA_SIPHON_BE.get())
+                        .factory(ManaSiphonVisual::new)
+                        .skipVanillaRender(be -> true)
+                        .apply();
                 // Glass arcane pipe renders its flowing fluid through Flywheel (BER fallback below).
                 SimpleBlockEntityVisualizer.builder(CWBlockEntities.GLASS_ARCANE_PIPE.get())
                         .factory(GlassPipeVisual::new)
@@ -321,6 +339,7 @@ public class CreateWizardry {
         public static void registerBER(EntityRenderersEvent.RegisterRenderers event) {
             event.registerBlockEntityRenderer(CWBlockEntities.CHANNELER_BE.get(), ChannelerRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.BLAZE_CASTER_BE.get(), BlazeCasterRenderer::new);
+            event.registerBlockEntityRenderer(CWBlockEntities.MANA_SIPHON_BE.get(), ManaSiphonRenderer::new);
             // Smart arcane pipe renders its filter value box; glass arcane pipe renders fluid when Flywheel is off.
             event.registerBlockEntityRenderer(CWBlockEntities.SMART_ARCANE_PIPE.get(), SmartBlockEntityRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.GLASS_ARCANE_PIPE.get(), TransparentStraightPipeRenderer::new);

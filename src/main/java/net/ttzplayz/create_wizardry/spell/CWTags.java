@@ -9,6 +9,9 @@ import net.ttzplayz.create_wizardry.CreateWizardry;
 
 public class CWTags {
     public static class Blocks {
+        /** Gem/crystal blocks that the Mana Siphon can crystallize Arcane Essence onto. */
+        public static final TagKey<Block> CRYSTALLINE = createTag("crystalline");
+
         private static TagKey<Block> createTag(String name) {
             return BlockTags.create(ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, name));
         }

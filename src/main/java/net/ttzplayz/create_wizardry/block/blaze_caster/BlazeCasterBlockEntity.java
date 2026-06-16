@@ -62,11 +62,13 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.ttzplayz.create_wizardry.CreateWizardry;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
+import net.ttzplayz.create_wizardry.block.pipe.ManaPipeTransport;
 import net.ttzplayz.create_wizardry.client.CWPartialModels;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +127,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     protected ItemStack heldItem = ItemStack.EMPTY;
     protected ItemStack heldHat = ItemStack.EMPTY;
     public SmartFluidTankBehaviour internalTank;
+    /** Per-side leak-aware tank capabilities, built lazily. */
+    private final Map<Direction, IFluidHandler> decayingCaps = new HashMap<>();
     public final LerpedFloat headAnimation = LerpedFloat.linear();
     public final LerpedFloat headAngle = LerpedFloat.angular();
 
@@ -1086,10 +1090,14 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         event.registerBlockEntity(
                 Capabilities.FluidHandler.BLOCK,
                 CWBlockEntities.BLAZE_CASTER_BE.get(),
-                (be, context) -> {
-                    if (be.internalTank == null) return null;
-                    return be.internalTank.getCapability();
-                }
+                (be, context) -> be.decayingCapability(context)
         );
+    }
+
+    /** Tank capability that leaks mana arriving through copper pipes (cached per side). */
+    private IFluidHandler decayingCapability(Direction side) {
+        if (internalTank == null) return null;
+        return decayingCaps.computeIfAbsent(side,
+                s -> ManaPipeTransport.decaying(this, s, internalTank.getCapability()));
     }
 }

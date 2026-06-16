@@ -1,0 +1,105 @@
+{
+	"comment": "Spinning lapis_pump blade wheel of the Mana Siphon, rendered (and rotated about Y) by ManaSiphonVisual / ManaSiphonRenderer.",
+	"textures": {
+		"5": "create_wizardry:block/lapis_pump",
+		"particle": "create_wizardry:block/lapis_pump"
+	},
+	"elements": [
+		{
+			"from": [6.5, 3, -1],
+			"to": [9.5, 9, 17],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 4, 8]},
+			"faces": {
+				"north": {"uv": [13.5, 6.5, 10.5, 8], "rotation": 90, "texture": "#5"},
+				"east": {"uv": [0, 10, 9, 13], "texture": "#5"},
+				"south": {"uv": [10.5, 6.5, 13.5, 8], "rotation": 270, "texture": "#5"},
+				"west": {"uv": [0, 10, 9, 13], "texture": "#5"},
+				"up": {"uv": [0, 6.5, 9, 8], "rotation": 270, "texture": "#5"},
+				"down": {"uv": [0, 6.5, 9, 8], "rotation": 90, "texture": "#5"}
+			}
+		},
+		{
+			"from": [-1, 3, 6.5],
+			"to": [17, 9, 9.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 4, 8]},
+			"faces": {
+				"north": {"uv": [0, 10, 9, 13], "texture": "#5"},
+				"east": {"uv": [10.5, 6.5, 13.5, 8], "rotation": 270, "texture": "#5"},
+				"south": {"uv": [0, 10, 9, 13], "texture": "#5"},
+				"west": {"uv": [13.5, 6.5, 10.5, 8], "rotation": 90, "texture": "#5"},
+				"up": {"uv": [0, 6.5, 9, 8], "rotation": 180, "texture": "#5"},
+				"down": {"uv": [0, 6.5, 9, 8], "rotation": 180, "texture": "#5"}
+			}
+		},
+		{
+			"from": [6.5, 3, -1],
+			"to": [9.5, 9, 17],
+			"rotation": {"angle": 45, "axis": "y", "origin": [8, 4, 8]},
+			"faces": {
+				"north": {"uv": [10.5, 6.5, 13.5, 8], "rotation": 90, "texture": "#5"},
+				"east": {"uv": [0, 10, 9, 13], "texture": "#5"},
+				"south": {"uv": [13.5, 6.5, 10.5, 8], "rotation": 270, "texture": "#5"},
+				"west": {"uv": [0, 10, 9, 13], "texture": "#5"},
+				"up": {"uv": [0, 6.5, 9, 8], "rotation": 270, "texture": "#5"},
+				"down": {"uv": [0, 6.5, 9, 8], "rotation": 90, "texture": "#5"}
+			}
+		},
+		{
+			"from": [5.5, 3.05, 0.9],
+			"to": [10.5, 8.95, 15.1],
+			"rotation": {"angle": -22.5, "axis": "y", "origin": [8, 4, 8]},
+			"faces": {
+				"north": {"uv": [11, 9, 14, 11.5], "rotation": 90, "texture": "#5"},
+				"south": {"uv": [11, 9, 14, 11.5], "rotation": 270, "texture": "#5"},
+				"up": {"uv": [1, 7, 1.5, 7.5], "rotation": 180, "texture": "#5"},
+				"down": {"uv": [1, 7, 1.5, 7.5], "texture": "#5"}
+			}
+		},
+		{
+			"from": [0.9, 3.05, 5.5],
+			"to": [15.1, 8.95, 10.5],
+			"rotation": {"angle": -22.5, "axis": "y", "origin": [8, 4, 8]},
+			"faces": {
+				"east": {"uv": [11, 9, 14, 11.5], "rotation": 270, "texture": "#5"},
+				"west": {"uv": [11, 9, 14, 11.5], "rotation": 90, "texture": "#5"},
+				"up": {"uv": [1, 7, 1.5, 7.5], "rotation": 90, "texture": "#5"},
+				"down": {"uv": [1, 7, 1.5, 7.5], "rotation": 90, "texture": "#5"}
+			}
+		},
+		{
+			"from": [0.9, 3.05, 5.5],
+			"to": [15.1, 8.95, 10.5],
+			"rotation": {"angle": 22.5, "axis": "y", "origin": [8, 4, 8]},
+			"faces": {
+				"east": {"uv": [11, 9, 14, 11.5], "rotation": 270, "texture": "#5"},
+				"west": {"uv": [11, 9, 14, 11.5], "rotation": 90, "texture": "#5"},
+				"up": {"uv": [1, 7, 1.5, 7.5], "rotation": 90, "texture": "#5"},
+				"down": {"uv": [1, 7, 1.5, 7.5], "rotation": 90, "texture": "#5"}
+			}
+		},
+		{
+			"from": [5.5, 3.05, 0.9],
+			"to": [10.5, 8.95, 15.1],
+			"rotation": {"angle": 22.5, "axis": "y", "origin": [8, 4, 8]},
+			"faces": {
+				"north": {"uv": [11, 9, 14, 11.5], "rotation": 90, "texture": "#5"},
+				"south": {"uv": [11, 9, 14, 11.5], "rotation": 270, "texture": "#5"},
+				"up": {"uv": [1, 7, 1.5, 7.5], "rotation": 180, "texture": "#5"},
+				"down": {"uv": [1, 7, 1.5, 7.5], "texture": "#5"}
+			}
+		},
+		{
+			"from": [6.5, 3, -1],
+			"to": [9.5, 9, 17],
+			"rotation": {"angle": -45, "axis": "y", "origin": [8, 4, 8]},
+			"faces": {
+				"north": {"uv": [10.5, 6.5, 13.5, 8], "rotation": 90, "texture": "#5"},
+				"east": {"uv": [9, 10, 0, 13], "texture": "#5"},
+				"south": {"uv": [13.5, 8, 10.5, 6.5], "rotation": 270, "texture": "#5"},
+				"west": {"uv": [9, 10, 0, 13], "texture": "#5"},
+				"up": {"uv": [0, 8, 9, 6.5], "rotation": 270, "texture": "#5"},
+				"down": {"uv": [0, 8, 9, 6.5], "rotation": 90, "texture": "#5"}
+			}
+		}
+	]
+}

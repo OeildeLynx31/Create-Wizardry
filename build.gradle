@@ -18,6 +18,18 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
+
+    // Iron's Maven first so io.redspace:* always resolves here, even if a later mirror
+    // (e.g. ci.createmod.net) is temporarily returning 5xx during a fetch.
+    maven {
+        name = "Iron's Maven - Release"
+        url = "https://code.redspace.io/releases"
+    }
+    maven {
+        name = "Iron's Maven - Snapshots"
+        url = "https://code.redspace.io/snapshots"
+    }
+
     maven {
         // location of the maven that hosts JEI files since January 2023
         name = "Jared's maven"
@@ -34,14 +46,6 @@ repositories {
     maven { url = "https://mvn.devos.one/snapshots" } // Registrate
     maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" } // ForgeConfigAPIPort
 
-    maven {
-        name = "Iron's Maven - Release"
-        url = "https://code.redspace.io/releases"
-    }
-    maven {
-        name = "Iron's Maven - Snapshots"
-        url = "https://code.redspace.io/snapshots"
-    }
     maven {
         name = 'GeckoLib'
         url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'

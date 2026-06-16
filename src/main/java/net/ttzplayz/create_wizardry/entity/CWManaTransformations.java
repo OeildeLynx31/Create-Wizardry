@@ -94,6 +94,40 @@ public final class CWManaTransformations {
         return false;
     }
 
+    // --- Reverse conversion (Mana Siphon drains a caster back to its mundane form) ----------
+
+    /** Reverse of {@link #CONVERSIONS}: the mundane counterpart for a caster type, or null. */
+    private static EntityType<?> getMundaneCounterpart(EntityType<?> casterType) {
+        for (Conversion c : CONVERSIONS) {
+            if (c.to().get() == casterType) {
+                return c.from();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Revert a fully-drained caster mob to its mundane counterpart (Necromancer -> Skeleton, etc.).
+     * Returns true if a reversion happened. Casters with no defined counterpart are left untouched.
+     */
+    public static boolean revertDrainedCaster(ServerLevel level, Mob mob) {
+        EntityType<?> counterpart = getMundaneCounterpart(mob.getType());
+        if (counterpart == null) return false;
+        @SuppressWarnings("unchecked")
+        EntityType<? extends Mob> mobType = (EntityType<? extends Mob>) counterpart;
+
+        Mob result = mob.convertTo(mobType, false);
+        if (result == null) return false; // conversion event cancelled
+        result.finalizeSpawn(level, level.getCurrentDifficultyAt(result.blockPosition()),
+                MobSpawnType.CONVERSION, null);
+
+        CWParticles.spawnManaRunes(level, result.getX(), result.getY() + result.getBbHeight() / 2,
+                result.getZ(), 16, result.getBbWidth() / 2, 0.1);
+        level.playSound(null, result.blockPosition(), SoundRegistry.EVOCATION_CAST.get(),
+                SoundSource.HOSTILE, 1.0F, 1.0F);
+        return true;
+    }
+
     // --- Exposure tracking -------------------------------------------------
 
     /** Marks an entity as recently touched by Mana (called from the Mana spout/pipe handler). */

@@ -1,0 +1,95 @@
+{
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "item": "create_wizardry:arcane_casing"
+  },
+  "results": [
+    {
+      "id": "create_wizardry:mana_siphon"
+    }
+  ],
+  "sequence": [
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "create_wizardry:arcane_casing"
+        },
+        {
+          "item": "irons_spellbooks:arcane_rune"
+        }
+      ],
+      "results": [
+        {
+          "id": "create_wizardry:arcane_casing"
+        }
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "create_wizardry:arcane_casing"
+        },
+        {
+          "item": "irons_spellbooks:arcane_ingot"
+        }
+      ],
+      "results": [
+        {
+          "id": "create_wizardry:arcane_casing"
+        }
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "create_wizardry:arcane_casing"
+        },
+        {
+          "item": "minecraft:hopper"
+        }
+      ],
+      "results": [
+        {
+          "id": "create_wizardry:arcane_casing"
+        }
+      ]
+    },
+    {
+      "type": "create:filling",
+      "ingredients": [
+        {
+          "item": "create_wizardry:arcane_casing"
+        },
+        {
+          "type": "neoforge:single",
+          "amount": 1000,
+          "fluid": "create_wizardry:mana"
+        }
+      ],
+      "results": [
+        {
+          "id": "create_wizardry:arcane_casing"
+        }
+      ]
+    },
+    {
+      "type": "create:pressing",
+      "ingredients": [
+        {
+          "item": "create_wizardry:arcane_casing"
+        }
+      ],
+      "results": [
+        {
+          "id": "create_wizardry:arcane_casing"
+        }
+      ]
+    }
+  ],
+  "transitional_item": {
+    "id": "create_wizardry:arcane_casing"
+  }
+}

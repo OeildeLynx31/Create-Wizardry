@@ -20,6 +20,7 @@ package net.ttzplayz.create_wizardry.datagen.recipe;
 
 import com.simibubi.create.content.fluids.transfer.FillingRecipe;
 import com.simibubi.create.content.kinetics.deployer.DeployerApplicationRecipe;
+import com.simibubi.create.content.kinetics.deployer.ManualApplicationRecipe;
 import com.simibubi.create.content.kinetics.press.PressingRecipe;
 import io.redspace.ironsspellbooks.IronsSpellbooks;
 import io.redspace.ironsspellbooks.registries.PotionRegistry;
@@ -43,8 +44,7 @@ import com.simibubi.create.content.fluids.potion.PotionFluidHandler;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static com.simibubi.create.AllBlocks.BLAZE_BURNER;
-import static com.simibubi.create.AllBlocks.COGWHEEL;
+import static com.simibubi.create.AllBlocks.*;
 import static com.simibubi.create.AllFluids.*;
 import static com.simibubi.create.AllItems.*;
 import static com.simibubi.create.AllTags.AllItemTags.FLOURS;
@@ -127,6 +127,18 @@ public class CWRecipeProvider extends RecipeProvider {
                 .define('I', ARCANE_INGOT.get())
                 .unlockedBy("has_arcane_sheet", has(ARCANE_SHEET.get()))
                 .save(output, itemId(ARCANE_PIPE.get()) + "_vertical");
+        // coating pre existing pipes
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ARCANE_PIPE.get(), 4)
+                .requires(ARCANE_SHEET.get())
+                .requires(FLUID_PIPE)
+                .unlockedBy("has_arcane_sheet", has(ARCANE_SHEET.get()))
+                .save(output, itemId(ARCANE_PIPE.get()) + "_from_pipe");
+        manualApplication(ARCANE_PIPE.getId())
+                .require(FLUID_PIPE)
+                .require(ARCANE_INGOT.get())
+                .output(ARCANE_PIPE.get())
+                .build(output);
+        baseDeployingRecipe(output, ARCANE_PIPE.get(), FLUID_PIPE, ARCANE_SHEET.get());
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, SMART_ARCANE_PIPE.get(), 1)
                 .pattern("B")
                 .pattern("P")

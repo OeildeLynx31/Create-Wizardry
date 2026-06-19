@@ -43,6 +43,27 @@ public final class ManaPipeTransport {
     /** Per-copper-block leak rate from {@code M·e^(-0.05b)}. */
     private static final double LEAK_RATE = 0.05;
 
+    /**
+     * Reentrancy depth of "mana is being moved through pipes". The leak applies only while this is
+     * non-zero, so a tank filled directly (a bucket, a hopper, an adjacent machine) is never docked —
+     * only mana that actually travels the pipe network is. Set around Create's
+     * {@code FluidNetwork.tick()} (via {@code FluidNetworkManaLeakMixin}) and around the Mana
+     * Siphon's own pump push. Server fluid ticks run on one thread, so a plain counter is enough.
+     */
+    private static int pipeTransportDepth = 0;
+
+    public static void enterPipeTransport() {
+        pipeTransportDepth++;
+    }
+
+    public static void exitPipeTransport() {
+        if (pipeTransportDepth > 0) pipeTransportDepth--;
+    }
+
+    public static boolean inPipeTransport() {
+        return pipeTransportDepth > 0;
+    }
+
     /** Arcane pipes are lossless; everything else (Create copper pipes) leaks. */
     public static boolean isArcanePipe(BlockState state) {
         Block b = state.getBlock();
@@ -77,18 +98,24 @@ public final class ManaPipeTransport {
     }
 
     /**
-     * Number of copper (leaky) pipe blocks between {@code tankPos} and the nearest reachable mana
-     * source, along the shortest copper route. Returns {@code -1} if no source is reachable (no
-     * leak). A {@code null} {@code fromSide} searches every face and takes the minimum.
+     * Number of copper (leaky) pipe blocks between {@code tankPos} and the nearest tank/endpoint
+     * feeding the copper run, along the shortest copper route. Returns {@code -1} if none is
+     * reachable (no leak). A {@code null} {@code fromSide} searches every face and takes the minimum.
+     *
+     * <p>The terminal is any non-pipe block exposing a fluid handler — matched on <em>presence</em>,
+     * not contents — so the upstream source is found even while it is drained/empty with fluid in
+     * transit through the network (the case that broke pump-driven tank→tank transfers). A
+     * Mechanical Pump is a {@code FluidTransportBehaviour} with no tank capability, so it is walked
+     * through (counting as one leaky block) rather than ending the search.
      */
     public static int copperDistanceToSource(Level level, BlockPos tankPos, @Nullable Direction fromSide) {
         if (fromSide != null) {
-            Hit hit = search(level, tankPos, fromSide, ManaPipeTransport::providesMana);
+            Hit hit = search(level, tankPos, fromSide, ManaPipeTransport::hasFluidHandler);
             return hit == null ? -1 : hit.copper();
         }
         int best = -1;
         for (Direction d : Iterate.directions) {
-            Hit hit = search(level, tankPos, d, ManaPipeTransport::providesMana);
+            Hit hit = search(level, tankPos, d, ManaPipeTransport::hasFluidHandler);
             if (hit != null && (best < 0 || hit.copper() < best)) best = hit.copper();
         }
         return best;
@@ -173,11 +200,14 @@ public final class ManaPipeTransport {
                 IFluidHandler.FluidAction.SIMULATE) > 0;
     }
 
-    private static boolean providesMana(Level level, BlockPos pos, Direction side) {
-        IFluidHandler handler = level.getCapability(Capabilities.FluidHandler.BLOCK, pos, side);
-        if (handler == null) return false;
-        return !handler.drain(new FluidStack(CWFluidRegistry.MANA.get(), Integer.MAX_VALUE),
-                IFluidHandler.FluidAction.SIMULATE).isEmpty();
+    /**
+     * Terminal for the upstream search: a non-pipe block that exposes a fluid handler. Resolves the
+     * capability only — no {@code fill}/{@code drain} — so it never re-enters a wrapper's
+     * {@link DecayingManaTank#factor()} (which would recurse between adjacent tanks), and it matches
+     * the source tank regardless of whether it currently holds mana.
+     */
+    private static boolean hasFluidHandler(Level level, BlockPos pos, Direction side) {
+        return level.getCapability(Capabilities.FluidHandler.BLOCK, pos, side) != null;
     }
 
     // --- Destination-side decay wrapper ------------------------------------
@@ -220,7 +250,9 @@ public final class ManaPipeTransport {
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            if (!isMana(resource)) return delegate.fill(resource, action);
+            // Only mana that actually travelled the pipe network leaks; direct fills (bucket, hopper,
+            // an adjacent machine) pass straight through untouched.
+            if (!isMana(resource) || !inPipeTransport()) return delegate.fill(resource, action);
             double f = factor();
             if (f >= 1.0) return delegate.fill(resource, action);
 

@@ -467,7 +467,14 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         }
 
         int toPush = Math.min(stored, Mth.clamp((int) Math.abs(getSpeed()), 1, PUMP_MAX_PER_TICK));
-        int consumed = target.fill(new FluidStack(MANA.get(), toPush), IFluidHandler.FluidAction.EXECUTE);
+        // Mark this as pipe transport so the destination's wrapper applies the copper-pipe leak.
+        ManaPipeTransport.enterPipeTransport();
+        int consumed;
+        try {
+            consumed = target.fill(new FluidStack(MANA.get(), toPush), IFluidHandler.FluidAction.EXECUTE);
+        } finally {
+            ManaPipeTransport.exitPipeTransport();
+        }
         if (consumed > 0) drainMana(Math.min(consumed, stored));
     }
 

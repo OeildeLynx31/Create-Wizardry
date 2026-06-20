@@ -5,6 +5,7 @@ import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import net.createmod.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -42,6 +43,17 @@ public final class ManaPipeTransport {
     private static final int MAX_PIPES = 256;
     /** Per-copper-block leak rate from {@code M·e^(-0.05b)}. */
     private static final double LEAK_RATE = 0.05;
+
+    /**
+     * Fractional mana (&lt;1 mB) carried between successive leak-applied fills into the same tank,
+     * keyed by tank position. Create's {@code FluidNetwork} delivers mana in many small fixed-size
+     * chunks rather than one fill, so flooring {@code chunk·factor} independently each chunk bleeds a
+     * rounding bias every chunk (e.g. {@code floor(8·e^-0.05) = 7}, an eighth lost) that has nothing
+     * to do with {@code b}. Carrying the remainder forward makes the <em>cumulative</em> delivered
+     * mana track {@code M·e^(-0.05b)} exactly, regardless of how the transfer is chunked. Server
+     * fluid ticks are single-threaded, so a plain map is enough.
+     */
+    private static final Map<GlobalPos, Double> LEAK_CARRY = new HashMap<>();
 
     /**
      * Reentrancy depth of "mana is being moved through pipes". The leak applies only while this is
@@ -253,18 +265,44 @@ public final class ManaPipeTransport {
             // Only mana that actually travelled the pipe network leaks; direct fills (bucket, hopper,
             // an adjacent machine) pass straight through untouched.
             if (!isMana(resource) || !inPipeTransport()) return delegate.fill(resource, action);
-            double f = factor();
+            Level level = be.getLevel();
+            double f = level == null ? 1.0 : factor();
             if (f >= 1.0) return delegate.fill(resource, action);
 
             int offered = resource.getAmount();
-            int want = (int) Math.floor(offered * f);
-            if (want <= 0) return 0;
+            if (offered <= 0) return 0;
+
+            // Carry the sub-mB remainder forward so chunked transfers total offered·f across the run,
+            // rather than flooring (and losing) a fraction on every chunk. Only advance it on EXECUTE,
+            // so Create's SIMULATE-then-EXECUTE pass (same args) computes an identical result.
+            GlobalPos key = GlobalPos.of(level.dimension(), be.getBlockPos());
+            double carry = LEAK_CARRY.getOrDefault(key, 0.0);
+            double exact = offered * f + carry;
+            int want = (int) Math.floor(exact);
+
+            if (want <= 0) {
+                // Nothing lands this chunk. If the tank still has room, the whole offered amount leaves
+                // the network anyway (the leaked share vanishes) and the fraction is banked.
+                if (delegate.fill(resource.copyWithAmount(1), FluidAction.SIMULATE) <= 0) return 0;
+                if (action.execute()) LEAK_CARRY.put(key, exact);
+                return offered;
+            }
 
             int stored = delegate.fill(resource.copyWithAmount(want), action);
             if (stored <= 0) return 0;
-            // Report the raw network amount that had to leave to store `stored` (the rest leaked).
-            int rawConsumed = stored >= want ? offered : (int) Math.ceil(stored / f);
-            return Math.min(offered, rawConsumed);
+
+            if (stored >= want) {
+                // All of `want` fit; the rest of `offered` leaked away. Bank the remainder.
+                if (action.execute()) {
+                    double remainder = exact - want;
+                    if (remainder < 1.0e-6) LEAK_CARRY.remove(key); else LEAK_CARRY.put(key, remainder);
+                }
+                return offered;
+            }
+            // Tank filled mid-chunk: only `stored` fit, so consume just the raw amount backing it and
+            // spend the carry (the run is interrupted).
+            if (action.execute()) LEAK_CARRY.remove(key);
+            return Math.min(offered, (int) Math.ceil(stored / f));
         }
 
         @Override

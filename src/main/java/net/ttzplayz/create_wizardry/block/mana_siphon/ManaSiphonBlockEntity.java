@@ -1,5 +1,7 @@
 package net.ttzplayz.create_wizardry.block.mana_siphon;
 
+import com.simibubi.create.content.fluids.FluidPropagator;
+import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
@@ -47,6 +49,8 @@ import net.ttzplayz.create_wizardry.entity.CWManaTransformations;
 import net.ttzplayz.create_wizardry.particle.CWParticles;
 import net.ttzplayz.create_wizardry.spell.CWTags;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -77,15 +81,13 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     private static final double SPELL_PULL_SPEED = 0.55;
     private static final double SPELL_CONSUME_DIST = 1.4;
     private static final int SPELL_MANA_PER_DAMAGE = 10;
-    /** Cap on mana pushed downward per tick; the pump scales toward this with rotation speed. */
+    /** Cap on mana pushed per tick by the no-pipe direct-fill fallback; scales with rotation speed. */
     private static final int PUMP_MAX_PER_TICK = 128;
-    /** Ticks between re-evaluating the pump's downward destination. */
-    private static final int PUMP_REFRESH_TICKS = 20;
 
     private int scanCooldown = SCAN_INTERVAL;
     private int growthCooldown = 0;
-    private int pumpRefresh = 0;
-    private ManaPipeTransport.Destination pumpDest;
+    /** Rotation speed at which downward pump pressure was last applied; {@code NaN} = none applied. */
+    private float lastPumpSpeed = Float.NaN;
     /** Per-side leak-aware tank capabilities, built lazily. */
     private final Map<Direction, IFluidHandler> decayingCaps = new HashMap<>();
     private final Map<BlockPos, Integer> eggProgress = new HashMap<>();
@@ -443,31 +445,83 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     // --- Mana pump ---------------------------------------------------------
 
     /**
-     * Acts as a downward-facing pump: pushes stored mana out the underside, along the connected
-     * pipe network, into the nearest tank. The leak through copper pipes is applied by the
-     * destination tank's {@link ManaPipeTransport.DecayingManaTank} wrapper, so the pump just
-     * pushes raw mana and drains exactly what the tank reports consumed. Idle when nothing is
-     * reachable below.
+     * Acts as a downward-facing pump. If a pipe sits below, the Siphon puts pressure on the connected
+     * pipe column so Create's own {@code FluidNetwork} pulls mana from the Siphon's tank (exposed as a
+     * fluid handler) and carries it down to a tank — through the real network, so the pipes animate
+     * and the copper leak applies at the destination. If a tank sits directly below with no pipe,
+     * falls back to a direct push (no animation possible there).
      */
     private void tickPump() {
-        int stored = storedMana();
-        if (stored <= 0) return;
-
-        if (--pumpRefresh <= 0 || pumpDest == null) {
-            pumpDest = ManaPipeTransport.findManaDestination(level, worldPosition, Direction.DOWN);
-            pumpRefresh = PUMP_REFRESH_TICKS;
+        BlockPos below = worldPosition.below();
+        FluidTransportBehaviour pipeBelow = FluidPropagator.getPipe(level, below);
+        if (pipeBelow != null) {
+            maintainDownwardPressure(pipeBelow);
+        } else {
+            lastPumpSpeed = Float.NaN; // pipe removed; force a fresh apply if one returns
+            if (storedMana() > 0) directFillBelow();
         }
-        ManaPipeTransport.Destination dest = pumpDest;
-        if (dest == null) return;
+    }
 
-        IFluidHandler target = level.getCapability(BLOCK, dest.pos(), dest.fillSide());
-        if (target == null) {
-            pumpDest = null;
+    /**
+     * Holds downward pressure on the pipe column so Create's {@code FluidNetwork} keeps pulling mana
+     * from the Siphon's tank and carrying it down. Pressure is applied <em>once</em> and left stable;
+     * it is re-applied only when the rotation speed changes or the column has lost its pressure (e.g. a
+     * pipe change reset the network). Re-applying every tick would pin the pipes in
+     * {@code WAIT_FOR_PUMPS} so the flow never advances and nothing moves.
+     */
+    private void maintainDownwardPressure(FluidTransportBehaviour firstPipe) {
+        float speed = Math.abs(getSpeed());
+        if (speed == 0) {
+            lastPumpSpeed = Float.NaN;
             return;
         }
+        if (speed == lastPumpSpeed && firstPipe.hasAnyPressure()) return; // stable: let the network flow
+        distributePressureDown(speed);
+        lastPumpSpeed = speed;
+    }
 
+    /**
+     * Puts downward pressure on the connected pipe column so Create forms a {@code FluidNetwork} that
+     * sources from the Siphon's tank. Wipe-then-set gives stable (non-accumulating) pressure; fluid
+     * enters every pipe from the face nearer the Siphon and leaves through the others.
+     */
+    private void distributePressureDown(float pressure) {
+        int max = FluidPropagator.getPumpRange();
+        Set<BlockPos> visited = new HashSet<>();
+        Deque<BlockPos> frontier = new ArrayDeque<>();
+        Map<BlockPos, Direction> entryFace = new HashMap<>();
+        BlockPos first = worldPosition.below();
+        entryFace.put(first, Direction.UP); // fluid enters the first pipe from the Siphon above
+        frontier.add(first);
+
+        while (!frontier.isEmpty() && visited.size() < max) {
+            BlockPos pos = frontier.poll();
+            if (!visited.add(pos)) continue;
+            FluidTransportBehaviour pipe = FluidPropagator.getPipe(level, pos);
+            if (pipe == null) continue;
+            pipe.wipePressure(); // stable, non-accumulating pressure
+            BlockState state = level.getBlockState(pos);
+            Direction in = entryFace.get(pos);
+            for (Direction d : FluidPropagator.getPipeConnections(state, pipe)) {
+                boolean inbound = d == in;
+                pipe.addPressure(d, inbound, pressure);
+                if (!inbound) {
+                    BlockPos next = pos.relative(d);
+                    if (!visited.contains(next) && FluidPropagator.getPipe(level, next) != null) {
+                        entryFace.putIfAbsent(next, d.getOpposite());
+                        frontier.add(next);
+                    }
+                }
+            }
+        }
+    }
+
+    /** Fallback for a tank sitting directly under the Siphon (no pipe): push mana straight in. */
+    private void directFillBelow() {
+        int stored = storedMana();
+        IFluidHandler target = level.getCapability(BLOCK, worldPosition.below(), Direction.UP);
+        if (target == null) return;
         int toPush = Math.min(stored, Mth.clamp((int) Math.abs(getSpeed()), 1, PUMP_MAX_PER_TICK));
-        // Mark this as pipe transport so the destination's wrapper applies the copper-pipe leak.
         ManaPipeTransport.enterPipeTransport();
         int consumed;
         try {

@@ -63,7 +63,6 @@ public class ChannelerBlock extends Block implements IWrenchable, IBE<ChannelerB
     @Override
     public @NotNull VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
         return CHANNELER_SHAPE.get(Direction.UP);
-        //state.getValue(FACING)
     }
 
     @Override

@@ -1,0 +1,28 @@
+{
+  "parent": "create_wizardry:aura_monster",
+  "criteria": {
+    "builtin": {
+      "trigger": "create_wizardry:baby_blue"
+    }
+  },
+  "display": {
+    "description": {
+      "color": "#DBA213",
+      "translate": "advancement.create_wizardry.baby_blue.desc"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "irons_spellbooks:arcane_essence"
+    },
+    "title": {
+      "translate": "advancement.create_wizardry.baby_blue"
+    }
+  },
+  "requirements": [
+    [
+      "builtin"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

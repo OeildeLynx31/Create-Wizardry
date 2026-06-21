@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
-/** Renders the Mana Siphon's wheel spinning at its kinetic rotation speed (Flywheel backend). */
+
 public class ManaSiphonVisual extends AbstractBlockEntityVisual<ManaSiphonBlockEntity>
         implements SimpleDynamicVisual {
 

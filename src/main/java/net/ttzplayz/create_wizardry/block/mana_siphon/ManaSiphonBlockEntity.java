@@ -67,31 +67,31 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     private static final int CAPACITY = 1000;
     private static final int SCAN_INTERVAL = 10;
-    /** Rotational stress this machine draws from its kinetic network. */
+
     private static final float STRESS_IMPACT = 4f;
-    /** Mana cost charged from the tank per Arcane Essence growth stage. */
+
     private static final int GROWTH_COST = 50;
-    /** Cooldown between Arcane Essence growth stages (15 s). */
+
     private static final int GROWTH_COOLDOWN_TICKS = 300;
-    /** Scans of draining before an Ice Spider Egg becomes a Turtle Egg. */
+
     private static final int EGG_DRAIN_STEPS = 30;
-    /** Player Depletion duration in ticks (60s). */
+
     private static final int DEPLETION_DURATION = 1200;
-    /** Spell handling. */
+
     private static final double SPELL_PULL_SPEED = 0.55;
     private static final double SPELL_CONSUME_DIST = 1.4;
     private static final int SPELL_MANA_PER_DAMAGE = 10;
-    /** Cap on mana pushed per tick by the no-pipe direct-fill fallback; scales with rotation speed. */
+
     private static final int PUMP_MAX_PER_TICK = 128;
 
     private int scanCooldown = SCAN_INTERVAL;
     private int growthCooldown = 0;
-    /** Rotation speed at which downward pump pressure was last applied; {@code NaN} = none applied. */
+
     private float lastPumpSpeed = Float.NaN;
-    /** Per-side leak-aware tank capabilities, built lazily. */
+    /** Lazy tank build */
     private final Map<Direction, IFluidHandler> decayingCaps = new HashMap<>();
     private final Map<BlockPos, Integer> eggProgress = new HashMap<>();
-    /** Cumulative mB siphoned from each caster mob, keyed by UUID, toward its max-mana pool. */
+    /**mB siphoned from caster out of max-mana pool */
     private final Map<UUID, Integer> casterDrain = new HashMap<>();
 
     public ManaSiphonBlockEntity(BlockPos pos, BlockState state) {
@@ -105,7 +105,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
                 (be, context) -> be.decayingCapability(context));
     }
 
-    /** Tank capability that leaks mana arriving through copper pipes (cached per side). */
+
     private IFluidHandler decayingCapability(Direction side) {
         if (internalTank == null) return null;
         return decayingCaps.computeIfAbsent(side,
@@ -162,14 +162,14 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     }
 
     private void tickServer() {
-        // Powered to function: nothing happens unless the wheel is being spun.
-        if (getSpeed() == 0) return;
         if (growthCooldown > 0) growthCooldown--;
+        tickCrystallization();
 
+        if (getSpeed() == 0) return;
         tickPump();
 
         AABB box = currentBox();
-        attractSpells(box); // spells move fast; pull every tick
+        attractSpells(box); // pull every tick
 
         if (--scanCooldown > 0) return;
         scanCooldown = SCAN_INTERVAL;
@@ -177,10 +177,9 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         if (bossBreakCheck(box)) return;
         drainEntities(box);
         tickEggs();
-        tickCrystallization();
     }
 
-    // --- Geometry ----------------------------------------------------------
+    // EXPANDED/CONFINED RADIUS
 
     private int currentRadius() {
         return getBlockState().getValue(ManaSiphonBlock.EXPANDED)
@@ -192,7 +191,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         return new AABB(worldPosition).inflate(currentRadius());
     }
 
-    // --- Boss interactions -------------------------------------------------
+    // BOSS INTERACTIONS
 
     /** Tyros, or an activated Dead King, overload and destroy the Siphon. Returns true if broken. */
     private boolean bossBreakCheck(AABB box) {
@@ -217,7 +216,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         return true;
     }
 
-    // --- Draining ----------------------------------------------------------
+    // DRAINING
 
     private void drainEntities(AABB box) {
         int perOp = Config.manaSiphonDrainPerOp;
@@ -225,11 +224,9 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         List<LivingEntity> living = level.getEntitiesOfClass(LivingEntity.class, box, LivingEntity::isAlive);
         for (LivingEntity e : living) {
             if (e instanceof DeadKingBoss) {
-                // Only the dormant Dead King reaches here (activated breaks the block above):
-                // an infinite, unchanging mana source.
                 fillMana(perOp);
                 spawnDrainParticles(e);
-                continue;
+                continue; // inf mana if dead king is asleep
             }
             if (e instanceof IceSpiderEntity spider) {
                 seenCasters.add(spider.getUUID());
@@ -248,7 +245,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
                 drainPlayer(player);
             }
         }
-        // Forget progress for casters that left the radius / died.
+        // Forget progress for casters that left the radius / died
         if (!casterDrain.isEmpty()) {
             casterDrain.keySet().retainAll(seenCasters);
         }
@@ -258,7 +255,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         int accepted = fillMana(Config.manaSiphonDrainPerOp);
         if (accepted <= 0) return; // tank full
 
-        // Disrupt: cannot cast, slowed, regen-locked and visibly shaking while drained.
+        // debuffs while draining (cant cast)
         MagicData md = caster.getMagicData();
         md.setMana(0);
         md.resetCastingState();
@@ -267,7 +264,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         shake(caster);
         spawnDrainParticles(caster);
 
-        // Drain gradually against the mob's max-mana pool; transform only once fully siphoned.
+        // transforms when all mana is siphoned
         int pool = Math.max(1, (int) caster.getAttributeValue(AttributeRegistry.MAX_MANA));
         int progress = casterDrain.getOrDefault(caster.getUUID(), 0) + accepted;
         if (progress >= pool) {
@@ -316,7 +313,6 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         }
     }
 
-    /** Zeroes mana regen for a short, self-refreshing window so anything in range can't regen while siphoned. */
     private void applySiphonLock(LivingEntity e) {
         e.addEffect(new MobEffectInstance(CWMobEffects.SIPHON_LOCK, SCAN_INTERVAL + 5, 0, true, false, false));
     }
@@ -334,13 +330,13 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
             double ey = e.getY() + e.getBbHeight() / 2;
             double ez = e.getZ();
             CWParticles.spawnManaRunes(sl, ex, ey, ez, 6, e.getBbWidth() / 2, 0.06);
-            // Trail of runes connecting the drained entity to the top of the Siphon.
+            // Rune trail
             Vec3 top = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.0, worldPosition.getZ() + 0.5);
             CWParticles.spawnManaTrail(sl, new Vec3(ex, ey, ez), top, 8);
         }
     }
 
-    // --- Spell attraction & consumption -----------------------------------
+    // SPELL ATTRACTION CODE
 
     private void attractSpells(AABB box) {
         List<AbstractMagicProjectile> spells = level.getEntitiesOfClass(AbstractMagicProjectile.class, box);
@@ -364,7 +360,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         }
     }
 
-    // --- Ice Spider Eggs ---------------------------------------------------
+    // Ice Spider Eggs
 
     private void tickEggs() {
         int radius = currentRadius();
@@ -399,11 +395,11 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         }
     }
 
-    // --- Crystallization ---------------------------------------------------
+    // MANA CRYSTALLIZATION
 
     /**
-     * Grows Arcane Essence in the gap directly above the Siphon, on the bottom face of a crystalline
-     * block placed two blocks up. One stage per {@link #GROWTH_COOLDOWN_TICKS}, costing {@link #GROWTH_COST}.
+     * Grows Arcane Essence on the bottom face of a crystalline block two blocks up from the siphon
+     * One stage per GROWTH_COOLDOWN_TICKS, costing GROWTH_COST
      */
     private void tickCrystallization() {
         if (growthCooldown > 0) return;
@@ -442,15 +438,8 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         }
     }
 
-    // --- Mana pump ---------------------------------------------------------
+    // PUMP
 
-    /**
-     * Acts as a downward-facing pump. If a pipe sits below, the Siphon puts pressure on the connected
-     * pipe column so Create's own {@code FluidNetwork} pulls mana from the Siphon's tank (exposed as a
-     * fluid handler) and carries it down to a tank — through the real network, so the pipes animate
-     * and the copper leak applies at the destination. If a tank sits directly below with no pipe,
-     * falls back to a direct push (no animation possible there).
-     */
     private void tickPump() {
         BlockPos below = worldPosition.below();
         FluidTransportBehaviour pipeBelow = FluidPropagator.getPipe(level, below);
@@ -462,13 +451,6 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         }
     }
 
-    /**
-     * Holds downward pressure on the pipe column so Create's {@code FluidNetwork} keeps pulling mana
-     * from the Siphon's tank and carrying it down. Pressure is applied <em>once</em> and left stable;
-     * it is re-applied only when the rotation speed changes or the column has lost its pressure (e.g. a
-     * pipe change reset the network). Re-applying every tick would pin the pipes in
-     * {@code WAIT_FOR_PUMPS} so the flow never advances and nothing moves.
-     */
     private void maintainDownwardPressure(FluidTransportBehaviour firstPipe) {
         float speed = Math.abs(getSpeed());
         if (speed == 0) {
@@ -480,11 +462,6 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         lastPumpSpeed = speed;
     }
 
-    /**
-     * Puts downward pressure on the connected pipe column so Create forms a {@code FluidNetwork} that
-     * sources from the Siphon's tank. Wipe-then-set gives stable (non-accumulating) pressure; fluid
-     * enters every pipe from the face nearer the Siphon and leaves through the others.
-     */
     private void distributePressureDown(float pressure) {
         int max = FluidPropagator.getPumpRange();
         Set<BlockPos> visited = new HashSet<>();
@@ -516,7 +493,6 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         }
     }
 
-    /** Fallback for a tank sitting directly under the Siphon (no pipe): push mana straight in. */
     private void directFillBelow() {
         int stored = storedMana();
         IFluidHandler target = level.getCapability(BLOCK, worldPosition.below(), Direction.UP);
@@ -532,7 +508,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         if (consumed > 0) drainMana(Math.min(consumed, stored));
     }
 
-    // --- Tank helpers ------------------------------------------------------
+    // TANK HELPERS
 
     private int fillMana(int mb) {
         if (internalTank == null || mb <= 0) return 0;

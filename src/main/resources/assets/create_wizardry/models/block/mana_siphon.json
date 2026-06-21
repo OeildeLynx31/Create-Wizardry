@@ -1,5 +1,5 @@
 {
-	"comment": "Static body of the Mana Siphon. The spinning wheel (lapis_pump blades) is rendered separately by ManaSiphonVisual / ManaSiphonRenderer from block/mana_siphon/wheel.",
+	"credits": "Made with Blockbench",
 	"textures": {
 		"0": "create_wizardry:block/glass_arcane_pipe",
 		"1": "create_wizardry:block/arcane_pipes",

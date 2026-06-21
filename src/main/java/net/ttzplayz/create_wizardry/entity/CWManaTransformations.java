@@ -28,50 +28,40 @@ import net.ttzplayz.create_wizardry.particle.CWParticles;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * Turns vanilla mobs into Iron's Spells caster mobs when they are exposed to Mana together with the
- * matching Iron's Spells spellbook, mirroring how vanilla zombifies a piglin.
- *
- * Two-phase: a trigger <em>arms</em> a pending conversion (the mob holds the book and, if a piglin,
- * admires it gold-style); a tick handler <em>completes</em> it 5 seconds later.
- *
- * Trigger paths:
- *  - drop/deploy: a matching item dropped onto the mob while it is in a Mana spout/pool (from
- *    {@code ManaEffectHandler}).
- *  - give/deploy: a player or Deployer uses the matching item on the mob while it is Mana-exposed (from
- *    the {@code PlayerInteractEvent.EntityInteract} hook). The Tarnished Crown works here too: a Deployer
- *    normally self-equips armor, but {@code EquipableNoDeployerSelfEquipMixin} keeps it in hand so it can
- *    be applied to the Skeleton.
- */
 public final class CWManaTransformations {
 
     private CWManaTransformations() {}
 
-    /** Persistent-data key stamped by the Mana spout handler so transient spouting still counts as exposure. */
+
     private static final String MANA_EXPOSED_KEY = "cw:mana_exposed_until";
-    /** Persistent-data keys for an armed-but-not-yet-completed conversion. */
+
     private static final String CONVERT_TO_KEY = "cw:convert_to";
     private static final String CONVERT_AT_KEY = "cw:convert_at";
-    /** UUID of the player who armed the conversion, so the advancement can be awarded on completion. */
+
     private static final String CONVERT_BY_KEY = "cw:convert_by";
 
-    /** How long (ticks) a Mana touch keeps a mob "exposed" for the interaction path. */
+    // ticks required to begin transformation
     private static final int EXPOSURE_TICKS = 30;
-    /** Delay between arming and completing a conversion (5 seconds). */
+    // time to transform
     private static final int CONVERSION_DELAY = 100;
 
-    /** A single vanilla-mob -> caster-mob conversion. */
     private record Conversion(Item trigger, EntityType<?> from, Supplier<EntityType<? extends Mob>> to) {}
 
+    // CONVERSIONS LIST
     private static final List<Conversion> CONVERSIONS = List.of(
+
             new Conversion(ItemRegistry.DRUIDIC_SPELL_BOOK.get(), EntityType.PIGLIN,
                     EntityRegistry.APOTHECARIST::get),
+
             new Conversion(ItemRegistry.TARNISHED_CROWN.get(), EntityType.SKELETON,
                     EntityRegistry.NECROMANCER::get),
+
             new Conversion(ItemRegistry.VILLAGER_SPELL_BOOK.get(), EntityType.VILLAGER,
                     EntityRegistry.PRIEST::get),
+
             new Conversion(ItemRegistry.BLAZE_SPELL_BOOK.get(), EntityType.VILLAGER,
                     EntityRegistry.PYROMANCER::get),
+
             new Conversion(ItemRegistry.ICE_SPELL_BOOK.get(), EntityType.VILLAGER,
                     EntityRegistry.CRYOMANCER::get)
     );
@@ -94,9 +84,8 @@ public final class CWManaTransformations {
         return false;
     }
 
-    // --- Reverse conversion (Mana Siphon drains a caster back to its mundane form) ----------
+    // Reverse conversion
 
-    /** Reverse of {@link #CONVERSIONS}: the mundane counterpart for a caster type, or null. */
     private static EntityType<?> getMundaneCounterpart(EntityType<?> casterType) {
         for (Conversion c : CONVERSIONS) {
             if (c.to().get() == casterType) {
@@ -106,10 +95,6 @@ public final class CWManaTransformations {
         return null;
     }
 
-    /**
-     * Revert a fully-drained caster mob to its mundane counterpart (Necromancer -> Skeleton, etc.).
-     * Returns true if a reversion happened. Casters with no defined counterpart are left untouched.
-     */
     public static boolean revertDrainedCaster(ServerLevel level, Mob mob) {
         EntityType<?> counterpart = getMundaneCounterpart(mob.getType());
         if (counterpart == null) return false;
@@ -128,14 +113,14 @@ public final class CWManaTransformations {
         return true;
     }
 
-    // --- Exposure tracking -------------------------------------------------
+    // EXPOSURE TRACKING
 
-    /** Marks an entity as recently touched by Mana (called from the Mana spout/pipe handler). */
+
     public static void markManaExposed(LivingEntity entity) {
         entity.getPersistentData().putLong(MANA_EXPOSED_KEY, entity.level().getGameTime() + EXPOSURE_TICKS);
     }
 
-    /** True if the entity was recently spouted with Mana or is currently standing in a Mana fluid. */
+    /** True if entity wad recently spouted with or is standing in Mana */
     public static boolean isManaExposed(LivingEntity entity) {
         Level level = entity.level();
         if (entity.getPersistentData().getLong(MANA_EXPOSED_KEY) >= level.getGameTime()) {
@@ -150,9 +135,9 @@ public final class CWManaTransformations {
         return fluid == CWFluidRegistry.MANA.get() || fluid == CWFluidRegistry.MANA_FLOWING.get();
     }
 
-    // --- Trigger paths -----------------------------------------------------
+    // TRIGGER PATHS
 
-    /** Drop/deploy path: arm a conversion if a matching item entity lies on the (Mana-exposed) mob. */
+    /** Drop/deploy path */
     public static void tryConvertViaDrop(ServerLevel level, LivingEntity entity) {
         if (!(entity instanceof Mob mob)) return;
         if (isPending(mob) || !hasConversionFor(mob.getType())) return;
@@ -174,7 +159,7 @@ public final class CWManaTransformations {
         }
     }
 
-    /** Give/deploy path: arm a conversion if the used item matches and the mob is Mana-exposed. */
+    /** Give/deploy path */
     public static boolean tryConvertViaInteract(Player player, Mob mob, ItemStack stack) {
         Conversion c = findConversion(stack.getItem(), mob.getType());
         if (c == null || isPending(mob) || !isManaExposed(mob)) return false;
@@ -187,7 +172,6 @@ public final class CWManaTransformations {
         return true;
     }
 
-    // --- Arm / complete ----------------------------------------------------
 
     private static boolean isPending(Mob mob) {
         return mob.getPersistentData().contains(CONVERT_AT_KEY);
@@ -202,11 +186,11 @@ public final class CWManaTransformations {
             data.putUUID(CONVERT_BY_KEY, byPlayer);
         }
 
-        // Hold the book up for the duration; for piglins, the gold-style admire pose.
+
         mob.setItemSlot(EquipmentSlot.OFFHAND, triggerStack.copyWithCount(1));
         mob.setDropChance(EquipmentSlot.OFFHAND, 0F);
         if (mob instanceof Piglin piglin) {
-            // Don't let it zombify mid-admire while the 5s timer runs.
+
             piglin.setImmuneToZombification(true);
             piglin.getBrain().setMemoryWithExpiry(MemoryModuleType.ADMIRING_ITEM, true, CONVERSION_DELAY);
             mob.playSound(SoundEvents.PIGLIN_ADMIRING_ITEM, 1.0F, 1.0F);
@@ -215,17 +199,17 @@ public final class CWManaTransformations {
         }
     }
 
-    /** Called every tick for every mob (server side): drives the admire animation and completes on schedule. */
+    /** Called every tick for every mob (server side): drives the admire animation */
     public static void tickPendingConversion(Mob mob) {
         CompoundTag data = mob.getPersistentData();
         if (!data.contains(CONVERT_AT_KEY)) return;
         if (!(mob.level() instanceof ServerLevel level)) return;
 
         long now = level.getGameTime();
-        // Don't let the mob die mid-transform: undead won't burn in daylight, piglins won't zombify.
+
         mob.clearFire();
         if (mob instanceof Piglin piglin) {
-            // Keep the piglin admiring so vanilla AI can't drop the book or clear the pose.
+            // Keep the piglin admiring
             piglin.getBrain().setMemoryWithExpiry(MemoryModuleType.ADMIRING_ITEM, true, 40L);
             piglin.setImmuneToZombification(true);
         }

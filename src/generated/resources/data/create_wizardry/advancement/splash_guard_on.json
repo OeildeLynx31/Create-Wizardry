@@ -1,0 +1,27 @@
+{
+  "parent": "create_wizardry:sploink",
+  "criteria": {
+    "builtin": {
+      "trigger": "create_wizardry:splash_guard_on"
+    }
+  },
+  "display": {
+    "description": {
+      "color": "#DBA213",
+      "translate": "advancement.create_wizardry.splash_guard_on.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "create_wizardry:arcane_pipe"
+    },
+    "title": {
+      "translate": "advancement.create_wizardry.splash_guard_on"
+    }
+  },
+  "requirements": [
+    [
+      "builtin"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

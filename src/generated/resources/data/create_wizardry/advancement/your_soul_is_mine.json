@@ -1,0 +1,28 @@
+{
+  "parent": "create_wizardry:aura_monster",
+  "criteria": {
+    "builtin": {
+      "trigger": "create_wizardry:your_soul_is_mine"
+    }
+  },
+  "display": {
+    "description": {
+      "color": "#DBA213",
+      "translate": "advancement.create_wizardry.your_soul_is_mine.desc"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "create_wizardry:mana_bucket"
+    },
+    "title": {
+      "translate": "advancement.create_wizardry.your_soul_is_mine"
+    }
+  },
+  "requirements": [
+    [
+      "builtin"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

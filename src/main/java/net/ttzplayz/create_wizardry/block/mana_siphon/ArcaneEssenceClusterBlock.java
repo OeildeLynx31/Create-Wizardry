@@ -30,12 +30,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Arcane Essence growing on a Crystalline block, fed by a nearby Mana Siphon. Modeled after
- * vanilla {@code AmethystClusterBlock}: directional, waterloggable, no collision. Grows through
- * three {@link #AGE} stages 0..{@link #MAX_AGE} (bud -> cluster -> crystal); harvesting on
- * right-click yields an escalating amount of Iron's Spells Arcane Essence by stage.
- */
 public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterloggedBlock {
 
     public static final int MAX_AGE = 2;
@@ -43,18 +37,17 @@ public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterlogge
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
-    // Bud-style shapes that scale up with age, oriented for an UP-facing cluster.
     private static final VoxelShape[] SHAPES_BY_AGE = new VoxelShape[] {
             Block.box(5, 0, 5, 11, 4, 11),   // age 0 (bud)
             Block.box(4, 0, 4, 12, 8, 12),   // age 1 (cluster)
-            Block.box(3, 0, 3, 13, 12, 13),  // age 2 (crystal, mature)
+            Block.box(3, 0, 3, 13, 12, 13),  // age 2 (crystal)
     };
 
     public ArcaneEssenceClusterBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(AGE, 0)
-                .setValue(FACING, Direction.UP)
+                .setValue(FACING, Direction.DOWN)
                 .setValue(WATERLOGGED, false));
     }
 

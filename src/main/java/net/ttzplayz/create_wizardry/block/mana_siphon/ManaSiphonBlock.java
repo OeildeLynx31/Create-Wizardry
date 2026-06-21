@@ -19,6 +19,8 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +28,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+
+import static com.simibubi.create.AllShapes.PUMP;
+import static net.ttzplayz.create_wizardry.block.CWShapes.CHANNELER_SHAPE;
 
 public class ManaSiphonBlock extends KineticBlock implements IBE<ManaSiphonBlockEntity>, ICogWheel, SimpleWaterloggedBlock {
 
@@ -40,8 +45,10 @@ public class ManaSiphonBlock extends KineticBlock implements IBE<ManaSiphonBlock
                 .setValue(WATERLOGGED, false));
     }
 
-    // --- Kinetics: a small cog on the vertical axis (Millstone-style), driven by an adjacent
-    //     vertical cogwheel. No shaft on any face, leaving the underside free for the mana pump. ---
+    @Override
+    public @NotNull VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
+        return PUMP.get(Direction.UP);
+    }
 
     @Override
     public Axis getRotationAxis(BlockState state) {

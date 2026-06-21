@@ -1,5 +1,5 @@
 {
-	"comment": "Spinning lapis_pump blade wheel of the Mana Siphon, rendered (and rotated about Y) by ManaSiphonVisual / ManaSiphonRenderer.",
+	"credit": "Made with Blockbench",
 	"textures": {
 		"5": "create_wizardry:block/lapis_pump",
 		"particle": "create_wizardry:block/lapis_pump"

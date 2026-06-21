@@ -35,6 +35,7 @@ public class CWAdvancements implements DataProvider {
                     .description("Mechanical Sorcery")
                     .awardedForFree()
                     .special(CWAdvancement.TaskType.SILENT)),
+    // CHANNELER/LIGHTNING
             CHANNELER = create("channeler", b -> b.icon(itemFromRegistry(CreateWizardry.id("channeler")))
                     .title("Harvest the Heavens")
                     .description("Craft and Place Down a Channeler to harvest Liquid Lightning.")
@@ -51,14 +52,10 @@ public class CWAdvancements implements DataProvider {
                     .description("Safe? No. Fun? Yes.")
                     .special(CWAdvancement.TaskType.SUPER_SECRET)
                     .after(SHOCKING)),
-            VAMPIRE_SHOWER = create("vampire_shower", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "blood_bucket")))
-                    .title("Vampire Shower")
-                    .description("Bathe in the blood of your enemies.")
-                    .special(CWAdvancement.TaskType.SECRET)
-                    .after(ROOT)),
+    // BLAZE CASTER
             I_CAST_FIREBALL = create("i_cast_fireball", b -> b.icon(itemFromRegistry(CreateWizardry.id("blaze_caster")))
                     .title("I CAST FIREBALL!!!")
-                    .description("Forge the Blaze Caster. And you don't care how big the room is.")
+                    .description("Forge the Blaze Caster. And uh, you don't care how big the room is.")
                     .whenIconCollected()
                     .special(CWAdvancement.TaskType.NOISY)
                     .after(ROOT)),
@@ -67,21 +64,68 @@ public class CWAdvancements implements DataProvider {
                     .description("Cast Black Hole with the Blaze Caster.")
                     .special(CWAdvancement.TaskType.SUPER_SECRET)
                     .after(I_CAST_FIREBALL)),
-            DO_YOU_FEEL_DIFFERENT = create("do_you_feel_different", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "blaze_spell_book")))
-                    .title("Do You Feel Different?")
-                    .description("Convert a mob to its casting counterpart.")
-                    .special(CWAdvancement.TaskType.SECRET)
-                    .after(ROOT)),
-            INDUSTRIAL_INK = create("industrial_ink", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(IronsSpellbooks.MODID, "legendary_ink")))
-                    .title("Industrial Ink")
-                    .description("Mix ink using Create contraptions.")
+    // MANA MANIPULATION
+            SPLOINK = create("sploink", b -> b.icon(itemFromRegistry(CreateWizardry.id("arcane_sheet")))
+                    .title("Sploink.")
+                    .description("Obtain a ** magical ** Arcane Sheet.")
                     .special(CWAdvancement.TaskType.NOISY)
                     .after(ROOT)),
             ENLIGHTENMENT_AGE = create("enlightenment_age", b -> b.icon(itemFromRegistry(CreateWizardry.id("arcane_casing")))
                     .title("The Enlightenment Age")
                     .description("Make an Arcane Casing.")
                     .special(CWAdvancement.TaskType.NORMAL)
-                    .after(ROOT));
+                    .after(ROOT)),
+            SPLASH_GUARD_ON = create("splash_guard_on", b -> b.icon(itemFromRegistry(CreateWizardry.id("arcane_pipe")))
+                    .title("Insulated")
+                    .description("Insulate pipes with Arcane Sheets to prevent Mana loss.")
+                    .special(CWAdvancement.TaskType.NOISY)
+                    .after(SPLOINK)),
+            DO_YOU_FEEL_DIFFERENT = create("do_you_feel_different", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "blaze_spell_book")))
+                    .title("Do You Feel Different?")
+                    .description("Convert a mob to its casting counterpart.")
+                    .special(CWAdvancement.TaskType.SECRET)
+                    .after(ROOT)),
+            AURA_MONSTER = create("aura_monster", b -> b.icon(itemFromRegistry(CreateWizardry.id("mana_siphon")))
+                    .title("Aura MONSTER")
+                    .description("Create a Mana Siphon to harness your innate AURA (mana).")
+                    .special(CWAdvancement.TaskType.NORMAL)
+                    .after(SPLASH_GUARD_ON)),
+            YOUR_SOUL_IS_MINE = create("your_soul_is_mine", b -> b.icon(itemFromRegistry(CreateWizardry.id("mana_bucket")))
+                    .title("Your Soul Is Mine!")
+                    .description("Siphon Mana from a spellcasting mob.")
+                    .special(CWAdvancement.TaskType.EXPERT)
+                    .after(AURA_MONSTER)),
+            BABY_BLUE = create("baby_blue", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(IronsSpellbooks.MODID, "arcane_essence")))
+                    .title("99.7% Pure")
+                    .description("Harvest Mana Crystals from a Mana Siphon for (almost) free Arcane Essence.")
+                    .special(CWAdvancement.TaskType.EXPERT)
+                    .after(AURA_MONSTER)),
+            A_DEVASTATING_LOSS = create("a_devastating_loss", b -> b.icon(itemFromRegistry(CreateWizardry.id("arcane_pipe")))
+                    .title("I II II L")
+                    .description("Pump Mana across <20 blocks of pipes...and be devastated by the result. Please insulate, for Herobrine's sake.")
+                    .special(CWAdvancement.TaskType.SUPER_SECRET)
+                    .after(ROOT)),
+    // GENERAL/MISC
+            VAMPIRE_SHOWER = create("vampire_shower", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "blood_bucket")))
+                    .title("Vampire Shower")
+                    .description("Bathe in the blood of your enemies.")
+                    .special(CWAdvancement.TaskType.SECRET)
+                    .after(ROOT)),
+            ALCH_101 = create("alch_101", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(IronsSpellbooks.MODID, "legendary_ink")))
+                    .title("Alchemy 101")
+                    .description("Synthesize Arcane Essence with Lapis, Amethyst, and Exp.")
+                    .special(CWAdvancement.TaskType.NORMAL)
+                    .after(ROOT)),
+            INDUSTRIAL_INK = create("industrial_ink", b -> b.icon(itemFromRegistry(ResourceLocation.fromNamespaceAndPath(IronsSpellbooks.MODID, "legendary_ink")))
+                    .title("Industrial Ink")
+                    .description("Mix ink using Create contraptions.")
+                    .special(CWAdvancement.TaskType.NOISY)
+                    .after(ALCH_101));
+
+
+
+
+
 
 
 

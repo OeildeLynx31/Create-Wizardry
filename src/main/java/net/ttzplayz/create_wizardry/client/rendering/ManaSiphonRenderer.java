@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.ttzplayz.create_wizardry.block.mana_siphon.ManaSiphonBlockEntity;
 import net.ttzplayz.create_wizardry.client.CWPartialModels;
 
-/** Fallback (no-Flywheel) renderer for the Mana Siphon's spinning wheel. */
+// fallback renderer
 public class ManaSiphonRenderer extends SafeBlockEntityRenderer<ManaSiphonBlockEntity>
         implements PartialModelBlockEntityRenderer {
 

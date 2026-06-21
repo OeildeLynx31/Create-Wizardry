@@ -1,0 +1,28 @@
+{
+  "parent": "create_wizardry:splash_guard_on",
+  "criteria": {
+    "builtin": {
+      "trigger": "create_wizardry:aura_monster"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "color": "#DBA213",
+      "translate": "advancement.create_wizardry.aura_monster.desc"
+    },
+    "icon": {
+      "count": 1,
+      "id": "create_wizardry:mana_siphon"
+    },
+    "title": {
+      "translate": "advancement.create_wizardry.aura_monster"
+    }
+  },
+  "requirements": [
+    [
+      "builtin"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -2,6 +2,11 @@
   "values": [
     "create_wizardry:mana_bucket",
     "create_wizardry:lightning_bucket",
-    "create_wizardry:blood_bucket"
+    "create_wizardry:blood_bucket",
+    "create:iron_sheet",
+    "create:golden_sheet",
+    "create:copper_sheet",
+    "create:sturdy_sheet",
+    "create:brass_sheet"
   ]
 }

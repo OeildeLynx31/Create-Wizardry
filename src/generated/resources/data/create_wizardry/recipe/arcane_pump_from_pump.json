@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "create_wizardry:arcane_sheet"
+    },
+    {
+      "item": "create:mechanical_pump"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_wizardry:arcane_pump"
+  }
+}

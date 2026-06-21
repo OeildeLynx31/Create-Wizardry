@@ -67,6 +67,7 @@ import net.ttzplayz.create_wizardry.CreateWizardry;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_BLOCK;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_CASING;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_PIPE;
+import static net.ttzplayz.create_wizardry.block.CWBlocks.ARCANE_PUMP;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.BLAZE_CASTER;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.CHANNELER;
 import static net.ttzplayz.create_wizardry.block.CWBlocks.MANA_SIPHON;
@@ -74,6 +75,7 @@ import static net.ttzplayz.create_wizardry.block.CWBlocks.SMART_ARCANE_PIPE;
 import static net.ttzplayz.create_wizardry.fluids.CWFluidRegistry.*;
 import static net.ttzplayz.create_wizardry.item.CWItems.*;
 import static net.ttzplayz.create_wizardry.datagen.recipe.CreateRecipeHelpers.*;
+import static net.ttzplayz.create_wizardry.util.CWTags.Items.SHEETS;
 
 public class CWRecipeProvider extends RecipeProvider {
 
@@ -113,6 +115,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .require(ARCANE_INGOT.get())
                 .output(ARCANE_SHEET.get())
                 .build(output);
+        manaFilling(output, ARCANE_SHEET.get(), SHEETS, 500);
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ARCANE_PIPE.get(), 4)
                 .pattern("SCS")
                 .define('S', ARCANE_SHEET.get())
@@ -139,6 +142,23 @@ public class CWRecipeProvider extends RecipeProvider {
                 .output(ARCANE_PIPE.get())
                 .build(output);
         baseDeployingRecipe(output, ARCANE_PIPE.get(), FLUID_PIPE, ARCANE_SHEET.get());
+        // Arcane Pump
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ARCANE_PUMP.get(), 1)
+                .requires(ARCANE_SHEET.get())
+                .requires(MECHANICAL_PUMP.get())
+                .unlockedBy("has_arcane_sheet", has(ARCANE_SHEET.get()))
+                .save(output, itemId(ARCANE_PUMP.get()) + "_from_pump");
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ARCANE_PUMP.get(), 1)
+                .requires(ARCANE_PIPE.get())
+                .requires(COGWHEEL.get())
+                .unlockedBy("has_arcane_sheet", has(ARCANE_SHEET.get()))
+                .save(output);
+        manualApplication(ARCANE_PUMP.getId())
+                .require(MECHANICAL_PUMP.get())
+                .require(ARCANE_SHEET.get())
+                .output(ARCANE_PUMP.get())
+                .build(output);
+        baseDeployingRecipe(output, ARCANE_PUMP.get(), MECHANICAL_PUMP.get(), ARCANE_SHEET.get());
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, SMART_ARCANE_PIPE.get(), 1)
                 .pattern("B")
                 .pattern("P")
@@ -730,17 +750,16 @@ public class CWRecipeProvider extends RecipeProvider {
                 .output(ARCANE_CASING.get(), 1)
                 .build(output);
         baseDeployingRecipe(output, ARCANE_CASING.get(), LAPIS_BLOCK, ARCANE_INGOT.get());
-        // MANA SIPHON
-        sequencedAssembly(MANA_SIPHON.getId())
-                .require(ARCANE_CASING.get())
-                .transitionTo(ARCANE_CASING.get())
-                .addOutput(MANA_SIPHON.get(), 1)
-                .loops(1)
-                .addStep(DeployerApplicationRecipe::new, builder -> builder.require(MANA_RUNE.get()))
-                .addStep(DeployerApplicationRecipe::new, builder -> builder.require(ARCANE_INGOT.get()))
-                .addStep(DeployerApplicationRecipe::new, builder -> builder.require(HOPPER))
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
-                .addStep(PressingRecipe::new, builder -> (builder))
+        // MANA SIPHON — mechanically crafted from arcane sheets, an Arcane Pump, an Item Drain and casing.
+        mechanicalCrafting(MANA_SIPHON.get(), 1)
+                .patternLine("A A")
+                .patternLine("APA")
+                .patternLine(" C ")
+                .patternLine("ADA")
+                .key('A', ARCANE_SHEET.get())
+                .key('P', ARCANE_PUMP.get())
+                .key('C', ARCANE_CASING.get())
+                .key('D', ITEM_DRAIN.get())
                 .build(output);
     }
 
@@ -1301,7 +1320,6 @@ public class CWRecipeProvider extends RecipeProvider {
                 .require(AMETHYST_SHARD)
                 .require(AMETHYST_SHARD)
                 .require(MANA.get(), 1000)
-                .require(ARCANE_ESSENCE.get())
                 .require(EXP_NUGGET)
                 .require(EXP_NUGGET)
                 .require(EXP_NUGGET)

@@ -96,7 +96,8 @@ public class ArcanePipeAttachmentModel extends BakedModelWrapperWithData {
         // window (cutout_mipped) this keeps the transparent tube out of the solid pass, which would
         // otherwise draw its see-through pixels as opaque black. Opaque pipes only declare solid, so
         // this guard is a no-op for them.
-        if (super.getRenderTypes(state, rand, data).contains(renderType))
+        // A null renderType means "all layers" (e.g. block-break particle sampling), so skip the guard.
+        if (renderType == null || super.getRenderTypes(state, rand, data).contains(renderType))
             quads.addAll(super.getQuads(state, side, rand, data, renderType));
         if (data.has(PIPE_PROPERTY)) {
             PipeModelData pipeData = data.get(PIPE_PROPERTY);
@@ -135,7 +136,7 @@ public class ArcanePipeAttachmentModel extends BakedModelWrapperWithData {
      *  into the cutout pass (and the cutout glass never bleeds into the solid pass). */
     private static void addModelQuads(List<BakedQuad> quads, BakedModel model, BlockState state, Direction side,
         RandomSource rand, ModelData data, RenderType renderType) {
-        if (model.getRenderTypes(state, rand, data).contains(renderType))
+        if (renderType == null || model.getRenderTypes(state, rand, data).contains(renderType))
             quads.addAll(model.getQuads(state, side, rand, data, renderType));
     }
 

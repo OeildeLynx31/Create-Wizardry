@@ -72,6 +72,20 @@ public class ManaSiphonBlock extends KineticBlock implements IBE<ManaSiphonBlock
     }
 
     @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state,
+                            net.minecraft.world.entity.LivingEntity placer, net.minecraft.world.item.ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (placer instanceof net.minecraft.world.entity.player.Player p) {
+            withBlockEntityDo(level, pos, be -> {
+                be.placerUuid = p.getUUID();
+                be.notifyUpdate();
+            });
+            if (p instanceof net.minecraft.server.level.ServerPlayer sp && !sp.isFakePlayer())
+                net.ttzplayz.create_wizardry.advancement.CWAdvancements.AURA_MONSTER.awardTo(sp);
+        }
+    }
+
+    @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();

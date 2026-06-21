@@ -1,12 +1,9 @@
 {
   "values": [
-    "create_wizardry:arcane_block",
     "create_wizardry:arcane_pipe",
     "create_wizardry:smart_arcane_pipe",
     "create_wizardry:glass_arcane_pipe",
     "create_wizardry:encased_arcane_pipe",
-    "create_wizardry:arcane_pump",
-    "create_wizardry:mana_siphon",
-    "create_wizardry:arcane_essence_cluster"
+    "create_wizardry:arcane_pump"
   ]
 }

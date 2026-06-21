@@ -10,12 +10,20 @@ import io.redspace.ironsspellbooks.fluids.SimpleTintedClientFluidType;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackSource;
+import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
+import io.redspace.ironsspellbooks.api.magic.MagicData;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,9 +37,12 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.registries.GameData;
 import net.neoforged.neoforge.registries.RegisterEvent;
+import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.decoration.encasing.EncasingRegistry;
 import com.simibubi.create.content.fluids.pipes.GlassPipeVisual;
 import com.simibubi.create.content.fluids.pipes.TransparentStraightPipeRenderer;
+import com.simibubi.create.content.fluids.pump.PumpRenderer;
+import com.simibubi.create.content.kinetics.base.SingleAxisRotatingVisual;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 import net.ttzplayz.create_wizardry.advancement.CWAdvancements;
 import net.ttzplayz.create_wizardry.advancement.CWTriggers;
@@ -108,6 +119,7 @@ public class CreateWizardry {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(CWEvents::registerCapabilities);
         modEventBus.addListener(CreateWizardry::modifyEntityAttributes);
+        modEventBus.addListener(CreateWizardry::addPackFinders);
 
         NeoForge.EVENT_BUS.register(this);
 
@@ -194,6 +206,7 @@ public class CreateWizardry {
             event.accept(CWBlocks.ARCANE_CASING.get());
             event.accept(CWBlocks.ARCANE_PIPE.get());
             event.accept(CWBlocks.SMART_ARCANE_PIPE.get());
+            event.accept(CWBlocks.ARCANE_PUMP.get());
             event.accept(ARCANE_SHEET.get());
             event.accept(CRUSHED_MITHRIL.get());
             event.accept(MITHRIL_NUGGET.get());
@@ -205,6 +218,21 @@ public class CreateWizardry {
 
     public static void modifyEntityAttributes(EntityAttributeModificationEvent event) {
         event.add(EntityType.ARMOR_STAND, Attributes.ATTACK_DAMAGE);
+    }
+
+    // Registers the bundled "arcane_alloy" resource pack so it shows up in Options > Resource Packs.
+    // It is NOT force-applied (alwaysActive=false): the player opts in by enabling it. Once enabled it
+    // renames Iron's Spellbooks' Arcane Ingot -> Arcane Alloy and our Arcane Block -> Block of Arcane Alloy.
+    public static void addPackFinders(AddPackFindersEvent event) {
+        if (event.getPackType() == PackType.CLIENT_RESOURCES) {
+            event.addPackFinders(
+                    ResourceLocation.fromNamespaceAndPath(MOD_ID, "arcane_alloy"),
+                    PackType.CLIENT_RESOURCES,
+                    Component.literal("Create Wizardry: Arcane Alloy"),
+                    PackSource.BUILT_IN,
+                    false,
+                    Pack.Position.TOP);
+        }
     }
 
     @SubscribeEvent
@@ -226,6 +254,19 @@ public class CreateWizardry {
         // Drives the 5-second "admire" delay and completes armed mana transformations.
         if (event.getEntity() instanceof Mob mob && !mob.level().isClientSide()) {
             CWManaTransformations.tickPendingConversion(mob);
+        }
+        // Players running low on mana (< 5) suffer Depletion: heavy slowness and slowed regen.
+        // A short instance is refreshed only as it nears expiry, so it clears on its own a couple
+        // of seconds after mana recovers to 5+.
+        if (event.getEntity() instanceof Player player && !player.level().isClientSide()
+                && !player.isCreative() && !player.isSpectator()) {
+            float mana = MagicData.getPlayerMagicData(player).getMana();
+            if (mana < 5) {
+                MobEffectInstance current = player.getEffect(CWMobEffects.DEPLETION);
+                if (current == null || current.getDuration() < 30) {
+                    player.addEffect(new MobEffectInstance(CWMobEffects.DEPLETION, 60, 0, false, true, true));
+                }
+            }
         }
     }
 
@@ -302,6 +343,12 @@ public class CreateWizardry {
                         .factory(GlassPipeVisual::new)
                         .skipVanillaRender(be -> true)
                         .apply();
+                // Arcane Pump cog spins via Flywheel (BER below is the no-Flywheel fallback), reusing
+                // Create's Mechanical Pump cog partial model.
+                SimpleBlockEntityVisualizer.builder(CWBlockEntities.ARCANE_PUMP.get())
+                        .factory(SingleAxisRotatingVisual.ofZ(AllPartialModels.MECHANICAL_PUMP_COG))
+                        .skipVanillaRender(be -> true)
+                        .apply();
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("arcane_casing"),
                                 model -> new CTModel(model, new SimpleCTBehaviour(CWSpriteShifts.ARCANE_CASING)));
@@ -319,6 +366,9 @@ public class CreateWizardry {
                         .register(CreateWizardry.id("glass_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("encased_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
+                // Arcane Pump uses the same pipe-attachment model as Create's pump so connection rims render.
+                CreateClient.MODEL_SWAPPER.getCustomBlockModels()
+                        .register(CreateWizardry.id("arcane_pump"), ArcanePipeAttachmentModel::withAO);
             });
         }
 
@@ -344,6 +394,7 @@ public class CreateWizardry {
             // Smart arcane pipe renders its filter value box; glass arcane pipe renders fluid when Flywheel is off.
             event.registerBlockEntityRenderer(CWBlockEntities.SMART_ARCANE_PIPE.get(), SmartBlockEntityRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.GLASS_ARCANE_PIPE.get(), TransparentStraightPipeRenderer::new);
+            event.registerBlockEntityRenderer(CWBlockEntities.ARCANE_PUMP.get(), PumpRenderer::new);
         }
 
     }

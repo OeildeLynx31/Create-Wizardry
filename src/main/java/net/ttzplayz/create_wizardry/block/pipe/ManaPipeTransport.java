@@ -76,13 +76,13 @@ public final class ManaPipeTransport {
         return pipeTransportDepth > 0;
     }
 
-    /** Arcane pipes are lossless; everything else (Create copper pipes) leaks. */
+    /**
+     * Mana-insulated nodes (the arcane pipe family + the Arcane Pump) are lossless; everything else
+     * (Create copper pipes, the Mechanical Pump) leaks. Membership is the {@code MANA_INSULATED}
+     * block tag so new insulated blocks just join the tag.
+     */
     public static boolean isArcanePipe(BlockState state) {
-        Block b = state.getBlock();
-        return b instanceof ArcanePipeBlock
-                || b instanceof SmartArcanePipeBlock
-                || b instanceof ArcaneGlassPipeBlock
-                || b instanceof EncasedArcanePipeBlock;
+        return state.is(net.ttzplayz.create_wizardry.util.CWTags.Blocks.MANA_INSULATED);
     }
 
     /** Fraction of mana that survives crossing {@code copperBlocks} leaky pipe blocks. */
@@ -241,6 +241,8 @@ public final class ManaPipeTransport {
         private double factor = 1.0;
         /** Game time at which the cached factor expires; 0 forces a compute on first use. */
         private long recomputeAt = 0L;
+        /** Throttle for the "a_devastating_loss" advancement scan. */
+        private long nextLeakAdvancementCheck = 0L;
 
         DecayingManaTank(BlockEntity be, @Nullable Direction side, IFluidHandler delegate) {
             this.be = be;
@@ -260,6 +262,26 @@ public final class ManaPipeTransport {
             return factor;
         }
 
+        /**
+         * Grants "I II II L" to the nearest player when mana leaks across a short (&lt;20 block) copper
+         * run — the "pump mana through uninsulated pipes and be devastated" moment. Scanned at most once
+         * per {@link #REFRESH_TICKS}; no player is directly involved in a leak, so we award whoever is close.
+         */
+        private void awardDevastationIfClose() {
+            Level level = be.getLevel();
+            if (level == null) return;
+            long now = level.getGameTime();
+            if (now < nextLeakAdvancementCheck) return;
+            nextLeakAdvancementCheck = now + REFRESH_TICKS;
+            int b = copperDistanceToSource(level, be.getBlockPos(), side);
+            if (b < 1 || b >= 20) return;
+            BlockPos p = be.getBlockPos();
+            net.minecraft.world.entity.player.Player nearest =
+                    level.getNearestPlayer(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 16.0, false);
+            if (nearest instanceof net.minecraft.server.level.ServerPlayer sp && !sp.isFakePlayer())
+                net.ttzplayz.create_wizardry.advancement.CWAdvancements.A_DEVASTATING_LOSS.awardTo(sp);
+        }
+
         @Override
         public int fill(FluidStack resource, FluidAction action) {
             // Only mana that actually travelled the pipe network leaks; direct fills (bucket, hopper,
@@ -268,6 +290,9 @@ public final class ManaPipeTransport {
             Level level = be.getLevel();
             double f = level == null ? 1.0 : factor();
             if (f >= 1.0) return delegate.fill(resource, action);
+
+            // Mana is leaking through copper here — award "a_devastating_loss" to a nearby player.
+            if (action.execute()) awardDevastationIfClose();
 
             int offered = resource.getAmount();
             if (offered <= 0) return 0;

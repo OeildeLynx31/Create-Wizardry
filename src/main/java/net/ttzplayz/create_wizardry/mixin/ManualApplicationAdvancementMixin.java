@@ -23,8 +23,13 @@ public class ManualApplicationAdvancementMixin {
 
     @Inject(method = "awardAdvancements", at = @At("HEAD"))
     private static void create_wizardry$awardArcaneCasing(Player player, BlockState placed, CallbackInfo ci) {
-        if (placed.is(CWBlocks.ARCANE_CASING.get()) && player instanceof ServerPlayer sp && !sp.isFakePlayer()) {
+        if (!(player instanceof ServerPlayer sp) || sp.isFakePlayer()) return;
+        if (placed.is(CWBlocks.ARCANE_CASING.get())) {
             CWAdvancements.ENLIGHTENMENT_AGE.awardTo(sp);
+        }
+        // Insulating a pipe/pump with arcane sheets (turning it mana-insulated) earns "Insulated".
+        if (placed.is(net.ttzplayz.create_wizardry.util.CWTags.Blocks.MANA_INSULATED)) {
+            CWAdvancements.SPLASH_GUARD_ON.awardTo(sp);
         }
     }
 }

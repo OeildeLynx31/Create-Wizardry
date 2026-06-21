@@ -26,6 +26,7 @@ public class CWBlockDropsProvider extends BlockLootSubProvider {
         dropSelf(CWBlocks.ARCANE_CASING.get());
         dropSelf(CWBlocks.ARCANE_PIPE.get());
         dropSelf(CWBlocks.SMART_ARCANE_PIPE.get());
+        dropSelf(CWBlocks.ARCANE_PUMP.get());
         // Glass + encased variants drop the regular arcane pipe (mirrors Create's fluid pipe family).
         dropOther(CWBlocks.GLASS_ARCANE_PIPE.get(), CWBlocks.ARCANE_PIPE.get());
         dropOther(CWBlocks.ENCASED_ARCANE_PIPE.get(), CWBlocks.ARCANE_PIPE.get());

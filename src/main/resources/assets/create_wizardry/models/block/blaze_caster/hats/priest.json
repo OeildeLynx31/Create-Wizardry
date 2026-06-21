@@ -2,6 +2,7 @@
   "loader": "neoforge:obj",
   "model": "create_wizardry:models/obj/hat/priest.geo.obj",
   "flip_v": true,
+  "automatic_culling": false,
   "render_type": "minecraft:cutout_mipped",
   "textures": {
     "none": "irons_spellbooks:models/armor/priest"

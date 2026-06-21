@@ -1,0 +1,18 @@
+{
+  "type": "create:filling",
+  "ingredients": [
+    {
+      "tag": "create_wizardry:create_wizardry_buckets"
+    },
+    {
+      "type": "neoforge:single",
+      "amount": 500,
+      "fluid": "create_wizardry:mana"
+    }
+  ],
+  "results": [
+    {
+      "id": "create_wizardry:arcane_sheet"
+    }
+  ]
+}

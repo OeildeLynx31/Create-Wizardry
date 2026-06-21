@@ -2,6 +2,7 @@
   "loader": "neoforge:obj",
   "model": "create_wizardry:models/obj/hat/electromancer.geo.obj",
   "flip_v": true,
+  "automatic_culling": false,
   "render_type": "minecraft:cutout_mipped",
   "textures": {
     "none": "create_wizardry:block/blaze_caster/hats/electromancer"

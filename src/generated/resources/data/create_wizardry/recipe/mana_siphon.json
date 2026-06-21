@@ -1,0 +1,29 @@
+{
+  "type": "create:mechanical_crafting",
+  "accept_mirrored": true,
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "create_wizardry:arcane_sheet"
+    },
+    "C": {
+      "item": "create_wizardry:arcane_casing"
+    },
+    "D": {
+      "item": "create:item_drain"
+    },
+    "P": {
+      "item": "create_wizardry:arcane_pump"
+    }
+  },
+  "pattern": [
+    "A A",
+    "APA",
+    " C ",
+    "ADA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_wizardry:mana_siphon"
+  }
+}

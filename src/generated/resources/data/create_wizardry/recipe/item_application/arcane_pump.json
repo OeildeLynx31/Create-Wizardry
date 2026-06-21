@@ -1,0 +1,16 @@
+{
+  "type": "create:item_application",
+  "ingredients": [
+    {
+      "item": "create:mechanical_pump"
+    },
+    {
+      "item": "create_wizardry:arcane_sheet"
+    }
+  ],
+  "results": [
+    {
+      "id": "create_wizardry:arcane_pump"
+    }
+  ]
+}

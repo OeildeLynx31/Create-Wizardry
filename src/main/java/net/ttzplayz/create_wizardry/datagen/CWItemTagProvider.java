@@ -11,11 +11,13 @@ import net.ttzplayz.create_wizardry.item.CWItems;
 import java.util.concurrent.CompletableFuture;
 
 import static com.simibubi.create.AllTags.AllItemTags.*;
+import static com.simibubi.create.AllItems.*;
 import static io.redspace.ironsspellbooks.registries.ItemRegistry.*;
 import static net.neoforged.neoforge.common.Tags.Items.BUCKETS;
 import static net.neoforged.neoforge.common.Tags.Items.NUGGETS;
 import static net.ttzplayz.create_wizardry.item.CWItems.*;
-import static net.ttzplayz.create_wizardry.spell.CWTags.Items.CW_BUCKETS;
+import static net.ttzplayz.create_wizardry.util.CWTags.Items.CW_BUCKETS;
+import static net.ttzplayz.create_wizardry.util.CWTags.Items.SHEETS;
 
 public class CWItemTagProvider extends ItemTagsProvider {
     public CWItemTagProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagLookup<Block>> blockTags, ExistingFileHelper existingFileHelper) {
@@ -46,5 +48,13 @@ public class CWItemTagProvider extends ItemTagsProvider {
                 .add(BLOOD_STAFF.get())
                 .add(LIGHTNING_ROD_STAFF.get())
                 .add(GRAYBEARD_STAFF.get());
+        tag(SHEETS)
+                .add(IRON_SHEET.get())
+                .add(GOLDEN_SHEET.get())
+                .add(COPPER_SHEET.get())
+                .add(STURDY_SHEET.get())
+                .add(BRASS_SHEET.get());
+
+
     }
 }

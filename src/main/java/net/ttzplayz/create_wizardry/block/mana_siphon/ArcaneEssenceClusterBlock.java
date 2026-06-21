@@ -106,8 +106,10 @@ public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterlogge
             int count = harvestYield(state.getValue(AGE), level.getRandom());
             popResource(level, pos, new ItemStack(ItemRegistry.ARCANE_ESSENCE.get(), count));
             level.playSound(null, pos, SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
-            // Reset to a fresh bud on its host so it can regrow.
-            level.setBlockAndUpdate(pos, state.setValue(AGE, 0));
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp && !sp.isFakePlayer())
+                net.ttzplayz.create_wizardry.advancement.CWAdvancements.BABY_BLUE.awardTo(sp);
+            // Harvesting breaks the cluster off its host (essence already popped above).
+            level.removeBlock(pos, false);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

@@ -47,7 +47,7 @@ import net.ttzplayz.create_wizardry.block.pipe.ManaPipeTransport;
 import net.ttzplayz.create_wizardry.effect.CWMobEffects;
 import net.ttzplayz.create_wizardry.entity.CWManaTransformations;
 import net.ttzplayz.create_wizardry.particle.CWParticles;
-import net.ttzplayz.create_wizardry.spell.CWTags;
+import net.ttzplayz.create_wizardry.util.CWTags;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -76,7 +76,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     private static final int EGG_DRAIN_STEPS = 30;
 
-    private static final int DEPLETION_DURATION = 1200;
+    private static final int DEPLETION_DURATION = 300;
 
     private static final double SPELL_PULL_SPEED = 0.55;
     private static final double SPELL_CONSUME_DIST = 1.4;
@@ -93,6 +93,8 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     private final Map<BlockPos, Integer> eggProgress = new HashMap<>();
     /**mB siphoned from caster out of max-mana pool */
     private final Map<UUID, Integer> casterDrain = new HashMap<>();
+    /** Player who placed the siphon (for advancements) */
+    public UUID placerUuid;
 
     public ManaSiphonBlockEntity(BlockPos pos, BlockState state) {
         super(CWBlockEntities.MANA_SIPHON_BE.get(), pos, state);
@@ -132,12 +134,21 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(compound, registries, clientPacket);
         compound.putInt("GrowthCooldown", growthCooldown);
+        if (placerUuid != null) compound.putUUID("Placer", placerUuid);
     }
 
     @Override
     protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
         super.read(compound, registries, clientPacket);
         growthCooldown = compound.getInt("GrowthCooldown");
+        placerUuid = compound.hasUUID("Placer") ? compound.getUUID("Placer") : null;
+    }
+
+    /** Award an advancement to the placer if they are online */
+    private void awardOwner(net.ttzplayz.create_wizardry.advancement.CWAdvancement advancement) {
+        if (placerUuid == null || level == null) return;
+        Player owner = level.getPlayerByUUID(placerUuid);
+        if (owner != null) advancement.awardTo(owner);
     }
 
     @Override
@@ -196,7 +207,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     // BOSS INTERACTIONS
 
-    /** Tyros, or an activated Dead King, overload and destroy the Siphon. Returns true if broken. */
+    /** Tyros/Dead King overload and destroy the Siphon; returns true if broken */
     private boolean bossBreakCheck(AABB box) {
         boolean overload = !level.getEntitiesOfClass(FireBossEntity.class, box).isEmpty();
         if (!overload) {
@@ -269,6 +280,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         int accepted = fillMana(Config.manaSiphonDrainPerOp);
         if (accepted <= 0) return; // tank full: suppressed, but no further drain progress
         spawnDrainParticles(caster);
+        awardOwner(net.ttzplayz.create_wizardry.advancement.CWAdvancements.YOUR_SOUL_IS_MINE);
 
         // transforms when all mana is siphoned
         int pool = Math.max(1, (int) caster.getAttributeValue(AttributeRegistry.MAX_MANA));

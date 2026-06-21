@@ -97,6 +97,7 @@ public class CWPartialModels {
 
     public static final Map<String, PartialModel> HAT_BASE_BY_ITEM = Map.of(
         "wizard_helmet",         ISS_WIZARD_HAT_BASE,
+        "wizard_hat",            ISS_WIZARD_HAT_BASE,
         "netherite_mage_helmet", ISS_NETHERITE_MAGE_HAT_BASE
     );
 
@@ -112,6 +113,7 @@ public class CWPartialModels {
         Map.entry("tarnished_helmet",        ISS_TARNISHED_HAT),
         Map.entry("wandering_magician_helmet", ISS_WANDERING_MAGICIAN_HAT),
         Map.entry("pumpkin_helmet",          ISS_PUMPKIN_HAT),
+        Map.entry("wizard_hat",              ISS_WIZARD_HAT),
         Map.entry("netherite_mage_helmet",   ISS_NETHERITE_MAGE_HAT)
     );
 

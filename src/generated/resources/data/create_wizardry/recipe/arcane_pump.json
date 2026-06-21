@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "create_wizardry:arcane_pipe"
+    },
+    {
+      "item": "create:cogwheel"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "create_wizardry:arcane_pump"
+  }
+}

@@ -22,6 +22,7 @@ public class CWLangProvider extends LanguageProvider {
         add("block.create_wizardry.smart_arcane_pipe", "Smart Arcane Pipe");
         add("block.create_wizardry.glass_arcane_pipe", "Glass Arcane Pipe");
         add("block.create_wizardry.encased_arcane_pipe", "Encased Arcane Pipe");
+        add("block.create_wizardry.arcane_pump", "Arcane Pump");
         add("item.create_wizardry.crushed_mithril", "Crushed Raw Mithril");
         add("item.create_wizardry.mithril_nugget", "Mithril Nugget");
         add("item.create_wizardry.mana_bucket", "Bucket of Mana");

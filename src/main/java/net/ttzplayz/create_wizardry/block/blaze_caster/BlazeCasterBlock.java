@@ -107,8 +107,29 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
 
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
+        // Right-click: toggle the caster mode (sentry <-> impulse).
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
+        if (!level.isClientSide) {
+            level.setBlockAndUpdate(pos, state.cycle(MODE));
+            withBlockEntityDo(level, pos, be -> {
+                be.lockedHead = false;
+                be.notifyUpdate();
+            });
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public BlockState updateAfterWrenched(BlockState newState, UseOnContext context) {
+        return IWrenchable.super.updateAfterWrenched(newState, context);
+    }
+
+    @Override
+    public InteractionResult onSneakWrenched(BlockState state, UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        // Impulse mode: shift-right-click locks/unlocks the head toward the player.
         if (state.getValue(MODE) == CasterMode.IMPULSE) {
             if (!level.isClientSide) {
                 Player player = context.getPlayer();
@@ -123,26 +144,8 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
-        return IWrenchable.super.onWrenched(state, context);
-    }
-
-    @Override
-    public BlockState updateAfterWrenched(BlockState newState, UseOnContext context) {
-        return IWrenchable.super.updateAfterWrenched(newState, context);
-    }
-
-    @Override
-    public InteractionResult onSneakWrenched(BlockState state, UseOnContext context) {
-        Level level = context.getLevel();
-        BlockPos pos = context.getClickedPos();
-        if (!level.isClientSide) {
-            level.setBlockAndUpdate(pos, state.cycle(MODE));
-            withBlockEntityDo(level, pos, be -> {
-                be.lockedHead = false;
-                be.notifyUpdate();
-            });
-        }
-        return InteractionResult.SUCCESS;
+        // Sentry mode: shift-right-click picks the block up (default wrench behaviour).
+        return IWrenchable.super.onSneakWrenched(state, context);
     }
 
     @Override

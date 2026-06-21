@@ -8,7 +8,7 @@ import net.neoforged.neoforge.common.data.BlockTagsProvider;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.ttzplayz.create_wizardry.CreateWizardry;
 import net.ttzplayz.create_wizardry.block.CWBlocks;
-import net.ttzplayz.create_wizardry.spell.CWTags;
+import net.ttzplayz.create_wizardry.util.CWTags;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
@@ -28,9 +28,18 @@ public class CWBlockTagProvider extends BlockTagsProvider {
                 CWBlocks.SMART_ARCANE_PIPE.get(),
                 CWBlocks.GLASS_ARCANE_PIPE.get(),
                 CWBlocks.ENCASED_ARCANE_PIPE.get(),
+                CWBlocks.ARCANE_PUMP.get(),
                 CWBlocks.MANA_SIPHON.get(),
                 CWBlocks.ARCANE_ESSENCE_CLUSTER.get());
         tag(STORAGE_BLOCKS).add(CWBlocks.ARCANE_BLOCK.get());
+
+        // Mana-insulated blocks carry mana losslessly (drives the pipe leak in ManaPipeTransport).
+        tag(CWTags.Blocks.MANA_INSULATED).add(
+                CWBlocks.ARCANE_PIPE.get(),
+                CWBlocks.SMART_ARCANE_PIPE.get(),
+                CWBlocks.GLASS_ARCANE_PIPE.get(),
+                CWBlocks.ENCASED_ARCANE_PIPE.get(),
+                CWBlocks.ARCANE_PUMP.get());
 
         // Gem/crystal blocks the Mana Siphon can crystallize Arcane Essence onto.
         tag(CWTags.Blocks.CRYSTALLINE).add(

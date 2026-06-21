@@ -16,6 +16,7 @@ import net.ttzplayz.create_wizardry.block.mana_siphon.ArcaneEssenceClusterBlock;
 import net.ttzplayz.create_wizardry.block.mana_siphon.ManaSiphonBlock;
 import net.ttzplayz.create_wizardry.block.pipe.ArcaneGlassPipeBlock;
 import net.ttzplayz.create_wizardry.block.pipe.ArcanePipeBlock;
+import net.ttzplayz.create_wizardry.block.pipe.ArcanePumpBlock;
 import net.ttzplayz.create_wizardry.block.pipe.EncasedArcanePipeBlock;
 import net.ttzplayz.create_wizardry.block.pipe.SmartArcanePipeBlock;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
@@ -101,6 +102,10 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
     public static final DeferredBlock<EncasedArcanePipeBlock> ENCASED_ARCANE_PIPE =
             registerBlockNoItem("encased_arcane_pipe", () -> new EncasedArcanePipeBlock(
                     pipeProperties().noOcclusion().mapColor(MapColor.TERRACOTTA_LIGHT_GRAY)));
+
+    // Mana-safe (lossless) counterpart to Create's Mechanical Pump.
+    public static final DeferredBlock<ArcanePumpBlock> ARCANE_PUMP =
+            registerBlock("arcane_pump", () -> new ArcanePumpBlock(pipeProperties().noOcclusion()));
 
     private static BlockBehaviour.Properties pipeProperties() {
         return Block.Properties.of()

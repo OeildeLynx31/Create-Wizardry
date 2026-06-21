@@ -9,6 +9,7 @@ import net.ttzplayz.create_wizardry.CreateWizardry;
 import com.simibubi.create.content.fluids.pipes.FluidPipeBlockEntity;
 import com.simibubi.create.content.fluids.pipes.SmartFluidPipeBlockEntity;
 import com.simibubi.create.content.fluids.pipes.StraightPipeBlockEntity;
+import com.simibubi.create.content.fluids.pump.PumpBlockEntity;
 import net.ttzplayz.create_wizardry.block.blaze_caster.BlazeCasterBlockEntity;
 import net.ttzplayz.create_wizardry.block.channeler.ChannelerBlockEntity;
 import net.ttzplayz.create_wizardry.block.mana_siphon.ManaSiphonBlockEntity;
@@ -59,6 +60,12 @@ public class CWBlockEntities {
             BLOCK_ENTITIES.register("smart_arcane_pipe", () -> BlockEntityType.Builder.<SmartFluidPipeBlockEntity>of(
                     (pos, state) -> new SmartFluidPipeBlockEntity(CWBlockEntities.SMART_ARCANE_PIPE.get(), pos, state),
                     CWBlocks.SMART_ARCANE_PIPE.get()).build(null));
+
+    // Arcane Pump reuses Create's PumpBlockEntity, bound to our own block-bound type.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PumpBlockEntity>> ARCANE_PUMP =
+            BLOCK_ENTITIES.register("arcane_pump", () -> BlockEntityType.Builder.<PumpBlockEntity>of(
+                    (pos, state) -> new PumpBlockEntity(CWBlockEntities.ARCANE_PUMP.get(), pos, state),
+                    CWBlocks.ARCANE_PUMP.get()).build(null));
 
 
     public static void register(IEventBus eventBus) {

@@ -10,10 +10,16 @@ import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visual.DynamicVisual;
 import dev.engine_room.flywheel.api.visual.TickableVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
+import dev.engine_room.flywheel.api.material.Material;
+import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
 import dev.engine_room.flywheel.lib.instance.TransformedInstance;
+import dev.engine_room.flywheel.lib.material.SimpleMaterial;
+import dev.engine_room.flywheel.lib.model.ModelUtil;
 import dev.engine_room.flywheel.lib.model.Models;
+import dev.engine_room.flywheel.lib.model.baked.BakedModelBuilder;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
+import dev.engine_room.flywheel.lib.util.RendererReloadCache;
 import dev.engine_room.flywheel.lib.transform.Translate;
 import dev.engine_room.flywheel.lib.visual.AbstractBlockEntityVisual;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
@@ -32,6 +38,22 @@ import java.util.function.Consumer;
 
 public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBlockEntity>
         implements SimpleDynamicVisual, SimpleTickableVisual {
+
+    // The hats are baked from OBJ geometry that is single-sided, so backface culling makes their
+    // far faces vanish at certain angles. Re-bake the partial with culling disabled. Cached per
+    // PartialModel (and cleared on renderer reload) so each hat maps to one shared instancer.
+    private static final RendererReloadCache<PartialModel, Model> NO_CULL_MODELS =
+            new RendererReloadCache<>(partial -> new BakedModelBuilder(partial.get())
+                    .materialFunc((renderType, shaded) -> {
+                        Material base = ModelUtil.getMaterial(renderType, shaded);
+                        return base == null ? null
+                                : new SimpleMaterial.Builder().copyFrom(base).backfaceCulling(false).build();
+                    })
+                    .build());
+
+    private static Model noCullPartial(PartialModel partial) {
+        return NO_CULL_MODELS.get(partial);
+    }
 
     private BlazeBurnerBlock.HeatLevel heatLevel;
     private final TransformedInstance head;
@@ -57,7 +79,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         PartialModel hatModel = blockEntity.getHatModel(heatLevel);
         if (hatModel != null) {
             hat = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatModel))
+                    .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatModel))
                     .createInstance();
             hat.light(LightTexture.FULL_BRIGHT);
         }
@@ -65,7 +87,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         PartialModel hatBaseModel = blockEntity.getHatBaseModel(heatLevel);
         if (hatBaseModel != null) {
             hatBase = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatBaseModel))
+                    .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatBaseModel))
                     .createInstance();
             hatBase.light(LightTexture.FULL_BRIGHT);
         }
@@ -125,12 +147,12 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
             if (hatModel != null) {
                 if (hat == null) {
                     hat = instancerProvider()
-                            .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatModel))
+                            .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatModel))
                             .createInstance();
                     hat.light(LightTexture.FULL_BRIGHT);
                 } else {
                     instancerProvider()
-                            .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatModel))
+                            .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatModel))
                             .stealInstance(hat);
                 }
             } else if (hat != null) {
@@ -142,12 +164,12 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
             if (hatBaseModel != null) {
                 if (hatBase == null) {
                     hatBase = instancerProvider()
-                            .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatBaseModel))
+                            .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatBaseModel))
                             .createInstance();
                     hatBase.light(LightTexture.FULL_BRIGHT);
                 } else {
                     instancerProvider()
-                            .instancer(InstanceTypes.TRANSFORMED, Models.partial(hatBaseModel))
+                            .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatBaseModel))
                             .stealInstance(hatBase);
                 }
             } else if (hatBase != null) {
@@ -175,7 +197,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         PartialModel currentHatModel = blockEntity.getHatModel(newHeatLevel);
         if (currentHatModel != null && hat == null) {
             hat = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(currentHatModel))
+                    .instancer(InstanceTypes.TRANSFORMED, noCullPartial(currentHatModel))
                     .createInstance();
             hat.light(LightTexture.FULL_BRIGHT);
         } else if (currentHatModel == null && hat != null) {
@@ -187,7 +209,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         PartialModel currentHatBaseModel = blockEntity.getHatBaseModel(newHeatLevel);
         if (currentHatBaseModel != null && hatBase == null) {
             hatBase = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(currentHatBaseModel))
+                    .instancer(InstanceTypes.TRANSFORMED, noCullPartial(currentHatBaseModel))
                     .createInstance();
             hatBase.light(LightTexture.FULL_BRIGHT);
         } else if (currentHatBaseModel == null && hatBase != null) {

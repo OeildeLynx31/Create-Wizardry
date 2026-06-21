@@ -107,6 +107,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
 
     private IFluidHandler decayingCapability(Direction side) {
+        if (side != Direction.DOWN) return null; // only connect from the bottom
         if (internalTank == null) return null;
         return decayingCaps.computeIfAbsent(side,
                 s -> ManaPipeTransport.decaying(this, s, internalTank.getCapability()));
@@ -143,12 +144,14 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         boolean added = super.addToGoggleTooltip(tooltip, isPlayerSneaking);
         if (internalTank == null) return added;
-        int radius = currentRadius();
-        int diameter = radius * 2 + 1;
+        boolean expanded = getBlockState().getValue(ManaSiphonBlock.EXPANDED);
+        int diameter = currentRadius() * 2 + 1;
         tooltip.add(Component.translatable("block.create_wizardry.mana_siphon")
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.literal(" ")
-                .append(Component.literal(diameter + "x" + diameter + " range")
+                .append(Component.translatable("create_wizardry.tooltip.mana_siphon."
+                        + (expanded ? "expanded" : "confined")).withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(" (" + diameter + "x" + diameter + ")")
                         .withStyle(ChatFormatting.DARK_GRAY)));
         containedFluidTooltip(tooltip, isPlayerSneaking, internalTank.getPrimaryHandler());
         return true;
@@ -241,6 +244,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
                 continue;
             }
             if (e instanceof Player player) {
+                if (player.hasEffect(CWMobEffects.DEPLETION)) continue; // depleted: not drained, regens slowly
                 applySiphonLock(player);
                 drainPlayer(player);
             }
@@ -252,16 +256,18 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     }
 
     private void drainCaster(AbstractSpellCastingMob caster) {
-        int accepted = fillMana(Config.manaSiphonDrainPerOp);
-        if (accepted <= 0) return; // tank full
-
-        // debuffs while draining (cant cast)
+        // Suppress the caster while it sits in the field, even if our tank is full: zero its mana
+        // and (re)apply SIPHON_LOCK. The actual cast block is done by AbstractSpellCastingMobMixin,
+        // which no-ops initiateCastSpell while SIPHON_LOCK is present (calling cancelCast() here
+        // would instead *complete* the spell, since cancelCast -> castComplete -> onServerCastComplete).
         MagicData md = caster.getMagicData();
         md.setMana(0);
         md.resetCastingState();
         caster.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, SCAN_INTERVAL + 10, 2, false, false));
         applySiphonLock(caster);
-        shake(caster);
+
+        int accepted = fillMana(Config.manaSiphonDrainPerOp);
+        if (accepted <= 0) return; // tank full: suppressed, but no further drain progress
         spawnDrainParticles(caster);
 
         // transforms when all mana is siphoned
@@ -315,13 +321,6 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     private void applySiphonLock(LivingEntity e) {
         e.addEffect(new MobEffectInstance(CWMobEffects.SIPHON_LOCK, SCAN_INTERVAL + 5, 0, true, false, false));
-    }
-
-    private void shake(LivingEntity e) {
-        double jx = (level.random.nextDouble() - 0.5) * 0.2;
-        double jz = (level.random.nextDouble() - 0.5) * 0.2;
-        e.setDeltaMovement(e.getDeltaMovement().add(jx, 0, jz));
-        e.hurtMarked = true;
     }
 
     private void spawnDrainParticles(LivingEntity e) {

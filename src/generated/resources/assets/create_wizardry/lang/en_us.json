@@ -54,6 +54,8 @@
   "create_wizardry.tooltip.hat.spell_power_boost": "+5%% Spell Power",
   "create_wizardry.tooltip.hat.tarnished_mana": "+1,500 Mana",
   "create_wizardry.tooltip.hat.tarnished_penalty": "-15% Spell Power",
+  "create_wizardry.tooltip.mana_siphon.confined": "Confined",
+  "create_wizardry.tooltip.mana_siphon.expanded": "Expanded",
   "create_wizardry.tooltip.mode.impulse": "Mode: Impulse",
   "create_wizardry.tooltip.mode.impulse.locked": "Impulse (Locked)",
   "create_wizardry.tooltip.mode.impulse.unlocked": "Impulse (Unlocked)",

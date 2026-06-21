@@ -19,7 +19,8 @@ public class CWBlockDropsProvider extends BlockLootSubProvider {
         dropSelf(CWBlocks.CHANNELER.get());
         dropSelf(CWBlocks.BLAZE_CASTER.get());
         dropSelf(CWBlocks.MANA_SIPHON.get());
-        // Arcane Essence cluster is harvested by hand (right-click); breaking it drops nothing.
+        // Arcane Essence cluster drops are handled in code (ArcaneEssenceClusterBlock#getDrops, age-scaled);
+        // this no-op loot table just satisfies datagen's known-block validation.
         add(CWBlocks.ARCANE_ESSENCE_CLUSTER.get(), noDrop());
         dropSelf(CWBlocks.ARCANE_BLOCK.get());
         dropSelf(CWBlocks.ARCANE_CASING.get());

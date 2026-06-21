@@ -231,7 +231,8 @@ public class CreateWizardry {
 
     @SubscribeEvent
     public void onSpellPreCast(SpellPreCastEvent event) {
-        // Depleted players (fully drained by a Mana Siphon) cannot cast spells.
+        // Depleted players (fully drained by a Mana Siphon) cannot cast spells. (This event only
+        // fires for players; drained mobs are suppressed via SIPHON_LOCK in onEntityTick.)
         if (event.getEntity() != null && event.getEntity().hasEffect(CWMobEffects.DEPLETION)) {
             event.setCanceled(true);
         }

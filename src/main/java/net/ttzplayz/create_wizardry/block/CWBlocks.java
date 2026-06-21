@@ -78,7 +78,7 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
             registerBlockNoItem("arcane_essence_cluster", () -> new ArcaneEssenceClusterBlock(
                     Block.Properties.of()
                             .mapColor(MapColor.COLOR_PURPLE)
-                            .strength(1.5F)
+                            .strength(0.3F)
                             .sound(SoundType.AMETHYST_CLUSTER)
                             .lightLevel(s -> 5)
                             .noOcclusion()

@@ -25,10 +25,13 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterloggedBlock {
 
@@ -107,6 +110,12 @@ public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterlogge
             level.setBlockAndUpdate(pos, state.setValue(AGE, 0));
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public @NotNull List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
+        int count = harvestYield(state.getValue(AGE), params.getLevel().getRandom());
+        return List.of(new ItemStack(ItemRegistry.ARCANE_ESSENCE.get(), count));
     }
 
     /** Essence dropped per stage: bud 1-2, cluster 3-4, crystal 5-7. */

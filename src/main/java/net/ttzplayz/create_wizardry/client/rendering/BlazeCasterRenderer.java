@@ -187,7 +187,7 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
                     light, overlay, seed,
                     animation, horizontalAngle, headY,
                     blazeModel, hatModel, hatDyeColor);
-        // Hat base (non-dyeable metal parts: buckle, helmet — rendered untinted)
+        // hat base, untinted metal parts
         if (hatBaseModel != null)
             renderHat(
                     blockState, heatLevel, renderTime,

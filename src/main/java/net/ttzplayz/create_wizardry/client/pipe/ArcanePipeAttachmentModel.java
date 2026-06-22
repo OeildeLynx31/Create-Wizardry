@@ -92,11 +92,8 @@ public class ArcanePipeAttachmentModel extends BakedModelWrapperWithData {
     public List<BakedQuad> getQuads(BlockState state, Direction side, RandomSource rand, ModelData data,
         RenderType renderType) {
         List<BakedQuad> quads = new ArrayList<>();
-        // Only emit the base model's quads into the render layers it actually declares. For the glass
-        // window (cutout_mipped) this keeps the transparent tube out of the solid pass, which would
-        // otherwise draw its see-through pixels as opaque black. Opaque pipes only declare solid, so
-        // this guard is a no-op for them.
-        // A null renderType means "all layers" (e.g. block-break particle sampling), so skip the guard.
+        // emit base quads only into declared layers, keeping glass out of the solid pass
+        // null renderType means all layers, so skip the guard
         if (renderType == null || super.getRenderTypes(state, rand, data).contains(renderType))
             quads.addAll(super.getQuads(state, side, rand, data, renderType));
         if (data.has(PIPE_PROPERTY)) {

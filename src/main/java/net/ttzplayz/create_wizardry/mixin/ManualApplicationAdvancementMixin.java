@@ -27,7 +27,7 @@ public class ManualApplicationAdvancementMixin {
         if (placed.is(CWBlocks.ARCANE_CASING.get())) {
             CWAdvancements.ENLIGHTENMENT_AGE.awardTo(sp);
         }
-        // Insulating a pipe/pump with arcane sheets (turning it mana-insulated) earns "Insulated".
+        // insulating a pipe/pump earns the advancement
         if (placed.is(net.ttzplayz.create_wizardry.util.CWTags.Blocks.MANA_INSULATED)) {
             CWAdvancements.SPLASH_GUARD_ON.awardTo(sp);
         }

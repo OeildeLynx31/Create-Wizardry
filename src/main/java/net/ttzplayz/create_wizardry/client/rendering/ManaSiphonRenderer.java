@@ -19,7 +19,7 @@ import net.ttzplayz.create_wizardry.client.CWPartialModels;
 public class ManaSiphonRenderer extends SafeBlockEntityRenderer<ManaSiphonBlockEntity>
         implements PartialModelBlockEntityRenderer {
 
-    // Kept in sync with ManaSiphonVisual.
+    // kept in sync with ManaSiphonVisual
     private static final float OUTWARD_DEGREES = -22.5f;
     private static final float HINGE_X = 0.5f;
     private static final float HINGE_Y = 14f / 16f;

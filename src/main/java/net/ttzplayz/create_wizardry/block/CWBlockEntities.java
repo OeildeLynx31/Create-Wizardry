@@ -40,7 +40,7 @@ public class CWBlockEntities {
                     () -> BlockEntityType.Builder.of(ManaSiphonBlockEntity::new, CWBlocks.MANA_SIPHON.get()).build(null)
             );
 
-    // Arcane pipe family reuses Create's block entity implementations with our own block-bound types.
+    // arcane pipe family reuses create's bes with our own types
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FluidPipeBlockEntity>> ARCANE_PIPE =
             BLOCK_ENTITIES.register("arcane_pipe", () -> BlockEntityType.Builder.<FluidPipeBlockEntity>of(
                     (pos, state) -> new FluidPipeBlockEntity(CWBlockEntities.ARCANE_PIPE.get(), pos, state),
@@ -61,7 +61,7 @@ public class CWBlockEntities {
                     (pos, state) -> new SmartFluidPipeBlockEntity(CWBlockEntities.SMART_ARCANE_PIPE.get(), pos, state),
                     CWBlocks.SMART_ARCANE_PIPE.get()).build(null));
 
-    // Arcane Pump reuses Create's PumpBlockEntity, bound to our own block-bound type.
+    // arcane pump reuses create's PumpBlockEntity with our own type
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PumpBlockEntity>> ARCANE_PUMP =
             BLOCK_ENTITIES.register("arcane_pump", () -> BlockEntityType.Builder.<PumpBlockEntity>of(
                     (pos, state) -> new PumpBlockEntity(CWBlockEntities.ARCANE_PUMP.get(), pos, state),

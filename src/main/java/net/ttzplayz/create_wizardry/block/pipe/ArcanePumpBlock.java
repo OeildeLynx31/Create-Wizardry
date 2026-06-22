@@ -6,11 +6,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Arcane counterpart of Create's {@link PumpBlock}. Behaves identically (a kinetic fluid pump), but
- * uses Create: Wizardry's own block entity type so it can be tagged {@code MANA_INSULATED} and move
- * mana losslessly — see {@link ManaPipeTransport#isArcanePipe}.
- */
+// create's pump with our own be type so it can be mana-insulated
 public class ArcanePumpBlock extends PumpBlock {
 
     public ArcanePumpBlock(Properties properties) {

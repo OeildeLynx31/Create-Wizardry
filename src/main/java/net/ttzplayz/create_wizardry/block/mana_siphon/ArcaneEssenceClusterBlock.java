@@ -66,12 +66,7 @@ public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterlogge
         return rotateShapeForFace(SHAPES_BY_AGE[state.getValue(AGE)], direction);
     }
 
-    /**
-     * Rotates a shape authored as if growing UP from the floor onto the given attachment face, so the
-     * collision/selection box tracks the model on every face. In particular {@link Direction#DOWN} —
-     * the default, where the cluster hangs from a ceiling — flips the box in Y so it sits against the
-     * top of the cell instead of the bottom.
-     */
+    // rotate the up-authored shape onto the attachment face
     private static VoxelShape rotateShapeForFace(VoxelShape upShape, Direction face) {
         if (face == Direction.UP) return upShape;
         List<VoxelShape> parts = new java.util.ArrayList<>();
@@ -84,7 +79,7 @@ public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterlogge
         return out;
     }
 
-    /** Rotates the UP-authored box so +Y points toward {@code face}; returns {minX,minY,minZ,maxX,maxY,maxZ}. */
+    // rotate box so +Y points toward face
     private static double[] rotateBox(double x1, double y1, double z1, double x2, double y2, double z2, Direction face) {
         double[] min = {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY};
         double[] max = {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY};
@@ -148,7 +143,7 @@ public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterlogge
             level.playSound(null, pos, SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
             if (player instanceof net.minecraft.server.level.ServerPlayer sp && !sp.isFakePlayer())
                 net.ttzplayz.create_wizardry.advancement.CWAdvancements.BABY_BLUE.awardTo(sp);
-            // Harvesting breaks the cluster off its host (essence already popped above).
+            // break cluster off host
             level.removeBlock(pos, false);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
@@ -160,7 +155,7 @@ public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterlogge
         return List.of(new ItemStack(ItemRegistry.ARCANE_ESSENCE.get(), count));
     }
 
-    /** Essence dropped per stage: bud 1-2, cluster 3-4, crystal 5-7. */
+    // essence per stage: bud 1-2, cluster 3-4, crystal 5-7
     private static int harvestYield(int age, RandomSource random) {
         return switch (age) {
             case 0 -> 1 + random.nextInt(2);   // 1-2

@@ -9,7 +9,9 @@
     "BasinInkMixingMixin",
     "EquipableNoDeployerSelfEquipMixin",
     "FluidNetworkManaLeakMixin",
+    "FluidPropagatorMixin",
     "FluidTankManaLeakMixin",
+    "FluidTransportBehaviourMixin",
     "PipeLeakParticleMixin",
     "ManualApplicationAdvancementMixin",
     "NoopFluidMixin"

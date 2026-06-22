@@ -33,7 +33,7 @@ public class CWBlockTagProvider extends BlockTagsProvider {
                 CWBlocks.ARCANE_ESSENCE_CLUSTER.get());
         tag(STORAGE_BLOCKS).add(CWBlocks.ARCANE_BLOCK.get());
 
-        // Mana-insulated blocks carry mana losslessly (drives the pipe leak in ManaPipeTransport).
+        // mana-insulated blocks carry mana losslessly
         tag(CWTags.Blocks.MANA_INSULATED).add(
                 CWBlocks.ARCANE_PIPE.get(),
                 CWBlocks.SMART_ARCANE_PIPE.get(),
@@ -41,7 +41,7 @@ public class CWBlockTagProvider extends BlockTagsProvider {
                 CWBlocks.ENCASED_ARCANE_PIPE.get(),
                 CWBlocks.ARCANE_PUMP.get());
 
-        // Gem/crystal blocks the Mana Siphon can crystallize Arcane Essence onto.
+        // blocks the siphon can crystallize essence onto
         tag(CWTags.Blocks.CRYSTALLINE).add(
                 Blocks.DIAMOND_BLOCK,
                 Blocks.EMERALD_BLOCK,

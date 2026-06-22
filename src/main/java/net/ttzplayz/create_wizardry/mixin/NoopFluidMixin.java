@@ -10,13 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * NoopFluid backs many Iron's Spells 'n Spellbooks fluids (blood, inks, elixirs, potions) and is
- * intentionally unplaceable: its {@code createLegacyBlock} returns AIR, so the blood bucket (which
- * wraps the noop {@code irons_spellbooks:blood}) places nothing. For the blood instance only, we
- * redirect that to our own flowing-blood block ({@link CWFluidRegistry#BLOOD_FLUID_BLOCK}). Every
- * other NoopFluid is left untouched, and the bucket/recipe/spell identity stays irons_spellbooks:blood.
- */
+// redirect noop blood placement to our flowing blood block; other noop fluids untouched
 @Mixin(NoopFluid.class)
 public abstract class NoopFluidMixin {
 

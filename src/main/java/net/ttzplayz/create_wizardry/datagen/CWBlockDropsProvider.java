@@ -19,15 +19,14 @@ public class CWBlockDropsProvider extends BlockLootSubProvider {
         dropSelf(CWBlocks.CHANNELER.get());
         dropSelf(CWBlocks.BLAZE_CASTER.get());
         dropSelf(CWBlocks.MANA_SIPHON.get());
-        // Arcane Essence cluster drops are handled in code (ArcaneEssenceClusterBlock#getDrops, age-scaled);
-        // this no-op loot table just satisfies datagen's known-block validation.
+        // cluster drops handled in code; no-op table satisfies datagen validation
         add(CWBlocks.ARCANE_ESSENCE_CLUSTER.get(), noDrop());
         dropSelf(CWBlocks.ARCANE_BLOCK.get());
         dropSelf(CWBlocks.ARCANE_CASING.get());
         dropSelf(CWBlocks.ARCANE_PIPE.get());
         dropSelf(CWBlocks.SMART_ARCANE_PIPE.get());
         dropSelf(CWBlocks.ARCANE_PUMP.get());
-        // Glass + encased variants drop the regular arcane pipe (mirrors Create's fluid pipe family).
+        // glass + encased drop the regular arcane pipe
         dropOther(CWBlocks.GLASS_ARCANE_PIPE.get(), CWBlocks.ARCANE_PIPE.get());
         dropOther(CWBlocks.ENCASED_ARCANE_PIPE.get(), CWBlocks.ARCANE_PIPE.get());
     }

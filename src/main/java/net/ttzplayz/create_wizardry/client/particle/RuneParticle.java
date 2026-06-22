@@ -37,7 +37,7 @@ public class RuneParticle extends TextureSheetParticle {
 
     @Override
     public int getLightColor(float partialTick) {
-        // Full brightness so the rune glows regardless of ambient light.
+        // full brightness so the rune glows
         return 0xF000F0;
     }
 

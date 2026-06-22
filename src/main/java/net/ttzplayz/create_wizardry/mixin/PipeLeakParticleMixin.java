@@ -20,18 +20,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Sheds rune particles off ordinary (copper) Create fluid pipes and Mechanical Pumps while they carry
- * mana, to show the node leaking. Arcane pipes/pumps (this mod's lossless family) reuse the same Create
- * BE classes, so we guard by <em>block type</em> ({@link ManaPipeTransport#isArcanePipe}) and never
- * sparkle them.
- *
- * <p>Targets {@code SmartBlockEntity.tick()} (the class that actually declares {@code tick}) and
- * narrows to Create's two copper pipe BEs plus the Pump BE, so the inherited-method injection resolves
- * reliably. The "is mana flowing here" signal is the live {@link PipeConnection#getProvidedFluid()} of
- * the node (for a pump, of the pipes on its facing axis) — which only exists once mana moves through
- * Create's real network (now also true for the Mana Siphon).
- */
+// sheds rune particles off copper pipes/pumps carrying mana; arcane nodes skipped by block type
 @Mixin(SmartBlockEntity.class)
 public class PipeLeakParticleMixin {
 
@@ -40,7 +29,7 @@ public class PipeLeakParticleMixin {
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void create_wizardry$leakRunes(CallbackInfo ci) {
-        if (!Config.manaLeakingEnabled) return; // leaking disabled: no spill, no sparkle
+        if (!Config.manaLeakingEnabled) return; // leaking off
 
         Object self = this;
         boolean isPipe = self instanceof FluidPipeBlockEntity || self instanceof StraightPipeBlockEntity;
@@ -51,10 +40,10 @@ public class PipeLeakParticleMixin {
         if (!(be.getLevel() instanceof ServerLevel level)) return;
 
         BlockState state = be.getBlockState();
-        if (ManaPipeTransport.isArcanePipe(state)) return; // arcane pipes/pumps don't leak
+        if (ManaPipeTransport.isArcanePipe(state)) return; // arcane never leaks
 
         BlockPos pos = be.getBlockPos();
-        // Throttle, de-phased per position so all nodes don't puff on the same tick.
+        // throttle, de-phased per position
         if (Math.floorMod(level.getGameTime() + pos.hashCode(), CW_LEAK_PERIOD) != 0) return;
 
         boolean carryingMana = isPump
@@ -75,10 +64,7 @@ public class PipeLeakParticleMixin {
         return false;
     }
 
-    /**
-     * A pump moves fluid along its facing axis, so we look at the pipes immediately in front of and
-     * behind it and ask whether either is carrying mana on the face it shares with the pump.
-     */
+    // check pipes on the pump's facing axis for mana
     private static boolean create_wizardry$pumpCarriesMana(ServerLevel level, BlockPos pos, BlockState state) {
         if (!state.hasProperty(BlockStateProperties.FACING)) return false;
         Direction facing = state.getValue(BlockStateProperties.FACING);

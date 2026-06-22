@@ -50,7 +50,7 @@ public class CWEffectHandlers {
         @Override
         public void apply(Level level, AABB area, FluidStack fluid) {
             if (level.getGameTime() % 5L == 0L) {
-                // Same mana burst as when a mana bucket is placed/vaporizes.
+                // mana burst, same as bucket vaporize
                 CWParticles.spawnManaRunes(level, area.getCenter().x, area.getCenter().y, area.getCenter().z, 12, 0.25, 0.05);
                 level.playLocalSound(
                         area.getCenter().x, area.getCenter().y, area.getCenter().z,
@@ -69,7 +69,7 @@ public class CWEffectHandlers {
                     } else {
                         entity.addEffect(new MobEffectInstance(MobEffectRegistry.INSTANT_MANA, 1, 3, true, false));
                     }
-                    // Mana exposure can transform vanilla mobs into Iron's Spells casters (drop/deploy path).
+                    // mana exposure can transform vanilla mobs into casters
                     if (level instanceof ServerLevel serverLevel) {
                         CWManaTransformations.markManaExposed(entity);
                         CWManaTransformations.tryConvertViaDrop(serverLevel, entity);

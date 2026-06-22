@@ -750,7 +750,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .output(ARCANE_CASING.get(), 1)
                 .build(output);
         baseDeployingRecipe(output, ARCANE_CASING.get(), LAPIS_BLOCK, ARCANE_INGOT.get());
-        // MANA SIPHON — mechanically crafted from arcane sheets, an Arcane Pump, an Item Drain and casing.
+        // mana siphon
         mechanicalCrafting(MANA_SIPHON.get(), 1)
                 .patternLine("A A")
                 .patternLine("APA")

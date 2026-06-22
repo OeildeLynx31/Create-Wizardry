@@ -63,9 +63,7 @@ public class ManaSiphonVisual extends AbstractBlockEntityVisual<ManaSiphonBlockE
                 .translateBack(Translate.CENTER)
                 .setChanged();
 
-        // Splay: tilt about the prong's hinge (canonical north frame), then rotate to each of the four
-        // directions about the block centre. Composition is applied innermost-first, so the hinge tilt
-        // lands before the directional Y-spin.
+        // splay: tilt about the prong hinge, then rotate to each direction
         float tilt = OUTWARD_DEGREES * blockEntity.prongAnimation.getValue(AnimationTickHolder.getPartialTicks());
         for (int i = 0; i < prongs.length; i++) {
             prongs[i].setIdentityTransform()

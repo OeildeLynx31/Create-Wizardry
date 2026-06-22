@@ -153,7 +153,7 @@ public class CreateWizardry {
         event.enqueueWork(() -> EncasingRegistry.addVariant(
                 CWBlocks.ARCANE_PIPE.get(), CWBlocks.ENCASED_ARCANE_PIPE.get()));
 
-        // Lava meeting Blood reacts like lava meeting water: flowing lava -> crimsite, source lava -> obsidian.
+        // lava + blood: flowing lava -> crimsite, source lava -> obsidian
         event.enqueueWork(() -> {
             BlockState crimsite = BuiltInRegistries.BLOCK
                     .getOptional(ResourceLocation.fromNamespaceAndPath("create", "crimsite"))
@@ -220,9 +220,7 @@ public class CreateWizardry {
         event.add(EntityType.ARMOR_STAND, Attributes.ATTACK_DAMAGE);
     }
 
-    // Registers the bundled "arcane_alloy" resource pack so it shows up in Options > Resource Packs.
-    // It is NOT force-applied (alwaysActive=false): the player opts in by enabling it. Once enabled it
-    // renames Iron's Spellbooks' Arcane Ingot -> Arcane Alloy and our Arcane Block -> Block of Arcane Alloy.
+    // registers the opt-in arcane_alloy resource pack (renames arcane ingot/block)
     public static void addPackFinders(AddPackFindersEvent event) {
         if (event.getPackType() == PackType.CLIENT_RESOURCES) {
             event.addPackFinders(
@@ -242,7 +240,7 @@ public class CreateWizardry {
     public void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (event.getLevel().isClientSide()) return;
         if (!(event.getTarget() instanceof Mob mob)) return;
-        // Give/deploy path: using a spellbook on a Mana-exposed mob arms an Iron's Spells caster transformation.
+        // spellbook on a mana-exposed mob arms a caster transformation
         if (CWManaTransformations.tryConvertViaInteract(event.getEntity(), mob, event.getItemStack())) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.SUCCESS);
@@ -251,13 +249,11 @@ public class CreateWizardry {
 
     @SubscribeEvent
     public void onEntityTick(EntityTickEvent.Post event) {
-        // Drives the 5-second "admire" delay and completes armed mana transformations.
+        // drive the admire delay and finish armed transformations
         if (event.getEntity() instanceof Mob mob && !mob.level().isClientSide()) {
             CWManaTransformations.tickPendingConversion(mob);
         }
-        // Players running low on mana (< 5) suffer Depletion: heavy slowness and slowed regen.
-        // A short instance is refreshed only as it nears expiry, so it clears on its own a couple
-        // of seconds after mana recovers to 5+.
+        // low mana (< 5) applies depletion: slowness and slowed regen, self-clears once mana recovers
         if (event.getEntity() instanceof Player player && !player.level().isClientSide()
                 && !player.isCreative() && !player.isSpectator()) {
             float mana = MagicData.getPlayerMagicData(player).getMana();
@@ -290,7 +286,7 @@ public class CreateWizardry {
             return;
         }
 
-        // Persistent entity protection: Black Hole, summoned mobs retaliating, etc.
+        // persistent entity protection (black hole, summoned mobs)
         net.minecraft.world.entity.Entity attacker = event.getSource().getEntity();
         if (attacker == null) attacker = event.getSource().getDirectEntity();
         if (attacker == null) return;
@@ -333,18 +329,17 @@ public class CreateWizardry {
                         .factory(BlazeCasterVisual::new)
                         .skipVanillaRender(be -> true)
                         .apply();
-                // Mana Siphon wheel spins via Flywheel; the BER below is the no-Flywheel fallback.
+                // flywheel; ber is fallback
                 SimpleBlockEntityVisualizer.builder(CWBlockEntities.MANA_SIPHON_BE.get())
                         .factory(ManaSiphonVisual::new)
                         .skipVanillaRender(be -> true)
                         .apply();
-                // Glass arcane pipe renders its flowing fluid through Flywheel (BER fallback below).
+                // glass pipe fluid via flywheel; ber is fallback
                 SimpleBlockEntityVisualizer.builder(CWBlockEntities.GLASS_ARCANE_PIPE.get())
                         .factory(GlassPipeVisual::new)
                         .skipVanillaRender(be -> true)
                         .apply();
-                // Arcane Pump cog spins via Flywheel (BER below is the no-Flywheel fallback), reusing
-                // Create's Mechanical Pump cog partial model.
+                // pump cog via flywheel, reusing create's pump cog model
                 SimpleBlockEntityVisualizer.builder(CWBlockEntities.ARCANE_PUMP.get())
                         .factory(SingleAxisRotatingVisual.ofZ(AllPartialModels.MECHANICAL_PUMP_COG))
                         .skipVanillaRender(be -> true)
@@ -353,20 +348,17 @@ public class CreateWizardry {
                         .register(CreateWizardry.id("arcane_casing"),
                                 model -> new CTModel(model, new SimpleCTBehaviour(CWSpriteShifts.ARCANE_CASING)));
 
-                // Dynamic pipe connection rims / casings, mirroring Create's PipeAttachmentModel
+                // dynamic pipe rims/casings, mirroring create's PipeAttachmentModel
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("arcane_pipe"), ArcanePipeAttachmentModel::withAO);
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("smart_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
-                // glass_arcane_pipe is wrapped too, exactly like Create's GLASS_FLUID_PIPE, so its
-                // connection rims render. ArcanePipeAttachmentModel emits each sub-model only into the
-                // render layers it declares, so the cutout glass stays out of the solid pass (no black
-                // glass) while the solid rims/casing still draw.
+                // glass pipe wrapped like create's so rims render; sub-models stay in their own layers (no black glass)
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("glass_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("encased_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
-                // Arcane Pump uses the same pipe-attachment model as Create's pump so connection rims render.
+                // pump reuses the pipe-attachment model so rims render
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("arcane_pump"), ArcanePipeAttachmentModel::withAO);
             });
@@ -391,7 +383,7 @@ public class CreateWizardry {
             event.registerBlockEntityRenderer(CWBlockEntities.CHANNELER_BE.get(), ChannelerRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.BLAZE_CASTER_BE.get(), BlazeCasterRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.MANA_SIPHON_BE.get(), ManaSiphonRenderer::new);
-            // Smart arcane pipe renders its filter value box; glass arcane pipe renders fluid when Flywheel is off.
+            // smart pipe value box; glass pipe fluid when flywheel off
             event.registerBlockEntityRenderer(CWBlockEntities.SMART_ARCANE_PIPE.get(), SmartBlockEntityRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.GLASS_ARCANE_PIPE.get(), TransparentStraightPipeRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.ARCANE_PUMP.get(), PumpRenderer::new);

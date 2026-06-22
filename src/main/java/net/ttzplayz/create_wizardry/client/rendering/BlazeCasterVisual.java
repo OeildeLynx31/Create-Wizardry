@@ -39,9 +39,7 @@ import java.util.function.Consumer;
 public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBlockEntity>
         implements SimpleDynamicVisual, SimpleTickableVisual {
 
-    // The hats are baked from OBJ geometry that is single-sided, so backface culling makes their
-    // far faces vanish at certain angles. Re-bake the partial with culling disabled. Cached per
-    // PartialModel (and cleared on renderer reload) so each hat maps to one shared instancer.
+    // re-bake single-sided hat obj with culling off; cached per partial
     private static final RendererReloadCache<PartialModel, Model> NO_CULL_MODELS =
             new RendererReloadCache<>(partial -> new BakedModelBuilder(partial.get())
                     .materialFunc((renderType, shaded) -> {
@@ -193,7 +191,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
             }
         }
 
-        // Hat lifecycle — reconcile independently of heat/element changes
+        // hat lifecycle
         PartialModel currentHatModel = blockEntity.getHatModel(newHeatLevel);
         if (currentHatModel != null && hat == null) {
             hat = instancerProvider()
@@ -229,7 +227,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
             eyes = null;
         }
 
-        // Rod lifecycle — created at FADING+, removed below FADING
+        // rod lifecycle, created at FADING+
         if (newHeatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) && smallRods == null) {
             smallRods = instancerProvider()
                     .instancer(InstanceTypes.TRANSFORMED, Models.partial(
@@ -314,7 +312,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
                     .setChanged();
         }
 
-        // Flame lifecycle — shown only when animation threshold is met (head animation active)
+        // flame lifecycle, shown above anim threshold
         if (active && flame == null) {
             setupFlame();
         } else if (!active && flame != null) {

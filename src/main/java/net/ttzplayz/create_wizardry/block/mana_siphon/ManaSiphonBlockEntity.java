@@ -19,6 +19,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -45,6 +46,7 @@ import net.ttzplayz.create_wizardry.Config;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import net.ttzplayz.create_wizardry.block.CWBlocks;
 import net.ttzplayz.create_wizardry.block.pipe.ManaPipeTransport;
+import net.ttzplayz.create_wizardry.client.ClientManaSiphons;
 import net.ttzplayz.create_wizardry.effect.CWMobEffects;
 import net.ttzplayz.create_wizardry.entity.CWManaTransformations;
 import net.ttzplayz.create_wizardry.particle.CWParticles;
@@ -97,8 +99,16 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     /** Player who placed the siphon (for advancements) */
     public UUID placerUuid;
 
-    /** Client/server-driven 0..1 prong-splay progress: 0 = confined (flat), 1 = expanded (+22.5° outward). */
+    // 0..1 prong-splay, driven both sides for the client visual
     public final LerpedFloat prongAnimation = LerpedFloat.linear();
+
+    // client mana-orb state
+    public final LerpedFloat orbDrain = LerpedFloat.linear();
+    public float orbSpin = 0f;
+    public float prevOrbSpin = 0f;
+    public boolean clientDraining = false;
+    private int drainPulseTicks = 0;
+    private int orbRingCooldown = 0;
 
     public ManaSiphonBlockEntity(BlockPos pos, BlockState state) {
         super(CWBlockEntities.MANA_SIPHON_BE.get(), pos, state);
@@ -139,6 +149,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         super.write(compound, registries, clientPacket);
         compound.putInt("GrowthCooldown", growthCooldown);
         if (placerUuid != null) compound.putUUID("Placer", placerUuid);
+        if (clientPacket) compound.putBoolean("Draining", drainPulseTicks > 0);
     }
 
     @Override
@@ -146,6 +157,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         super.read(compound, registries, clientPacket);
         growthCooldown = compound.getInt("GrowthCooldown");
         placerUuid = compound.hasUUID("Placer") ? compound.getUUID("Placer") : null;
+        if (clientPacket) clientDraining = compound.getBoolean("Draining");
     }
 
     /** Award an advancement to the placer if they are online */
@@ -176,16 +188,48 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     public void tick() {
         super.tick();
         if (level == null) return;
-        // Smoothly splay the prongs toward their target whenever EXPANDED changes (driven on both sides
-        // so the client visual can read an interpolated value).
+        // splay prongs toward target on EXPANDED change, driven both sides for the client visual
         prongAnimation.chase(getBlockState().getValue(ManaSiphonBlock.EXPANDED) ? 1 : 0, .2f, LerpedFloat.Chaser.EXP);
         prongAnimation.tickChaser();
-        if (level.isClientSide) return;
+        if (level.isClientSide) {
+            tickClientOrb();
+            return;
+        }
         tickServer();
+    }
+
+    // spin/grow the orb and orbit its rune ring
+    private void tickClientOrb() {
+        ClientManaSiphons.add(worldPosition);
+        orbDrain.chase(clientDraining ? 1 : 0, 0.15f, LerpedFloat.Chaser.EXP);
+        orbDrain.tickChaser();
+        prevOrbSpin = orbSpin;
+        orbSpin += 6f * (1f + 4f * orbDrain.getValue()); // faster while draining
+        spawnOrbRing();
+    }
+
+    private void spawnOrbRing() {
+        int mana = storedMana();
+        if (mana <= 0) return;
+        if (--orbRingCooldown > 0) return;
+        orbRingCooldown = 4;
+        int count = Math.min(8, ((mana - 1) / 250 + 1) * 2); // 2/4/6/8 by tier
+        double cx = worldPosition.getX() + 0.5;
+        double cy = worldPosition.getY() + 1.25;
+        double cz = worldPosition.getZ() + 0.5;
+        double phase = Math.toRadians(orbSpin);
+        for (int i = 0; i < count; i++) {
+            double a = phase + i * (Math.PI * 2 / count);
+            double px = cx + Math.cos(a) * 0.45;
+            double pz = cz + Math.sin(a) * 0.45;
+            SimpleParticleType rune = CWParticles.RUNES.get(i % CWParticles.RUNES.size()).get();
+            level.addParticle(rune, px, cy, pz, 0, 0.005, 0);
+        }
     }
 
     private void tickServer() {
         if (growthCooldown > 0) growthCooldown--;
+        if (drainPulseTicks > 0 && --drainPulseTicks == 0) notifyUpdate();
         tickCrystallization();
 
         if (getSpeed() == 0) return;
@@ -276,10 +320,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     }
 
     private void drainCaster(AbstractSpellCastingMob caster) {
-        // Suppress the caster while it sits in the field, even if our tank is full: zero its mana
-        // and (re)apply SIPHON_LOCK. The actual cast block is done by AbstractSpellCastingMobMixin,
-        // which no-ops initiateCastSpell while SIPHON_LOCK is present (calling cancelCast() here
-        // would instead *complete* the spell, since cancelCast -> castComplete -> onServerCastComplete).
+        // zero mana and reapply SIPHON_LOCK; the mixin no-ops casts while locked (cancelCast would complete the spell)
         MagicData md = caster.getMagicData();
         md.setMana(0);
         md.resetCastingState();
@@ -354,6 +395,14 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
             Vec3 top = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.0, worldPosition.getZ() + 0.5);
             CWParticles.spawnManaTrail(sl, new Vec3(ex, ey, ez), top, 8);
         }
+        markDraining();
+    }
+
+    // light the orb's fast-spin pulse and sync it to the client
+    private void markDraining() {
+        boolean was = drainPulseTicks > 0;
+        drainPulseTicks = 20;
+        if (!was) notifyUpdate();
     }
 
     // SPELL ATTRACTION CODE
@@ -552,7 +601,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         return drained.getAmount();
     }
 
-    private int storedMana() {
+    public int storedMana() {
         if (internalTank == null) return 0;
         return internalTank.getPrimaryHandler().getFluidInTank(0).getAmount();
     }

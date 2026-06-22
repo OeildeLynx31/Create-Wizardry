@@ -12,7 +12,7 @@ public class CWTags {
         // Gem/crystal blocks for Mana crystals to form
         public static final TagKey<Block> CRYSTALLINE = createTag("crystalline");
 
-        // Blocks that carry mana losslessly (arcane pipe family + arcane pump). Drives the pipe leak.
+        // blocks that carry mana losslessly
         public static final TagKey<Block> MANA_INSULATED = createTag("mana_insulated");
 
         private static TagKey<Block> createTag(String name) {

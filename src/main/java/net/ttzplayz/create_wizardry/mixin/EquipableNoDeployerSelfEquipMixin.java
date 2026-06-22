@@ -13,14 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Stops Create's Deployer from equipping wearable items (armor, the Tarnished Crown, elytra, heads…)
- * onto its own fake player. Right-clicking an equipable normally swaps it into the player's armor
- * slot via {@link Equipable#swapWithEquipmentSlot}; for a {@link DeployerFakePlayer} that means the
- * Deployer pointlessly "wears" the item and empties its hand instead of applying it to a target. By
- * failing the swap, the item stays in the Deployer's hand so it can be used on an entity — e.g.
- * deploying the Tarnished Crown onto a Mana-exposed Skeleton to convert it into a Necromancer.
- */
+// keep wearables in a deployer's hand instead of self-equipping, so they can be deployed onto mobs
 @Mixin(Equipable.class)
 public interface EquipableNoDeployerSelfEquipMixin {
 

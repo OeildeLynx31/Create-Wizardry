@@ -107,7 +107,7 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
 
     @Override
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
-        // Right-click: toggle the caster mode (sentry <-> impulse).
+        // toggle caster mode
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         if (!level.isClientSide) {
@@ -129,7 +129,7 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
     public InteractionResult onSneakWrenched(BlockState state, UseOnContext context) {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
-        // Impulse mode: shift-right-click locks/unlocks the head toward the player.
+        // impulse: lock/unlock the head toward the player
         if (state.getValue(MODE) == CasterMode.IMPULSE) {
             if (!level.isClientSide) {
                 Player player = context.getPlayer();
@@ -144,7 +144,7 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
-        // Sentry mode: shift-right-click picks the block up (default wrench behaviour).
+        // sentry: pick the block up
         return IWrenchable.super.onSneakWrenched(state, context);
     }
 
@@ -167,9 +167,7 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
         // Shift right-click: hat management
         if (player.isShiftKeyDown()) {
             if (!stack.isEmpty() && isHat(stack)) {
-                // Always consume the interaction when shift-clicking with a hat so that
-                // the armor item's auto-equip never fires. The actual slot check is
-                // server-only — if the slot is already full, nothing happens.
+                // consume the click so armor auto-equip never fires; slot check is server-only
                 if (!level.isClientSide) {
                     withBlockEntityDo(level, pos, be -> {
                         if (be.heldHat.isEmpty()) {

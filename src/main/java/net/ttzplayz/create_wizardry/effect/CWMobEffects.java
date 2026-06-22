@@ -27,7 +27,7 @@ public class CWMobEffects {
                                     CreateWizardry.id("mana_depletion_slowness"),
                                     -0.30D,
                                     AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
-                            // Mana regenerates 4x slower (25%) while depleted, but never fully stops.
+                            // regen 4x slower while depleted, never fully stops
                             .addAttributeModifier(
                                     AttributeRegistry.MANA_REGEN,
                                     CreateWizardry.id("mana_depletion_slow_regen"),

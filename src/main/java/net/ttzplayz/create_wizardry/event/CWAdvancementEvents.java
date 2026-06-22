@@ -28,7 +28,7 @@ public class CWAdvancementEvents {
         if (stack.is(CWItems.ARCANE_SHEET.get())) {
             CWAdvancements.SPLOINK.awardTo(sp);
         } else if (stack.is(ItemRegistry.ARCANE_ESSENCE.get())) {
-            // Arcane Essence is synthesised from dusts + mana ("Alchemy 101").
+            // essence synthesised from dusts + mana
             CWAdvancements.ALCH_101.awardTo(sp);
         }
     }

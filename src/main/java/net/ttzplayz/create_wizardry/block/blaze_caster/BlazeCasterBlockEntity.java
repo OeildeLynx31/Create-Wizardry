@@ -493,8 +493,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 castTicksRemaining--;
                 if (castTicksRemaining == 0) {
                     executeCast(spell, spellLevel, null);
-                    // Continuous spells start a channel (channelProxy != null); their cooldown
-                    // begins when the channel ends, not now.
+                    // continuous spells cool down when the channel ends, not now
                     if (channelProxy == null)
                         cooldownTicksRemaining = spell.getSpellCooldown();
                 }
@@ -513,10 +512,9 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             castTicksRemaining--;
             if (castTicksRemaining == 0) {
                 executeCast(spell, spellLevel, target);
-                // Continuous spells start a channel (channelProxy != null); their cooldown
-                // begins when the channel ends, not now.
+                // continuous spells cool down when the channel ends, not now
                 if (channelProxy == null)
-                    // Enforce minimum 1-tick cooldown to prevent zero-cooldown spam
+                    // min 1-tick cooldown to prevent spam
                     cooldownTicksRemaining = Math.max(1, spell.getSpellCooldown());
             }
         } else if (target != null) {
@@ -554,8 +552,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (!creative && handler.getFluidInTank(0).getAmount() < manaCost) return;
         if (!creative)
             handler.drain(manaCost, IFluidHandler.FluidAction.EXECUTE);
-        // For CONTINUOUS spells the cast time IS the channel duration (handled by the
-        // channel loop), so use a minimal windup here instead of burning the whole cast time.
+        // continuous spells channel for the cast time, so use a minimal windup here
         castTicksRemaining = spell.getCastType() == CastType.CONTINUOUS
                 ? 1
                 : Math.max(1, spell.getCastTime(spellLevel));
@@ -668,12 +665,10 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             }
 
             if (keepAlive) {
-                // Start continuous channel — proxy stays alive and is ticked each server tick.
-                // Prime the cast state so the per-tick spell logic (which keys off
-                // getCastDurationRemaining()/isCasting()) actually runs while channeling.
+                // start continuous channel; prime cast state so per-tick spell logic runs
                 int castDuration = spell.getCastTime(spellLevel);
-                // Force lazy init of SyncedSpellData — initiateCast() touches the raw field
-                // directly and NPEs otherwise (no ServerPlayer backs this proxy MagicData).
+                // force lazy init of SyncedSpellData or initiateCast NPEs
+
                 magicData.getSyncedData();
                 magicData.initiateCast(spell, spellLevel, castDuration, CastSource.MOB, "mainhand");
                 channelProxy = proxy;
@@ -681,8 +676,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 channelSpell = spell;
                 channelSpellLevel = spellLevel;
                 channelTicksRemaining = castDuration;
-                // Sync channel state immediately so the client shows "Casting...", keeps the
-                // raised pose, and (for Ray of Siphoning) starts rendering the beam.
+                // sync channel state now so the client shows casting, raised pose, and the beam
                 notifyUpdate();
             } else {
                 // Multi-targeting for burst/barrage spells (e.g. Flame Barrage)
@@ -740,7 +734,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             final BlockPos capturedPos = worldPosition;
             trackNewEntities(serverLevel, preCastEntities, finalTarget, capturedPlacer);
 
-            // Also schedule a next-tick scan — ISS may spawn entities with a 1-tick delay (e.g. Raise Dead)
+            // next-tick scan; iss may spawn with a 1-tick delay
             serverLevel.getServer().execute(() -> {
                 if (level == null || level.isClientSide) return;
                 trackNewEntities((ServerLevel) level, preCastEntities, finalTarget, capturedPlacer);
@@ -898,7 +892,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 : ItemStack.EMPTY;
         castTicksRemaining = compound.getInt("CastTicks");
         cooldownTicksRemaining = compound.getInt("CooldownTicks");
-        // Channel state is sync-only (see write); never read it back from disk on the server.
+        // channel state is sync-only, never read from disk on the server
         if (clientPacket) {
             channelTicksRemaining = compound.getInt("ChannelTicks");
             clientChannelProxyId = compound.getInt("ChannelProxyId");

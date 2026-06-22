@@ -10,16 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Makes Create's own Fluid Tank leak mana that arrives through copper pipes, exactly like the
- * mod's mana tanks. Create exposes the tank capability via {@code handlerForCapability()}; we wrap
- * the returned handler in a {@link ManaPipeTransport.DecayingManaTank}. Only mana fills decay —
- * tanks holding water/lava/etc. are untouched.
- *
- * <p>Guarded to the controller: a non-controller tank block delegates to the controller's
- * (already-wrapped) handler, so wrapping only on the controller path avoids double-wrapping.
- * Create's own method names aren't SRG-remapped at runtime, so targeting by name needs no refmap.
- */
+// wraps create's fluid tank so piped mana leaks; controller only to avoid double-wrap
 @Mixin(FluidTankBlockEntity.class)
 public abstract class FluidTankManaLeakMixin {
 

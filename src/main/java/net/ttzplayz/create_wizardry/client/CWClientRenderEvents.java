@@ -8,18 +8,14 @@ import net.minecraft.world.entity.Mob;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.ttzplayz.create_wizardry.CreateWizardry;
+import net.ttzplayz.create_wizardry.client.rendering.ManaSiphonOrbRenderer;
 import net.ttzplayz.create_wizardry.effect.CWMobEffects;
 
-/**
- * Client-side rendering for Blaze Caster spell visuals that ISS only draws for players / its own
- * caster-mobs. The Blaze Caster channels through an invisible ArmorStand proxy, so we render the
- * Ray of Siphoning beam on that proxy ourselves — mirroring ISS's
- * {@code ClientPlayerEvents.afterLivingRender}. This runs in the entity render pipeline, so it
- * works regardless of whether Flywheel is suppressing the block-entity renderer.
- */
+// renders blaze caster beams on their armorstand proxy, bypassing flywheel ber suppression
 @EventBusSubscriber(modid = CreateWizardry.MOD_ID, value = Dist.CLIENT)
 public class CWClientRenderEvents {
 
@@ -31,11 +27,7 @@ public class CWClientRenderEvents {
         }
     }
 
-    /**
-     * Makes mobs currently being drained by a Mana Siphon wobble like a converting villager
-     * (vanilla {@code ZombieVillagerRenderer.setupRotations}). Driven by the synced SIPHON_LOCK
-     * effect; players are excluded so a player in range doesn't have their own view spun.
-     */
+    // wobble drained mobs like a converting villager; players excluded
     @SubscribeEvent
     public static void wobbleDrainedMob(RenderLivingEvent.Pre<? extends LivingEntity, ? extends EntityModel<? extends LivingEntity>> event) {
         LivingEntity entity = event.getEntity();
@@ -45,9 +37,19 @@ public class CWClientRenderEvents {
         }
     }
 
+    // mana orbs render here so they show whether or not flywheel suppresses the ber
+    @SubscribeEvent
+    public static void renderManaOrbs(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+        ManaSiphonOrbRenderer.renderAll(event.getPoseStack(), event.getCamera(),
+                event.getPartialTick().getGameTimeDeltaPartialTick(false));
+    }
+
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
-        if (event.getLevel().isClientSide())
+        if (event.getLevel().isClientSide()) {
             ClientBlazeBeams.clear();
+            ClientManaSiphons.clear();
+        }
     }
 }

@@ -74,7 +74,7 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
                             .noOcclusion()
             ));
 
-    // Arcane Essence cluster grows on Crystalline blocks near a Mana Siphon; no item of its own.
+    // grows on crystalline blocks near a siphon, no item
     public static final DeferredBlock<ArcaneEssenceClusterBlock> ARCANE_ESSENCE_CLUSTER =
             registerBlockNoItem("arcane_essence_cluster", () -> new ArcaneEssenceClusterBlock(
                     Block.Properties.of()
@@ -94,7 +94,7 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
             registerBlock("smart_arcane_pipe", () -> new SmartArcanePipeBlock(
                     pipeProperties().mapColor(MapColor.TERRACOTTA_YELLOW)));
 
-    // Glass + encased variants have no item of their own (obtained via wrench / encasing), mirroring Create.
+    // glass + encased have no item, got via wrench/encasing
     public static final DeferredBlock<ArcaneGlassPipeBlock> GLASS_ARCANE_PIPE =
             registerBlockNoItem("glass_arcane_pipe", () -> new ArcaneGlassPipeBlock(
                     pipeProperties().noOcclusion()));
@@ -103,7 +103,7 @@ public static final DeferredBlock<ChannelerBlock> CHANNELER =
             registerBlockNoItem("encased_arcane_pipe", () -> new EncasedArcanePipeBlock(
                     pipeProperties().noOcclusion().mapColor(MapColor.TERRACOTTA_LIGHT_GRAY)));
 
-    // Mana-safe (lossless) counterpart to Create's Mechanical Pump.
+    // lossless counterpart to create's mechanical pump
     public static final DeferredBlock<ArcanePumpBlock> ARCANE_PUMP =
             registerBlock("arcane_pump", () -> new ArcanePumpBlock(pipeProperties().noOcclusion()));
 

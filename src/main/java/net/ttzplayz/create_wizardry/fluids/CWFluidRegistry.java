@@ -182,10 +182,7 @@ public class CWFluidRegistry {
                     FIRE_ALE_FLUID,
                     FIRE_ALE_FLUID_FLOWING);
 
-    // BLOOD (Iron's Spells 'n Spellbooks) — a finite, lava-like flowing fluid for the in-world liquid.
-    // ISS's irons_spellbooks:blood is a stateless NoopFluid that cannot flow, so we register our own
-    // source/flowing pair but REUSE ISS's BLOOD_TYPE so it renders identically. The blood_bucket still
-    // wraps irons_spellbooks:blood (recipes/spells unchanged); NoopFluidMixin redirects placement here.
+    // blood: our own finite flowing fluid reusing iss's blood type; bucket stays irons_spellbooks:blood
     public static final DeferredHolder<Fluid, FlowingFluid> BLOOD_SOURCE =
             FLUIDS.register("blood", () -> new BaseFlowingFluid.Source(CWFluidRegistry.BLOOD_PROPERTIES));
     public static final DeferredHolder<Fluid, FlowingFluid> BLOOD_FLOWING =
@@ -202,10 +199,10 @@ public class CWFluidRegistry {
                     BLOOD_FLOWING)
                     .bucket(CWItems.BLOOD_BUCKET)   // existing bucket; still wraps irons_spellbooks:blood
                     .block(BLOOD_FLUID_BLOCK)
-                    // finite — no infinite source: BLOOD_TYPE (default FluidType) has canConvertToSource=false
-                    .slopeFindDistance(2)           // short horizontal spread (~lava)
-                    .levelDecreasePerBlock(2)       // depletes fast → ~3-4 block reach
-                    .tickRate(30)                   // slow flow (~lava)
+                    // finite, no infinite source
+                    .slopeFindDistance(2)           // short horizontal spread
+                    .levelDecreasePerBlock(2)       // depletes fast, ~3-4 block reach
+                    .tickRate(30)                   // slow flow
                     .explosionResistance(100f);
 
     public static final DeferredHolder<Fluid, FlowingFluid> NETHERWARD_TINCTURE_FLUID =

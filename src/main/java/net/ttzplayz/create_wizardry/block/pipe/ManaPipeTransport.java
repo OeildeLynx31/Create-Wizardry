@@ -41,8 +41,6 @@ public final class ManaPipeTransport {
 
     /** Safety cap on how many pipe blocks a single search will visit. */
     private static final int MAX_PIPES = 256;
-    /** Per-copper-block leak rate from {@code M·e^(-0.05b)}. */
-    private static final double LEAK_RATE = 0.05;
 
     /**
      * Fractional mana (&lt;1 mB) carried between successive leak-applied fills into the same tank,
@@ -87,8 +85,8 @@ public final class ManaPipeTransport {
 
     /** Fraction of mana that survives crossing {@code copperBlocks} leaky pipe blocks. */
     public static double decayFactor(int copperBlocks) {
-        if (copperBlocks <= 0) return 1.0;
-        return Math.exp(-LEAK_RATE * copperBlocks);
+        if (copperBlocks <= 0 || !net.ttzplayz.create_wizardry.Config.manaLeakingEnabled) return 1.0;
+        return Math.exp(-net.ttzplayz.create_wizardry.Config.manaPipeLossRate * copperBlocks);
     }
 
     public static boolean isMana(FluidStack stack) {
@@ -314,9 +312,10 @@ public final class ManaPipeTransport {
         }
 
         /**
-         * Grants "I II II L" to the nearest player when mana leaks across a short (&lt;20 block) copper
-         * run — the "pump mana through uninsulated pipes and be devastated" moment. Scanned at most once
-         * per {@link #REFRESH_TICKS}; no player is directly involved in a leak, so we award whoever is close.
+         * Grants "I II II L" to the nearest player when mana leaks across a long (&gt;20 block) copper
+         * run — the "pump mana through uninsulated pipes and be devastated" moment, where the bulk of the
+         * mana has bled away. Scanned at most once per {@link #REFRESH_TICKS}; no player is directly
+         * involved in a leak, so we award whoever is close.
          */
         private void awardDevastationIfClose() {
             Level level = be.getLevel();
@@ -325,7 +324,7 @@ public final class ManaPipeTransport {
             if (now < nextLeakAdvancementCheck) return;
             nextLeakAdvancementCheck = now + REFRESH_TICKS;
             int b = copperDistance(level);
-            if (b < 1 || b >= 20) return;
+            if (b <= 20) return;
             BlockPos p = be.getBlockPos();
             net.minecraft.world.entity.player.Player nearest =
                     level.getNearestPlayer(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 16.0, false);

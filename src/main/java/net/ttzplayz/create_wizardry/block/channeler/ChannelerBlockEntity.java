@@ -130,7 +130,8 @@ public class ChannelerBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private void absorbNearbyChargedCreepers() {
         if (level == null) return;
 
-        AABB box = new AABB(worldPosition).inflate(2, 2, 2);
+        int r = net.ttzplayz.create_wizardry.Config.channelerCreeperRange;
+        AABB box = new AABB(worldPosition).inflate(r, r, r);
         List<Creeper> creepers = level.getEntitiesOfClass(Creeper.class, box, c -> c != null && c.isAlive() && c.isPowered());
 
         for (Creeper creeper : creepers) {
@@ -151,7 +152,8 @@ public class ChannelerBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private void absorbNearbyLightning() {
         if (level == null) return;
 
-        AABB box = new AABB(worldPosition).inflate(8, 8, 8);
+        int r = net.ttzplayz.create_wizardry.Config.channelerLightningRange;
+        AABB box = new AABB(worldPosition).inflate(r, r, r);
         List<LightningBolt> bolts = level.getEntitiesOfClass(LightningBolt.class, box, l -> l != null && l.isAlive());
 
         for (LightningBolt bolt : bolts) {

@@ -59,16 +59,16 @@ public class CWFluidRegistry {
 
     // TEXTURES
     public static final ResourceLocation LIGHTNING_TEXTURE = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/lightning");
-    public static final ResourceLocation LIGHTNING_TEXTURE_FLOWING = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/lightning_flow");
+    public static final ResourceLocation LIGHTNING_TEXTURE_FLOWING = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/lightning");
     public static final ResourceLocation MANA_TEXTURE = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/mana_still");
-    public static final ResourceLocation MANA_TEXTURE_FLOWING = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/mana_flow");
+    public static final ResourceLocation MANA_TEXTURE_FLOWING = ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "block/mana_still");
 
     public static final DeferredHolder<FluidType, FluidType> MANA_TYPE =
             FLUID_TYPES.register("mana_type", () ->
                     new MagicFluidType(FluidType.Properties.create()
                             .viscosity(200)
                             .temperature(3000)
-                            .lightLevel(15), MANA_TEXTURE, MANA_TEXTURE){
+                            .lightLevel(15), MANA_TEXTURE, MANA_TEXTURE_FLOWING){
                         @Override
                         public void onVaporize(@Nullable Player player, Level level, BlockPos pos, FluidStack stack) {
                             if (level instanceof ServerLevel) {
@@ -114,7 +114,7 @@ public class CWFluidRegistry {
                             .canConvertToSource(false)
                             .density(-1000)
 //                            .sound()
-                            .lightLevel(15), LIGHTNING_TEXTURE, LIGHTNING_TEXTURE)
+                            .lightLevel(15), LIGHTNING_TEXTURE, LIGHTNING_TEXTURE_FLOWING)
                     {
                         @Override
                         public void onVaporize(@Nullable Player player, Level level, BlockPos pos, FluidStack stack) {

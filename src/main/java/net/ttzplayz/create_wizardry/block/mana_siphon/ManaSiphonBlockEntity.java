@@ -14,6 +14,7 @@ import io.redspace.ironsspellbooks.entity.mobs.wizards.fire_boss.FireBossEntity;
 import io.redspace.ironsspellbooks.entity.spells.AbstractMagicProjectile;
 import io.redspace.ironsspellbooks.network.SyncManaPacket;
 import io.redspace.ironsspellbooks.registries.BlockRegistry;
+import net.createmod.catnip.animation.LerpedFloat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -96,6 +97,9 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     /** Player who placed the siphon (for advancements) */
     public UUID placerUuid;
 
+    /** Client/server-driven 0..1 prong-splay progress: 0 = confined (flat), 1 = expanded (+22.5° outward). */
+    public final LerpedFloat prongAnimation = LerpedFloat.linear();
+
     public ManaSiphonBlockEntity(BlockPos pos, BlockState state) {
         super(CWBlockEntities.MANA_SIPHON_BE.get(), pos, state);
     }
@@ -171,7 +175,12 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     @Override
     public void tick() {
         super.tick();
-        if (level == null || level.isClientSide) return;
+        if (level == null) return;
+        // Smoothly splay the prongs toward their target whenever EXPANDED changes (driven on both sides
+        // so the client visual can read an interpolated value).
+        prongAnimation.chase(getBlockState().getValue(ManaSiphonBlock.EXPANDED) ? 1 : 0, .2f, LerpedFloat.Chaser.EXP);
+        prongAnimation.tickChaser();
+        if (level.isClientSide) return;
         tickServer();
     }
 

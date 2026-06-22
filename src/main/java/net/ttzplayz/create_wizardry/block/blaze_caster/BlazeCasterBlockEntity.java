@@ -239,7 +239,12 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
     public int getHatDyeColor() {
         DyedItemColor dyed = heldHat.get(DataComponents.DYED_COLOR);
-        return dyed != null ? dyed.rgb() : 0xFFFFFF;
+        if (dyed != null) return dyed.rgb();
+        if (heldHat.isEmpty()) return 0xFFFFFF;
+        // Undyed: tint the dye layer with the hat's signature default colour (white if none defined).
+        String itemPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(heldHat.getItem()).getPath();
+        return CWPartialModels.DEFAULT_HAT_COLOR.getOrDefault(itemPath, 0xFFFFFF);
     }
 
     @OnlyIn(Dist.CLIENT)

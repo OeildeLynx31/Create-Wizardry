@@ -102,7 +102,7 @@ public class CWAdvancements implements DataProvider {
                     .after(AURA_MONSTER)),
             A_DEVASTATING_LOSS = create("a_devastating_loss", b -> b.icon(itemFromRegistry(CreateWizardry.id("arcane_pipe")))
                     .title("I II II L")
-                    .description("Pump Mana across <20 blocks of pipes...and be devastated by the result. Please insulate, for Herobrine's sake.")
+                    .description("Pump Mana across >20 blocks of pipes...and be devastated by the result. Please insulate, for Herobrine's sake.")
                     .special(CWAdvancement.TaskType.SUPER_SECRET)
                     .after(ROOT)),
     // GENERAL/MISC

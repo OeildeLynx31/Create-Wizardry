@@ -25,6 +25,7 @@ public class CWPartialModels {
     public static final PartialModel ISS_NETHERITE_MAGE_HAT_BASE = block("blaze_caster/hats/netherite_mage_base");
 
     public static final PartialModel MANA_SIPHON_WHEEL = block("mana_siphon/wheel");
+    public static final PartialModel MANA_SIPHON_PRONG = block("mana_siphon/prong");
 
     public static final PartialModel BLAZE_CASTER_INERT = block("blaze_caster/blaze/inert");
     public static final PartialModel BLAZE_CASTER_NONE      = block("blaze_caster/blaze/none");
@@ -115,6 +116,12 @@ public class CWPartialModels {
         Map.entry("pumpkin_helmet",          ISS_PUMPKIN_HAT),
         Map.entry("wizard_hat",              ISS_WIZARD_HAT),
         Map.entry("netherite_mage_helmet",   ISS_NETHERITE_MAGE_HAT)
+    );
+
+    public static final Map<String, Integer> DEFAULT_HAT_COLOR = Map.ofEntries(
+        Map.entry("wizard_hat",                0xB8E5F3),
+        Map.entry("wizard_helmet",             0xB8E5F3), //from ISS ClientSetup#registerDyeables
+        Map.entry("netherite_mage_helmet",     0x8C4141) //ditto
     );
 
     public static void register() {}

@@ -28,6 +28,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,9 +66,48 @@ public class ArcaneEssenceClusterBlock extends Block implements SimpleWaterlogge
         return rotateShapeForFace(SHAPES_BY_AGE[state.getValue(AGE)], direction);
     }
 
+    /**
+     * Rotates a shape authored as if growing UP from the floor onto the given attachment face, so the
+     * collision/selection box tracks the model on every face. In particular {@link Direction#DOWN} —
+     * the default, where the cluster hangs from a ceiling — flips the box in Y so it sits against the
+     * top of the cell instead of the bottom.
+     */
     private static VoxelShape rotateShapeForFace(VoxelShape upShape, Direction face) {
-        // Cheap approximation: the up-facing shapes read fine on any face for a placeholder model.
-        return upShape;
+        if (face == Direction.UP) return upShape;
+        List<VoxelShape> parts = new java.util.ArrayList<>();
+        upShape.forAllBoxes((x1, y1, z1, x2, y2, z2) -> {
+            double[] b = rotateBox(x1, y1, z1, x2, y2, z2, face);
+            parts.add(Shapes.box(b[0], b[1], b[2], b[3], b[4], b[5]));
+        });
+        VoxelShape out = Shapes.empty();
+        for (VoxelShape part : parts) out = Shapes.or(out, part);
+        return out;
+    }
+
+    /** Rotates the UP-authored box so +Y points toward {@code face}; returns {minX,minY,minZ,maxX,maxY,maxZ}. */
+    private static double[] rotateBox(double x1, double y1, double z1, double x2, double y2, double z2, Direction face) {
+        double[] min = {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY};
+        double[] max = {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY};
+        for (double x : new double[]{x1, x2})
+            for (double y : new double[]{y1, y2})
+                for (double z : new double[]{z1, z2}) {
+                    double cx = x - 0.5, cy = y - 0.5, cz = z - 0.5;
+                    double rx, ry, rz;
+                    switch (face) {
+                        case DOWN  -> { rx = cx;  ry = -cy; rz = -cz; }
+                        case NORTH -> { rx = cx;  ry = cz;  rz = -cy; }
+                        case SOUTH -> { rx = cx;  ry = -cz; rz = cy;  }
+                        case EAST  -> { rx = cy;  ry = -cx; rz = cz;  }
+                        case WEST  -> { rx = -cy; ry = cx;  rz = cz;  }
+                        default    -> { rx = cx;  ry = cy;  rz = cz;  }
+                    }
+                    double[] f = {rx + 0.5, ry + 0.5, rz + 0.5};
+                    for (int i = 0; i < 3; i++) {
+                        min[i] = Math.min(min[i], f[i]);
+                        max[i] = Math.max(max[i], f[i]);
+                    }
+                }
+        return new double[]{min[0], min[1], min[2], max[0], max[1], max[2]};
     }
 
     @Override

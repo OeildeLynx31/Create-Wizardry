@@ -133,6 +133,28 @@ public final class ManaPipeTransport {
         return best;
     }
 
+    /**
+     * Multiblock-tank variant of {@link #copperDistanceToSource}: the shortest copper run from any
+     * external face of the tank's whole footprint to an upstream source, taking the minimum over every
+     * member block. A single-block tank's controller is the block the pipe touches, but a multiblock
+     * Create tank is usually piped into through a <em>non-controller</em> block, so searching only the
+     * controller (which {@code copperDistanceToSource} did) missed the network entirely and never
+     * leaked. Sibling members are excluded as terminals — otherwise an adjacent block of the same tank
+     * reads as a 0-distance "source" and cancels the leak. Returns {@code -1} if no source is reachable.
+     */
+    public static int copperDistanceFromFootprint(Level level, Set<BlockPos> own) {
+        Terminal external = (lvl, pos, side) -> !own.contains(pos) && hasFluidHandler(lvl, pos, side);
+        int best = -1;
+        for (BlockPos p : own) {
+            for (Direction d : Iterate.directions) {
+                if (own.contains(p.relative(d))) continue; // face into another member: not an exit
+                Hit hit = search(level, p, d, external);
+                if (hit != null && (best < 0 || hit.copper() < best)) best = hit.copper();
+            }
+        }
+        return best;
+    }
+
     /** Wraps {@code delegate} so mana filled into it leaks by the copper distance back to its source. */
     public static IFluidHandler decaying(BlockEntity be, @Nullable Direction side, IFluidHandler delegate) {
         return new DecayingManaTank(be, side, delegate);
@@ -255,11 +277,40 @@ public final class ManaPipeTransport {
             if (level == null) return 1.0;
             long now = level.getGameTime();
             if (now >= recomputeAt) {
-                int b = copperDistanceToSource(level, be.getBlockPos(), side);
+                int b = copperDistance(level);
                 factor = b < 0 ? 1.0 : decayFactor(b);
                 recomputeAt = now + REFRESH_TICKS;
             }
             return factor;
+        }
+
+        /**
+         * Copper distance to the source, accounting for multiblock tanks. A Create Fluid Tank spanning
+         * more than one block is piped into through any of its members (often not the controller this
+         * wrapper sits on), so we search the whole footprint; everything else uses the single-block path.
+         */
+        private int copperDistance(Level level) {
+            Set<BlockPos> own = multiblockFootprint();
+            return own != null
+                    ? copperDistanceFromFootprint(level, own)
+                    : copperDistanceToSource(level, be.getBlockPos(), side);
+        }
+
+        /** Member positions of a multiblock Create Fluid Tank (the wrapper sits on its controller), or
+         *  {@code null} for a single-block tank / the mod's own tanks. */
+        @Nullable
+        private Set<BlockPos> multiblockFootprint() {
+            if (!(be instanceof com.simibubi.create.content.fluids.tank.FluidTankBlockEntity tank)) return null;
+            int w = tank.getWidth();
+            int h = tank.getHeight();
+            if (w <= 1 && h <= 1) return null;
+            BlockPos c = be.getBlockPos();
+            Set<BlockPos> own = new HashSet<>(w * w * h);
+            for (int dx = 0; dx < w; dx++)
+                for (int dy = 0; dy < h; dy++)
+                    for (int dz = 0; dz < w; dz++)
+                        own.add(c.offset(dx, dy, dz));
+            return own;
         }
 
         /**
@@ -273,7 +324,7 @@ public final class ManaPipeTransport {
             long now = level.getGameTime();
             if (now < nextLeakAdvancementCheck) return;
             nextLeakAdvancementCheck = now + REFRESH_TICKS;
-            int b = copperDistanceToSource(level, be.getBlockPos(), side);
+            int b = copperDistance(level);
             if (b < 1 || b >= 20) return;
             BlockPos p = be.getBlockPos();
             net.minecraft.world.entity.player.Player nearest =

@@ -12,10 +12,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Arcane-textured equivalents of Create's pipe attachment partial models, used by {@link ArcanePipeAttachmentModel}
- * so connection rims, casings and drains match the arcane pipe textures.
- */
+// arcane pipe partials
 public class ArcanePartialModels {
 
     public static final PartialModel FLUID_PIPE_CASING = block("arcane_pipe/casing");
@@ -34,7 +31,7 @@ public class ArcanePartialModels {
         }
     }
 
-    /** Forces class-loading so the static PartialModels register before model baking. */
+    // force classload
     public static void register() {}
 
     private static PartialModel block(String path) {

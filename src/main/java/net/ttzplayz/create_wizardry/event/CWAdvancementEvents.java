@@ -11,11 +11,8 @@ import net.ttzplayz.create_wizardry.CreateWizardry;
 import net.ttzplayz.create_wizardry.advancement.CWAdvancements;
 import net.ttzplayz.create_wizardry.item.CWItems;
 
-/**
- * Awards the "obtain item X" advancements when a real player picks the item up. Covers both crafting
- * (the item drops into the inventory) and Create-processed outputs (the item pops into the world).
- */
 @EventBusSubscriber(modid = CreateWizardry.MOD_ID)
+// pickup advancements
 public class CWAdvancementEvents {
 
     @SubscribeEvent

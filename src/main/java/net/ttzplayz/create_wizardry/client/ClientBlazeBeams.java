@@ -4,14 +4,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Client-side registry of Blaze Caster proxy entity ids that are currently channeling Ray of
- * Siphoning, so {@link CWClientRenderEvents} knows which (invisible) ArmorStand proxies should
- * draw the beam. Populated from the synced channel state in
- * {@code BlazeCasterBlockEntity#read}. Mirrors the static client-cache pattern ISS uses for
- * {@code ClientMagicData}. Kept free of client-only imports so it is safe to reference from the
- * common block-entity class.
- */
+// beam registry
 public final class ClientBlazeBeams {
     private static final Set<Integer> RAY_OF_SIPHONING_PROXIES = Collections.synchronizedSet(new HashSet<>());
 

@@ -9,11 +9,6 @@ import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * A small, gently rising particle that displays one of the animated rune textures.
- * The texture animates on its own via its {@code .mcmeta} (atlas sprites tick
- * automatically), so the particle just holds a single sprite.
- */
 public class RuneParticle extends TextureSheetParticle {
 
     protected RuneParticle(ClientLevel level, double x, double y, double z,

@@ -10,11 +10,8 @@ import net.ttzplayz.create_wizardry.block.pipe.EncasedArcanePipeBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-/**
- * Create's pipe network special-cases its own blocks by identity, so the arcane pump/encased pipe
- * (separate blocks reusing Create's BE classes) get skipped. We widen those identity checks.
- */
 @Mixin(FluidPropagator.class)
+// recognize arcane pump
 public class FluidPropagatorMixin {
 
     // pump never told to pressurize its pipes -> mana/fluid won't move through arcane pipes

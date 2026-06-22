@@ -28,7 +28,7 @@ public class CWParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> LIGHTNING_RUNE = rune("lightning_rune");
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> NATURE_RUNE = rune("nature_rune");
 
-    /** All rune particle types, for random selection. */
+    // rune types
     public static final List<DeferredHolder<ParticleType<?>, SimpleParticleType>> RUNES = List.of(
             ARCANE_RUNE, BLOOD_RUNE, ENDER_RUNE, EVOCATION_RUNE, FIRE_RUNE,
             HOLY_RUNE, ICE_RUNE, LIGHTNING_RUNE, NATURE_RUNE);
@@ -37,10 +37,7 @@ public class CWParticles {
         return PARTICLES.register(name, () -> new SimpleParticleType(false) {});
     }
 
-    /**
-     * Spawns the signature mana burst of randomly-chosen rune particles. Shared by mana bucket vaporization
-     * and mana spilling out of an open-ended pipe / pump so they look identical.
-     */
+    // mana burst
     public static void spawnManaRunes(Level level, double x, double y, double z, int count, double spread, double speed) {
         for (int i = 0; i < count; i++) {
             SimpleParticleType rune = RUNES.get(level.random.nextInt(RUNES.size())).get();
@@ -48,10 +45,7 @@ public class CWParticles {
         }
     }
 
-    /**
-     * Draws a trail of rune particles along the line from {@code from} to {@code to}, used to visually
-     * connect an entity being siphoned to the top of a Mana Siphon.
-     */
+    // rune trail
     public static void spawnManaTrail(Level level, Vec3 from, Vec3 to, int count) {
         for (int i = 0; i < count; i++) {
             double t = (i + 1.0) / (count + 1.0);

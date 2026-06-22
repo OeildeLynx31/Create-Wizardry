@@ -11,14 +11,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Grants "The Enlightenment Age" when an Arcane Casing is made via item application, mirroring how
- * Create awards its Andesite/Brass Age advancements. Create's {@code awardAdvancements} runs for both
- * the manual (player right-click) and deployer paths, since the deployer also fires
- * {@code PlayerInteractEvent.RightClickBlock} through {@code CommonHooks.onRightClickBlock}. We only
- * award real players (the deployer's fake player is skipped), matching the "manually applying" case.
- */
 @Mixin(ManualApplicationRecipe.class)
+// casing advancement
 public class ManualApplicationAdvancementMixin {
 
     @Inject(method = "awardAdvancements", at = @At("HEAD"))

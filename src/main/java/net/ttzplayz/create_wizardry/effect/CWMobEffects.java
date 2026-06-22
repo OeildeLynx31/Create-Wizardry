@@ -15,10 +15,7 @@ public class CWMobEffects {
     public static final DeferredRegister<MobEffect> MOB_EFFECTS =
             DeferredRegister.create(BuiltInRegistries.MOB_EFFECT, CreateWizardry.MOD_ID);
 
-    /**
-     * Inflicted on players whose mana is fully siphoned: heavy slowness and (via the
-     * SpellPreCastEvent hook in CWEvents) an inability to cast spells.
-     */
+    // depletion effect
     public static final DeferredHolder<MobEffect, MobEffect> DEPLETION =
             MOB_EFFECTS.register("mana_depletion", () ->
                     new DepletionMobEffect(MobEffectCategory.HARMFUL, 0x7B4FB5)
@@ -34,10 +31,7 @@ public class CWMobEffects {
                                     -0.75D,
                                     AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 
-    /**
-     * Hidden, short-lived effect applied to anything within an active Mana Siphon's radius:
-     * zeroes mana regeneration so caught entities cannot regenerate while being absorbed from.
-     */
+    // siphon lock
     public static final DeferredHolder<MobEffect, MobEffect> SIPHON_LOCK =
             MOB_EFFECTS.register("siphon_lock", () ->
                     new DepletionMobEffect(MobEffectCategory.NEUTRAL, 0x7B4FB5)
@@ -51,7 +45,7 @@ public class CWMobEffects {
         MOB_EFFECTS.register(eventBus);
     }
 
-    /** MobEffect's constructor is protected, so a trivial subclass is needed to instantiate it. */
+    // effect base
     private static class DepletionMobEffect extends MobEffect {
         protected DepletionMobEffect(MobEffectCategory category, int color) {
             super(category, color);

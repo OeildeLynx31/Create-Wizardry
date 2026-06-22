@@ -9,11 +9,8 @@ import net.ttzplayz.create_wizardry.block.pipe.EncasedArcanePipeBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-/**
- * Lets the encased arcane pipe draw its rim attachment like Create's own encased pipe, which is
- * hardcoded by block identity in getRenderedRimAttachment.
- */
 @Mixin(FluidTransportBehaviour.class)
+// encased pipe rim
 public class FluidTransportBehaviourMixin {
 
     @WrapOperation(

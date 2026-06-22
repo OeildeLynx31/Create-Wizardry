@@ -22,9 +22,9 @@ import java.util.function.Consumer;
 public class ManaSiphonVisual extends AbstractBlockEntityVisual<ManaSiphonBlockEntity>
         implements SimpleDynamicVisual {
 
-    /** Max outward splay of each prong when fully expanded. Sign points the prong tips outward+down. */
+    // prong splay
     private static final float OUTWARD_DEGREES = -22.5f;
-    /** Hinge of the (canonical, north-facing) prong: the inner-top edge where it meets the cap. */
+    // prong hinge
     private static final float HINGE_X = 0.5f;
     private static final float HINGE_Y = 14f / 16f;
     private static final float HINGE_Z = 6f / 16f;

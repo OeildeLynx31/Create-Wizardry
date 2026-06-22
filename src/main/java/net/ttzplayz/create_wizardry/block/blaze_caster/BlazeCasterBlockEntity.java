@@ -127,7 +127,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     protected ItemStack heldItem = ItemStack.EMPTY;
     protected ItemStack heldHat = ItemStack.EMPTY;
     public SmartFluidTankBehaviour internalTank;
-    /** Per-side leak-aware tank capabilities, built lazily. */
+    // lazy caps
     private final Map<Direction, IFluidHandler> decayingCaps = new HashMap<>();
     public final LerpedFloat headAnimation = LerpedFloat.linear();
     public final LerpedFloat headAngle = LerpedFloat.angular();
@@ -229,7 +229,6 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             DataComponentType<String> variantType = (DataComponentType<String>)
                 (DataComponentType<?>) net.minecraft.core.registries.BuiltInRegistries.DATA_COMPONENT_TYPE
                     .get(ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "clothing_variant"));
-            // Only the hat variant has a metal buckle; the hood variant is all cloth
             if (variantType != null && "hat".equals(heldHat.get(variantType)))
                 return CWPartialModels.ISS_WIZARD_HAT_BASE;
             return null;
@@ -241,7 +240,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         DyedItemColor dyed = heldHat.get(DataComponents.DYED_COLOR);
         if (dyed != null) return dyed.rgb();
         if (heldHat.isEmpty()) return 0xFFFFFF;
-        // Undyed: tint the dye layer with the hat's signature default colour (white if none defined).
+       //dye layer tinting
         String itemPath = net.minecraft.core.registries.BuiltInRegistries.ITEM
                 .getKey(heldHat.getItem()).getPath();
         return CWPartialModels.DEFAULT_HAT_COLOR.getOrDefault(itemPath, 0xFFFFFF);
@@ -558,7 +557,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 : Math.max(1, spell.getCastTime(spellLevel));
     }
 
-    /** Mana cost for one cast: ISS base cost ×10, with the Tarnished Helmet's −25% discount. */
+    // mana cost
     private int computeManaCost(AbstractSpell spell, int spellLevel) {
         int manaCost = spell.getManaCost(spellLevel) * 10;
         if (!heldHat.isEmpty()) {
@@ -570,11 +569,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         return manaCost;
     }
 
-    /**
-     * Whether the caster currently holds enough mana to cast the held scroll's spell.
-     * Returns true for creative mode and for spells that aren't mana-gated here (eldritch /
-     * blacklisted), so those keep showing the normal "Ready" line rather than a false warning.
-     */
+    // enough mana
     private boolean hasEnoughManaFor(ItemStack stack) {
         if (creative || internalTank == null) return true;
         ISpellContainer container = ISpellContainer.get(stack);
@@ -937,7 +932,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         }
     }
 
-    /** Client only: keep {@link net.ttzplayz.create_wizardry.client.ClientBlazeBeams} in sync with the synced channel state. */
+    // sync beam
     private void updateClientBeam() {
         boolean shouldBeam = clientChannelProxyId != 0 && "ray_of_siphoning".equals(clientChannelSpellPath);
         int desired = shouldBeam ? clientChannelProxyId : 0;
@@ -1093,7 +1088,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         );
     }
 
-    /** Tank capability that leaks mana arriving through copper pipes (cached per side). */
+    // decaying cap
     private IFluidHandler decayingCapability(Direction side) {
         if (internalTank == null) return null;
         return decayingCaps.computeIfAbsent(side,

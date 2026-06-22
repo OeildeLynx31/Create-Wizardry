@@ -34,7 +34,7 @@ import static net.ttzplayz.create_wizardry.block.CWShapes.CHANNELER_SHAPE;
 
 public class ManaSiphonBlock extends KineticBlock implements IBE<ManaSiphonBlockEntity>, ICogWheel, SimpleWaterloggedBlock {
 
-    /** false = small (3x3) drain area, true = expanded (7x7). */
+    // expanded radius
     public static final BooleanProperty EXPANDED = BooleanProperty.create("expanded");
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 

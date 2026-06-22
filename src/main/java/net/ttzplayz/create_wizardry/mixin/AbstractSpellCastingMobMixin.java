@@ -9,17 +9,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Prevents a spell-casting mob from casting while it sits in an active Mana Siphon's field (it
- * carries the short-lived {@code SIPHON_LOCK} effect, refreshed every scan).
- *
- * <p>This has to be done at the start of {@code initiateCastSpell}: the mob's attack goals don't
- * gate on mana (base {@code AbstractSpell.checkPreCastConditions} returns true), so zeroing mana
- * doesn't stop them, and {@code cancelCast()} is worse than useless here because it routes through
- * {@code castComplete() -> onServerCastComplete(...)} and actually fires the spell. No-opping the
- * cast initiation is the only clean way to suppress it.
- */
 @Mixin(AbstractSpellCastingMob.class)
+// suppress siphoned casts
 public abstract class AbstractSpellCastingMobMixin {
 
     @Inject(method = "initiateCastSpell", at = @At("HEAD"), cancellable = true)

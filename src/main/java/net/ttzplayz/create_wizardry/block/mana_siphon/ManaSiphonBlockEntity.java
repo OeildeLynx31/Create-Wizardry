@@ -91,12 +91,12 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     private int growthCooldown = 0;
 
     private float lastPumpSpeed = Float.NaN;
-    /** Lazy tank build */
+    // lazy caps
     private final Map<Direction, IFluidHandler> decayingCaps = new HashMap<>();
     private final Map<BlockPos, Integer> eggProgress = new HashMap<>();
-    /**mB siphoned from caster out of max-mana pool */
+    // caster drain
     private final Map<UUID, Integer> casterDrain = new HashMap<>();
-    /** Player who placed the siphon (for advancements) */
+    // placer uuid
     public UUID placerUuid;
 
     // 0..1 prong-splay, driven both sides for the client visual
@@ -160,7 +160,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         if (clientPacket) clientDraining = compound.getBoolean("Draining");
     }
 
-    /** Award an advancement to the placer if they are online */
+    // award placer
     private void awardOwner(net.ttzplayz.create_wizardry.advancement.CWAdvancement advancement) {
         if (placerUuid == null || level == null) return;
         Player owner = level.getPlayerByUUID(placerUuid);
@@ -260,7 +260,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     // BOSS INTERACTIONS
 
-    /** Tyros/Dead King overload and destroy the Siphon; returns true if broken */
+    // boss break
     private boolean bossBreakCheck(AABB box) {
         boolean overload = !level.getEntitiesOfClass(FireBossEntity.class, box).isEmpty();
         if (!overload) {
@@ -466,10 +466,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     // MANA CRYSTALLIZATION
 
-    /**
-     * Grows Arcane Essence on the bottom face of a crystalline block two blocks up from the siphon
-     * One stage per GROWTH_COOLDOWN_TICKS, costing GROWTH_COST
-     */
+    // grow essence
     private void tickCrystallization() {
         if (growthCooldown > 0) return;
         if (storedMana() < GROWTH_COST) return;

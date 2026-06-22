@@ -31,10 +31,7 @@ import net.neoforged.neoforge.client.model.data.ModelData.Builder;
 import net.neoforged.neoforge.client.model.data.ModelProperty;
 import net.neoforged.neoforge.common.util.TriState;
 
-/**
- * Arcane copy of Create's {@code PipeAttachmentModel}, dynamically adding connection rims, casings, drains and
- * brackets using {@link ArcanePartialModels} so the geometry matches the arcane pipe textures.
- */
+// arcane pipe attachments
 public class ArcanePipeAttachmentModel extends BakedModelWrapperWithData {
 
     private static final ModelProperty<PipeModelData> PIPE_PROPERTY = new ModelProperty<>();
@@ -129,8 +126,7 @@ public class ArcanePipeAttachmentModel extends BakedModelWrapperWithData {
             addModelQuads(quads, ArcanePartialModels.FLUID_PIPE_CASING.get(), state, side, rand, data, renderType);
     }
 
-    /** Adds a sub-model's quads only for the render layers it declares, so e.g. solid rims never bleed
-     *  into the cutout pass (and the cutout glass never bleeds into the solid pass). */
+    // layer-filtered quads
     private static void addModelQuads(List<BakedQuad> quads, BakedModel model, BlockState state, Direction side,
         RandomSource rand, ModelData data, RenderType renderType) {
         if (renderType == null || model.getRenderTypes(state, rand, data).contains(renderType))

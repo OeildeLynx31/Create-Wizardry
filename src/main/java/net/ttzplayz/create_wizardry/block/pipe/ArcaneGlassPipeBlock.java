@@ -27,10 +27,7 @@ import net.minecraft.world.phys.HitResult;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import net.ttzplayz.create_wizardry.block.CWBlocks;
 
-/**
- * Arcane counterpart of Create's {@link GlassFluidPipeBlock}. Wrenches back into the arcane pipe and
- * encases into the arcane encased pipe.
- */
+// arcane glass pipe
 public class ArcaneGlassPipeBlock extends GlassFluidPipeBlock {
 
     public ArcaneGlassPipeBlock(Properties properties) {

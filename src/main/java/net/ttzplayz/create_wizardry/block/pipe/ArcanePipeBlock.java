@@ -25,10 +25,7 @@ import net.ttzplayz.create_wizardry.block.CWBlocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Arcane counterpart of Create's {@link FluidPipeBlock}. Behaves identically, but uses Create: Wizardry's
- * own block entity type and converts into the arcane glass/encased variants when wrenched/encased.
- */
+// arcane pipe
 public class ArcanePipeBlock extends FluidPipeBlock {
 
     public static final MapCodec<ArcanePipeBlock> CODEC = simpleCodec(ArcanePipeBlock::new);

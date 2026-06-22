@@ -9,9 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Arcane counterpart of Create's {@link SmartFluidPipeBlock}. Identical behaviour, own block entity type.
- */
+// smart arcane pipe
 public class SmartArcanePipeBlock extends SmartFluidPipeBlock {
 
     public static final MapCodec<SmartArcanePipeBlock> CODEC = simpleCodec(SmartArcanePipeBlock::new);

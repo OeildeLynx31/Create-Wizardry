@@ -120,7 +120,7 @@ public final class CWManaTransformations {
         entity.getPersistentData().putLong(MANA_EXPOSED_KEY, entity.level().getGameTime() + EXPOSURE_TICKS);
     }
 
-    /** True if entity wad recently spouted with or is standing in Mana */
+    // exposure check
     public static boolean isManaExposed(LivingEntity entity) {
         Level level = entity.level();
         if (entity.getPersistentData().getLong(MANA_EXPOSED_KEY) >= level.getGameTime()) {
@@ -137,7 +137,7 @@ public final class CWManaTransformations {
 
     // TRIGGER PATHS
 
-    /** Drop/deploy path */
+    // drop conversion
     public static void tryConvertViaDrop(ServerLevel level, LivingEntity entity) {
         if (!(entity instanceof Mob mob)) return;
         if (isPending(mob) || !hasConversionFor(mob.getType())) return;
@@ -159,7 +159,7 @@ public final class CWManaTransformations {
         }
     }
 
-    /** Give/deploy path */
+    // interact conversion
     public static boolean tryConvertViaInteract(Player player, Mob mob, ItemStack stack) {
         Conversion c = findConversion(stack.getItem(), mob.getType());
         if (c == null || isPending(mob) || !isManaExposed(mob)) return false;
@@ -199,7 +199,7 @@ public final class CWManaTransformations {
         }
     }
 
-    /** Called every tick for every mob (server side): drives the admire animation */
+    // finish conversion
     public static void tickPendingConversion(Mob mob) {
         CompoundTag data = mob.getPersistentData();
         if (!data.contains(CONVERT_AT_KEY)) return;

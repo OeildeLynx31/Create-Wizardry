@@ -17,14 +17,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Grants the "Industrial Ink" advancement when an Iron's Spells 'n Spellbooks ink fluid is produced
- * in a Create basin. Create has no recipe-completion event, but every mixing/compacting result is
- * deposited through {@link BasinBlockEntity#acceptOutputs}; only the {@code create:mixing} ink recipes
- * ever output an ink fluid, so seeing one in the (non-simulated, accepted) outputs reliably means
- * "ink was mixed". Players standing near the basin at that moment are awarded.
- */
 @Mixin(BasinBlockEntity.class)
+// ink advancement
 public abstract class BasinInkMixingMixin {
 
     @Inject(method = "acceptOutputs", at = @At("RETURN"))

@@ -5,25 +5,23 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-/**
- * Create Wizardry common config. Configures the Mana Siphon, mana pipes, and the Channeler.
- */
+
 @EventBusSubscriber(modid = CreateWizardry.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class Config
 {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
-    // ---- Mana Siphon ----
+    // Mana Siphon
     private static final ModConfigSpec.IntValue MANA_SIPHON_SMALL_RADIUS;
     private static final ModConfigSpec.IntValue MANA_SIPHON_LARGE_RADIUS;
     private static final ModConfigSpec.IntValue MANA_SIPHON_DRAIN_PER_OP;
     private static final ModConfigSpec.IntValue PLAYER_MANA_PER_MB;
 
-    // ---- Mana Pipes ----
+    // Mana Pipe Leaking
     private static final ModConfigSpec.DoubleValue MANA_PIPE_LOSS_RATE;
     private static final ModConfigSpec.BooleanValue MANA_LEAKING_ENABLED;
 
-    // ---- Channeler ----
+    // Channeler
     private static final ModConfigSpec.IntValue CHANNELER_CREEPER_RANGE;
     private static final ModConfigSpec.IntValue CHANNELER_LIGHTNING_RANGE;
 

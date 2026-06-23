@@ -401,7 +401,9 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     }
 
     private void applySiphonLock(LivingEntity e) {
-        e.addEffect(new MobEffectInstance(CWMobEffects.SIPHON_LOCK, SCAN_INTERVAL + 5, 0, true, false, false));
+        if (level instanceof ServerLevel sl) {
+            CWMobEffects.applySiphonLock(sl, e, SCAN_INTERVAL + 5);
+        }
     }
 
     private void spawnDrainParticles(LivingEntity e) {

@@ -1,5 +1,6 @@
 package net.ttzplayz.create_wizardry.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.redspace.ironsspellbooks.render.SpellRenderingHelper;
 import net.minecraft.client.model.EntityModel;
@@ -14,10 +15,14 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 import net.ttzplayz.create_wizardry.CreateWizardry;
 import net.ttzplayz.create_wizardry.client.rendering.ManaSiphonOrbRenderer;
 import net.ttzplayz.create_wizardry.effect.CWMobEffects;
+import software.bernie.geckolib.event.GeoRenderEvent;
 
 // renders blaze caster beams on their armorstand proxy, bypassing flywheel ber suppression
 @EventBusSubscriber(modid = CreateWizardry.MOD_ID, value = Dist.CLIENT)
 public class CWClientRenderEvents {
+
+    // peak drain-wobble twist, in degrees
+    private static final float WOBBLE_DEGREES = 2.5f;
 
     @SubscribeEvent
     public static void afterLivingRender(RenderLivingEvent.Post<? extends LivingEntity, ? extends EntityModel<? extends LivingEntity>> event) {
@@ -27,13 +32,26 @@ public class CWClientRenderEvents {
         }
     }
 
-    // wobble drained mobs like a converting villager; players excluded
+    // wobble drained mobs like a converting villager; players excluded.
+    // vanilla-rendered mobs (e.g. the villager/piglin/skeleton/spider conversion targets) come through here
     @SubscribeEvent
     public static void wobbleDrainedMob(RenderLivingEvent.Pre<? extends LivingEntity, ? extends EntityModel<? extends LivingEntity>> event) {
-        LivingEntity entity = event.getEntity();
+        applyDrainWobble(event.getEntity(), event.getPoseStack());
+    }
+
+    // Iron's Spellbooks casters are GeckoLib-rendered and never fire RenderLivingEvent, so wobble them
+    // off GeckoLib's own pre-render event instead (these are the mobs that "have mana")
+    @SubscribeEvent
+    public static void wobbleDrainedGeckoMob(GeoRenderEvent.Entity.Pre event) {
+        if (event.getEntity() instanceof LivingEntity entity) {
+            applyDrainWobble(entity, event.getPoseStack());
+        }
+    }
+
+    private static void applyDrainWobble(LivingEntity entity, PoseStack poseStack) {
         if (entity instanceof Mob && entity.hasEffect(CWMobEffects.SIPHON_LOCK)) {
-            float wobble = (float) (Math.cos(entity.tickCount * 3.25) * Math.PI * 0.25);
-            event.getPoseStack().mulPose(Axis.YP.rotationDegrees(wobble));
+            float wobble = (float) (Math.cos(entity.tickCount * 3.25) * WOBBLE_DEGREES);
+            poseStack.mulPose(Axis.YP.rotationDegrees(wobble));
         }
     }
 

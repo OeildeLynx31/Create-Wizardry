@@ -24,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.ttzplayz.create_wizardry.CWConfig;
+import net.ttzplayz.create_wizardry.effect.CWMobEffects;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import net.ttzplayz.create_wizardry.particle.CWParticles;
 
@@ -250,6 +251,8 @@ public final class CWManaTransformations {
         if (!(mob.level() instanceof ServerLevel level)) return;
 
         long now = level.getGameTime();
+        // keep the converting mob shaking: SIPHON_LOCK (broadcast to clients) drives the render wobble
+        if (now % 5L == 0L) CWMobEffects.applySiphonLock(level, mob, 15);
 
         mob.clearFire();
         if (mob instanceof Piglin piglin) {

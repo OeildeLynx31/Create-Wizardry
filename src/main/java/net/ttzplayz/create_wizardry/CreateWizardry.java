@@ -87,6 +87,7 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 import net.neoforged.neoforge.event.entity.EntityStruckByLightningEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.ttzplayz.create_wizardry.block.blaze_caster.BlazeCasterBlockEntity;
@@ -297,6 +298,22 @@ public class CreateWizardry {
         if (spawnedByPlacer != null && player.getUUID().equals(spawnedByPlacer))
             event.setCanceled(true);
     }
+    // Mob-effect removals aren't synced to tracking clients, so when SIPHON_LOCK ends server-side we
+    // broadcast the removal ourselves; otherwise the drained mob keeps shaking forever on the client.
+    @SubscribeEvent
+    public void onSiphonLockExpired(MobEffectEvent.Expired event) {
+        if (event.getEffectInstance() != null && event.getEffectInstance().is(CWMobEffects.SIPHON_LOCK)) {
+            CWMobEffects.broadcastSiphonLockRemoval(event.getEntity());
+        }
+    }
+
+    @SubscribeEvent
+    public void onSiphonLockRemoved(MobEffectEvent.Remove event) {
+        if (event.getEffectInstance() != null && event.getEffectInstance().is(CWMobEffects.SIPHON_LOCK)) {
+            CWMobEffects.broadcastSiphonLockRemoval(event.getEntity());
+        }
+    }
+
     public static void onRegister(final RegisterEvent event) {
         if (event.getRegistry() == BuiltInRegistries.TRIGGER_TYPES) {
             CWAdvancements.registerTriggers();

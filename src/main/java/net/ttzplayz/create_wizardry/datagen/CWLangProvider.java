@@ -34,7 +34,7 @@ public class CWLangProvider extends LanguageProvider {
         add("jei.create_wizardry.liquid_lightning",
                 "An extremely volatile fluid that is charged with electric energy. Can be obtained by channeling lightning bolts using the Channeler block or by extracting from charged creepers in a bottle.");
         add("jei.create_wizardry.mana",
-                "The liquid essence of magic. It is an extremely volatile substance, rapidly leaking from pipes that are un-insulated with arcane material. Can be extracted from players, spells, and mobs with the Mana Siphon, and can also be crystallized into Arcane E    ssence by placing a crystalline block above a filled mana Siphon.");
+                "The liquid essence of magic. It is an extremely volatile substance, rapidly leaking from pipes that are un-insulated with arcane material. Can be extracted from players, spells, and mobs with the Mana Siphon, and can also be crystallized into Arcane Essence by placing a crystalline block above a filled mana Siphon.");
         add("jei.create_wizardry.blood",
                 "The lifeblood of all organisms. Can be obtained by compressing meat or boiling mobs.");
         add("item.create_wizardry.incomplete_blaze_caster", "Incomplete Blaze Caster");
@@ -46,7 +46,7 @@ public class CWLangProvider extends LanguageProvider {
         add("create_wizardry.tooltip.mana_siphon.confined", "Confined");
         add("create_wizardry.tooltip.mana_siphon.expanded", "Expanded");
         add("block.create_wizardry.arcane_essence_cluster", "Arcane Essence Cluster");
-        add("effect.create_wizardry.depletion", "Depletion");
+        add("effect.create_wizardry.mana_depletion", "Depletion");
         add("effect.create_wizardry.siphon_lock", "Siphon Lock");
         add("create_wizardry.tooltip.must_be_superheated", "(Must be superheated)");
         add("create_wizardry.tooltip.spell", "Spell: %s");

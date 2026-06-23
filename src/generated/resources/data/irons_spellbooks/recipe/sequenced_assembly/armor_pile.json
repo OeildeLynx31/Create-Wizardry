@@ -40,6 +40,24 @@
           "id": "minecraft:netherite_scrap"
         }
       ]
+    },
+    {
+      "type": "create:filling",
+      "ingredients": [
+        {
+          "item": "minecraft:netherite_scrap"
+        },
+        {
+          "type": "neoforge:single",
+          "amount": 1000,
+          "fluid": "create_wizardry:mana"
+        }
+      ],
+      "results": [
+        {
+          "id": "minecraft:netherite_scrap"
+        }
+      ]
     }
   ],
   "transitional_item": {

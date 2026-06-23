@@ -138,7 +138,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .save(output, itemId(ARCANE_PIPE.get()) + "_from_pipe");
         manualApplication(ARCANE_PIPE.getId())
                 .require(FLUID_PIPE)
-                .require(ARCANE_INGOT.get())
+                .require(ARCANE_SHEET.get())
                 .output(ARCANE_PIPE.get())
                 .build(output);
         baseDeployingRecipe(output, ARCANE_PIPE.get(), FLUID_PIPE, ARCANE_SHEET.get());
@@ -168,6 +168,12 @@ public class CWRecipeProvider extends RecipeProvider {
                 .define('E', ELECTRON_TUBE.get())
                 .unlockedBy("has_arcane_pipe", has(ARCANE_PIPE.get()))
                 .save(output);
+        baseDeployingRecipe(output, SMART_ARCANE_PIPE.get(), SMART_FLUID_PIPE.get(), ARCANE_SHEET.get());
+        manualApplication(SMART_ARCANE_PIPE.getId())
+                .require(SMART_FLUID_PIPE.get())
+                .require(ARCANE_SHEET.get())
+                .output(SMART_ARCANE_PIPE.get())
+                .build(output);
     }
     private void buildVanillaRecipes(RecipeOutput output) {
         List<ItemLike> MITHRIL_SMELTABLES = List.of(CRUSHED_MITHRIL.get(), MITHRIL_ORE_BLOCK_ITEM.get(), MITHRIL_ORE_DEEPSLATE_BLOCK_ITEM.get());
@@ -308,7 +314,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .transitionTo(IRON_HELMET)
                 .addOutput(TARNISHED_CROWN.get(), 1)
                 .loops(3)
-                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 500))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 100))
                 .addStep(PressingRecipe::new, builder -> (builder))
                 .build(output); //check if this works
         sequencedAssembly(INFERNAL_SORCERER_CHESTPLATE.getId())
@@ -642,6 +648,7 @@ public class CWRecipeProvider extends RecipeProvider {
                 .loops(1)
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(CINDER_ESSENCE.get()))
                 .addStep(DeployerApplicationRecipe::new, builder -> builder.require(NETHERITE_SCRAP))
+                .addStep(FillingRecipe::new, builder -> builder.require(MANA.get(), 1000))
                 .build(output);
         sequencedAssembly(ICE_SPIDER_EGG_BLOCK_ITEM.getId())
                 .require(TURTLE_EGG)
@@ -839,23 +846,22 @@ public class CWRecipeProvider extends RecipeProvider {
     private void buildMixingRecipes(RecipeOutput output) {
         // INKS (6.0.6 restrictions - cannot be more than nine items)
         mixing(COMMON_INK.getId())
-                .require(COPPER_INGOT)
-                .require(COPPER_INGOT)
+                .require(INK_SAC)
                 .require(INK_SAC)
                 .require(ARCANE_ESSENCE.get())
                 .output(COMMON_INK.get(), 500)
                 .build(output);
         mixing(UNCOMMON_INK.getId())
-                .require(IRON_INGOT)
-                .require(IRON_INGOT)
+                .require(COPPER_INGOT)
+                .require(COPPER_INGOT)
                 .require(ARCANE_ESSENCE.get())
                 .require(ARCANE_ESSENCE.get())
                 .require(COMMON_INK.get(), 1000)
                 .output(UNCOMMON_INK.get(), 500)
                 .build(output);
         mixing(RARE_INK.getId())
-                .require(GOLD_INGOT)
-                .require(GOLD_INGOT)
+                .require(IRON_INGOT)
+                .require(IRON_INGOT)
                 .require(ARCANE_ESSENCE.get())
                 .require(ARCANE_ESSENCE.get())
                 .require(ARCANE_ESSENCE.get())
@@ -864,8 +870,8 @@ public class CWRecipeProvider extends RecipeProvider {
                 .output(RARE_INK.get(), 500)
                 .build(output);
         mixing(EPIC_INK.getId())
-                .require(DIAMOND)
-                .require(DIAMOND)
+                .require(GOLD_INGOT)
+                .require(GOLD_INGOT)
                 .require(ARCANE_ESSENCE.get())
                 .require(ARCANE_ESSENCE.get())
                 .require(ARCANE_ESSENCE.get())

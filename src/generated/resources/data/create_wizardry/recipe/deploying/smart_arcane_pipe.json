@@ -1,8 +1,8 @@
 {
-  "type": "create:item_application",
+  "type": "create:deploying",
   "ingredients": [
     {
-      "item": "create:fluid_pipe"
+      "item": "create:smart_fluid_pipe"
     },
     {
       "item": "create_wizardry:arcane_sheet"
@@ -10,7 +10,7 @@
   ],
   "results": [
     {
-      "id": "create_wizardry:arcane_pipe"
+      "id": "create_wizardry:smart_arcane_pipe"
     }
   ]
 }

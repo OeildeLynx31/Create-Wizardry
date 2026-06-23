@@ -33,6 +33,10 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
@@ -79,6 +83,8 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     private static final int EGG_DRAIN_STEPS = 30;
 
+    private static final int ARMOR_PILE_MANA = 1500;
+
     private static final int DEPLETION_DURATION = 300;
 
     private static final double SPELL_PULL_SPEED = 0.55;
@@ -94,6 +100,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     // lazy caps
     private final Map<Direction, IFluidHandler> decayingCaps = new HashMap<>();
     private final Map<BlockPos, Integer> eggProgress = new HashMap<>();
+    private final Map<BlockPos, Integer> armorPileProgress = new HashMap<>();
     // caster drain
     private final Map<UUID, Integer> casterDrain = new HashMap<>();
     // placer uuid
@@ -177,7 +184,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.literal(" ")
                 .append(Component.translatable("create_wizardry.tooltip.mana_siphon."
-                        + (expanded ? "expanded" : "confined")).withStyle(ChatFormatting.GRAY))
+                        + (expanded ? "expanded" : "confined")).withStyle(ChatFormatting.AQUA))
                 .append(Component.literal(" (" + diameter + "x" + diameter + ")")
                         .withStyle(ChatFormatting.DARK_GRAY)));
         containedFluidTooltip(tooltip, isPlayerSneaking, internalTank.getPrimaryHandler());
@@ -244,6 +251,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         if (bossBreakCheck(box)) return;
         drainEntities(box);
         tickEggs();
+        tickArmorPiles();
     }
 
     // EXPANDED/CONFINED RADIUS
@@ -346,6 +354,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     private void revert(AbstractSpellCastingMob caster) {
         if (!(level instanceof ServerLevel sl)) return;
         if (caster instanceof IceSpiderEntity spider) {
+            CWManaTransformations.dropKeyItem(sl, spider);
             Mob result = spider.convertTo(EntityType.SPIDER, false);
             if (result != null) {
                 CWParticles.spawnManaRunes(sl, result.getX(), result.getY() + result.getBbHeight() / 2,
@@ -462,6 +471,53 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
                 CWParticles.spawnManaRunes(sl, found.getX() + 0.5, found.getY() + 0.5, found.getZ() + 0.5, 4, 0.2, 0.05);
             }
         }
+    }
+
+    // Armor Piles
+
+    private void tickArmorPiles() {
+        int radius = currentRadius();
+        BlockPos found = null;
+        for (BlockPos p : BlockPos.betweenClosed(
+                worldPosition.offset(-radius, -radius, -radius),
+                worldPosition.offset(radius, radius, radius))) {
+            if (level.getBlockState(p).is(BlockRegistry.ARMOR_PILE_BLOCK.get())) {
+                found = p.immutable();
+                break;
+            }
+        }
+        if (found == null) {
+            if (!armorPileProgress.isEmpty()) armorPileProgress.clear();
+            return;
+        }
+        int accepted = fillMana(Config.manaSiphonDrainPerOp);
+        if (accepted <= 0) return; // tank full
+
+        int prog = armorPileProgress.getOrDefault(found, 0) + accepted;
+        if (prog >= ARMOR_PILE_MANA) {
+            armorPileProgress.remove(found);
+            level.removeBlock(found, false);
+            dropArmorPileLoot(found);
+            level.playSound(null, found, SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.BLOCKS, 1.0F, 0.7F);
+            if (level instanceof ServerLevel sl) {
+                CWParticles.spawnManaRunes(sl, found.getX() + 0.5, found.getY() + 0.5, found.getZ() + 0.5, 16, 0.3, 0.1);
+            }
+        } else {
+            armorPileProgress.put(found, prog);
+            if (level instanceof ServerLevel sl) {
+                CWParticles.spawnManaRunes(sl, found.getX() + 0.5, found.getY() + 0.5, found.getZ() + 0.5, 4, 0.2, 0.05);
+            }
+        }
+    }
+
+    private static final Item[] ARMOR_PILE_LOOT = {
+            Items.NETHERITE_HELMET, Items.NETHERITE_CHESTPLATE,
+            Items.NETHERITE_LEGGINGS, Items.NETHERITE_BOOTS, Items.NETHERITE_INGOT
+    };
+
+    private void dropArmorPileLoot(BlockPos pos) {
+        Item drop = ARMOR_PILE_LOOT[level.random.nextInt(ARMOR_PILE_LOOT.length)];
+        Block.popResource(level, pos, new ItemStack(drop));
     }
 
     // MANA CRYSTALLIZATION

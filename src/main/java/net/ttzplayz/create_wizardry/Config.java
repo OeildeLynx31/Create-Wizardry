@@ -16,6 +16,7 @@ public class Config
     private static final ModConfigSpec.IntValue MANA_SIPHON_LARGE_RADIUS;
     private static final ModConfigSpec.IntValue MANA_SIPHON_DRAIN_PER_OP;
     private static final ModConfigSpec.IntValue PLAYER_MANA_PER_MB;
+    private static final ModConfigSpec.BooleanValue MANA_SIPHON_DROP_KEY_ITEMS;
 
     // Mana Pipe Leaking
     private static final ModConfigSpec.DoubleValue MANA_PIPE_LOSS_RATE;
@@ -38,11 +39,16 @@ public class Config
 
         MANA_SIPHON_DRAIN_PER_OP = BUILDER
                 .comment("Mana (mB) the Mana Siphon pulls from each entity per drain operation.")
-                .defineInRange("manaSiphonDrainPerOp", 5, 1, 1000);
+                .defineInRange("manaSiphonDrainPerOp", 1, 1, 1000);
 
         PLAYER_MANA_PER_MB = BUILDER
                 .comment("Player mana spent per 1 mB the Mana Siphon stores (only applies to players).")
                 .defineInRange("playerManaPerMb", 5, 1, 1000);
+
+        MANA_SIPHON_DROP_KEY_ITEMS = BUILDER
+                .comment("Whether mobs drop their key item (e.g. tarnished crown, spell book, permafrost shard)",
+                        "when the Mana Siphon fully drains and reverts them.")
+                .define("manaSiphonDropKeyItems", true);
 
         BUILDER.pop();
 
@@ -79,6 +85,7 @@ public class Config
     public static int manaSiphonLargeRadius;
     public static int manaSiphonDrainPerOp;
     public static int playerManaPerMb;
+    public static boolean manaSiphonDropKeyItems;
 
     public static double manaPipeLossRate;
     public static boolean manaLeakingEnabled;
@@ -93,6 +100,7 @@ public class Config
         manaSiphonLargeRadius = MANA_SIPHON_LARGE_RADIUS.get();
         manaSiphonDrainPerOp = MANA_SIPHON_DRAIN_PER_OP.get();
         playerManaPerMb = PLAYER_MANA_PER_MB.get();
+        manaSiphonDropKeyItems = MANA_SIPHON_DROP_KEY_ITEMS.get();
 
         manaPipeLossRate = MANA_PIPE_LOSS_RATE.get();
         manaLeakingEnabled = MANA_LEAKING_ENABLED.get();

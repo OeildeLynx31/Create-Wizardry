@@ -68,6 +68,7 @@
   "create_wizardry.tooltip.spell": "Spell: %s",
   "create_wizardry.tooltip.spell_incompatible": "(Incompatible with Blaze Caster)",
   "effect.create_wizardry.depletion": "Depletion",
+  "effect.create_wizardry.siphon_lock": "Siphon Lock",
   "fluid_type.create_wizardry.fire_ale_type": "Fire Ale",
   "fluid_type.create_wizardry.lightning_type": "Liquid Lightning",
   "fluid_type.create_wizardry.mana_type": "Mana",

@@ -21,7 +21,9 @@ import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.ttzplayz.create_wizardry.Config;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import net.ttzplayz.create_wizardry.particle.CWParticles;
 
@@ -63,7 +65,10 @@ public final class CWManaTransformations {
                     EntityRegistry.PYROMANCER::get),
 
             new Conversion(ItemRegistry.ICE_SPELL_BOOK.get(), EntityType.VILLAGER,
-                    EntityRegistry.CRYOMANCER::get)
+                    EntityRegistry.CRYOMANCER::get),
+
+            new Conversion(permafrostShard(), EntityType.SPIDER,
+                    EntityRegistry.ICE_SPIDER::get)
     );
 
     private static Conversion findConversion(Item item, EntityType<?> type) {
@@ -101,6 +106,7 @@ public final class CWManaTransformations {
         @SuppressWarnings("unchecked")
         EntityType<? extends Mob> mobType = (EntityType<? extends Mob>) counterpart;
 
+        dropKeyItem(level, mob);
         Mob result = mob.convertTo(mobType, false);
         if (result == null) return false; // conversion event cancelled
         result.finalizeSpawn(level, level.getCurrentDifficultyAt(result.blockPosition()),
@@ -111,6 +117,33 @@ public final class CWManaTransformations {
         level.playSound(null, result.blockPosition(), SoundRegistry.EVOCATION_CAST.get(),
                 SoundSource.HOSTILE, 1.0F, 1.0F);
         return true;
+    }
+
+    // KEY ITEM DROPS
+
+    private static Item permafrostShard;
+
+    private static Item permafrostShard() {
+        if (permafrostShard == null) {
+            permafrostShard = BuiltInRegistries.ITEM.get(
+                    ResourceLocation.fromNamespaceAndPath("irons_spellbooks", "permafrost_shard"));
+        }
+        return permafrostShard;
+    }
+
+    // caster's trigger item
+    private static Item keyItemFor(EntityType<?> casterType) {
+        for (Conversion c : CONVERSIONS) {
+            if (c.to().get() == casterType) return c.trigger();
+        }
+        return null;
+    }
+
+    public static void dropKeyItem(ServerLevel level, Mob mob) {
+        if (!Config.manaSiphonDropKeyItems) return;
+        Item item = keyItemFor(mob.getType());
+        if (item == null || item == Items.AIR) return;
+        mob.spawnAtLocation(new ItemStack(item));
     }
 
     // EXPOSURE TRACKING

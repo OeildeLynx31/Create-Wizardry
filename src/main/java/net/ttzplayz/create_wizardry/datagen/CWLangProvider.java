@@ -47,6 +47,7 @@ public class CWLangProvider extends LanguageProvider {
         add("create_wizardry.tooltip.mana_siphon.expanded", "Expanded");
         add("block.create_wizardry.arcane_essence_cluster", "Arcane Essence Cluster");
         add("effect.create_wizardry.depletion", "Depletion");
+        add("effect.create_wizardry.siphon_lock", "Siphon Lock");
         add("create_wizardry.tooltip.must_be_superheated", "(Must be superheated)");
         add("create_wizardry.tooltip.spell", "Spell: %s");
         add("create_wizardry.tooltip.no_scroll", "No scroll equipped");

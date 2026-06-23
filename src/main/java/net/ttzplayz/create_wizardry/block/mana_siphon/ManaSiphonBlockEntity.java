@@ -5,8 +5,13 @@ import com.simibubi.create.content.fluids.FluidTransportBehaviour;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
+import io.redspace.ironsspellbooks.api.item.IScroll;
 import io.redspace.ironsspellbooks.api.magic.MagicData;
 import io.redspace.ironsspellbooks.api.registry.AttributeRegistry;
+import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
+import io.redspace.ironsspellbooks.api.spells.ISpellContainer;
+import io.redspace.ironsspellbooks.api.spells.SpellData;
+import io.redspace.ironsspellbooks.registries.ItemRegistry;
 import io.redspace.ironsspellbooks.entity.mobs.abstract_spell_casting_mob.AbstractSpellCastingMob;
 import io.redspace.ironsspellbooks.entity.mobs.dead_king_boss.DeadKingBoss;
 import io.redspace.ironsspellbooks.entity.mobs.ice_spider.IceSpiderEntity;
@@ -19,6 +24,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -32,6 +39,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -53,6 +61,7 @@ import net.ttzplayz.create_wizardry.block.pipe.ManaPipeTransport;
 import net.ttzplayz.create_wizardry.client.ClientManaSiphons;
 import net.ttzplayz.create_wizardry.effect.CWMobEffects;
 import net.ttzplayz.create_wizardry.entity.CWManaTransformations;
+import net.ttzplayz.create_wizardry.item.CWItems;
 import net.ttzplayz.create_wizardry.particle.CWParticles;
 import net.ttzplayz.create_wizardry.util.CWTags;
 
@@ -251,6 +260,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         drainEntities(box);
         tickEggs();
         tickArmorPiles();
+        if (CWConfig.manaSiphonDrainItems) tickItems(box);
     }
 
     // EXPANDED/CONFINED RADIUS
@@ -519,6 +529,103 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     private void dropArmorPileLoot(BlockPos pos) {
         Item drop = ARMOR_PILE_LOOT[level.random.nextInt(ARMOR_PILE_LOOT.length)];
         Block.popResource(level, pos, new ItemStack(drop));
+    }
+
+    // ITEM DRAINING
+
+    // mana (mB) it costs to craft an arcane ingot/sheet/magic cloth via filling; drained items bank a fraction of this
+    private static final int ARCANE_CRAFT_MANA = 500;
+
+    // yield (mB) banked + optional transmuted result item (null = item is consumed)
+    private record DrainResult(int yieldMb, Item result) {}
+
+    // drain one dropped magical item per scan: bank its mana, transmute/consume it
+    private void tickItems(AABB box) {
+        for (ItemEntity ie : level.getEntitiesOfClass(ItemEntity.class, box, ItemEntity::isAlive)) {
+            ItemStack stack = ie.getItem();
+            DrainResult drain = classifyItem(stack);
+            if (drain == null) continue;
+
+            int accepted = fillMana(drain.yieldMb());
+            if (accepted <= 0) continue; // tank full / nothing banked: leave the item
+
+            stack.shrink(1);
+            if (stack.isEmpty()) ie.discard(); else ie.setItem(stack);
+            if (drain.result() != null) {
+                Block.popResource(level, ie.blockPosition(), new ItemStack(drain.result()));
+            }
+            level.playSound(null, ie.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.6F, 1.4F);
+            if (level instanceof ServerLevel sl) {
+                CWParticles.spawnManaRunes(sl, ie.getX(), ie.getY(), ie.getZ(), 8, 0.2, 0.08);
+            }
+            markDraining();
+            return; // one item per scan
+        }
+    }
+
+    // classify a dropped stack into a drain yield + result, or null if not drainable
+    private DrainResult classifyItem(ItemStack stack) {
+        if (stack.isEmpty()) return null;
+        Item item = stack.getItem();
+
+        if (item instanceof IScroll) {
+            ISpellContainer container = ISpellContainer.get(stack);
+            if (container == null) return null;
+            SpellData spellData = container.getSpellAtIndex(0);
+            if (spellData == null || spellData == SpellData.EMPTY) return null;
+            AbstractSpell spell = spellData.getSpell();
+            if (spell == null) return null;
+            int cost = spell.getManaCost(spellData.getLevel());
+            if (cost <= 0) return null;
+            int yield = Math.max(1, (int) Math.round(CWConfig.manaSiphonScrollDrainPercent * cost));
+            return new DrainResult(yield, null);
+        }
+        if (item == ItemRegistry.ARCANE_INGOT.get()) {
+            return new DrainResult(arcaneItemYield(), randomIngot());
+        }
+        if (item == CWItems.ARCANE_SHEET.get()) {
+            return new DrainResult(arcaneItemYield(), randomSheet());
+        }
+        if (item == ItemRegistry.MAGIC_CLOTH.get()) {
+            return new DrainResult(arcaneItemYield(), Items.WHITE_WOOL);
+        }
+        return null;
+    }
+
+    private int arcaneItemYield() {
+        return Math.max(1, (int) Math.round(CWConfig.manaSiphonItemDrainPercent * ARCANE_CRAFT_MANA));
+    }
+
+    private static final Item[] BASE_INGOTS = {Items.GOLD_INGOT, Items.IRON_INGOT, Items.COPPER_INGOT};
+
+    private Item randomIngot() {
+        Item special = rollSpecial(Items.NETHERITE_INGOT, createItem("brass_ingot"));
+        return special != null ? special : BASE_INGOTS[level.random.nextInt(BASE_INGOTS.length)];
+    }
+
+    private Item randomSheet() {
+        Item[] base = {createItem("golden_sheet"), createItem("iron_sheet"), createItem("copper_sheet")};
+        Item special = rollSpecial(createItem("sturdy_sheet"), createItem("brass_sheet"));
+        return special != null ? special : base[level.random.nextInt(base.length)];
+    }
+
+    // roll the optional rare/brass upgrade, or null to fall back to a base result
+    private Item rollSpecial(Item rare, Item brass) {
+        if (!CWConfig.manaSiphonSpecialIngotDrops) return null;
+        double r = level.random.nextDouble();
+        if (rare != null && r < CWConfig.manaSiphonRareDropChance) return rare;
+        if (brass != null && r < CWConfig.manaSiphonRareDropChance + CWConfig.manaSiphonBrassDropChance) return brass;
+        return null;
+    }
+
+    private static final Map<String, Item> CREATE_ITEMS = new HashMap<>();
+
+    // lazily resolve a create: item by path, falling back to iron ingot if absent
+    private static Item createItem(String path) {
+        return CREATE_ITEMS.computeIfAbsent(path, p -> {
+            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("create", p));
+            return item == Items.AIR ? Items.IRON_INGOT : item;
+        });
     }
 
     // MANA CRYSTALLIZATION

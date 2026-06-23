@@ -19,6 +19,12 @@ public class CWConfig
     private static final ModConfigSpec.DoubleValue MANA_SIPHON_TRANSFORMATION_DAMAGE_PERCENT;
     private static final ModConfigSpec.IntValue PLAYER_MANA_PER_MB;
     private static final ModConfigSpec.BooleanValue MANA_SIPHON_DROP_KEY_ITEMS;
+    private static final ModConfigSpec.BooleanValue MANA_SIPHON_DRAIN_ITEMS;
+    private static final ModConfigSpec.DoubleValue MANA_SIPHON_SCROLL_DRAIN_PERCENT;
+    private static final ModConfigSpec.DoubleValue MANA_SIPHON_ITEM_DRAIN_PERCENT;
+    private static final ModConfigSpec.BooleanValue MANA_SIPHON_SPECIAL_INGOT_DROPS;
+    private static final ModConfigSpec.DoubleValue MANA_SIPHON_BRASS_DROP_CHANCE;
+    private static final ModConfigSpec.DoubleValue MANA_SIPHON_RARE_DROP_CHANCE;
 
     // Mana Pipe Leaking
     private static final ModConfigSpec.DoubleValue MANA_PIPE_LOSS_RATE;
@@ -63,6 +69,36 @@ public class CWConfig
                         "when the Mana Siphon fully drains and reverts them.")
                 .define("manaSiphonDropKeyItems", true);
 
+        MANA_SIPHON_DRAIN_ITEMS = BUILDER
+                .comment("Whether the Mana Siphon sucks mana out of dropped items within its radius",
+                        "(spell scrolls, arcane ingots/sheets, and magic cloth).")
+                .define("manaSiphonDrainItems", true);
+
+        MANA_SIPHON_SCROLL_DRAIN_PERCENT = BUILDER
+                .comment("Fraction of a spell scroll's mana cost banked (as mB) when the Siphon drains it.",
+                        "0.5 = 50% of the spell's mana cost. The scroll is consumed.")
+                .defineInRange("manaSiphonScrollDrainPercent", 0.5, 0.0, 1.0);
+
+        MANA_SIPHON_ITEM_DRAIN_PERCENT = BUILDER
+                .comment("Fraction of an arcane material's craft mana (mB) banked when the Siphon drains it.",
+                        "0.25 = 25% of the ~500 mB it costs to make an arcane ingot/sheet/magic cloth.",
+                        "Arcane ingots/sheets transmute into mundane ingots/sheets; magic cloth becomes wool.")
+                .defineInRange("manaSiphonItemDrainPercent", 0.25, 0.0, 1.0);
+
+        MANA_SIPHON_SPECIAL_INGOT_DROPS = BUILDER
+                .comment("Whether draining arcane ingots/sheets can yield the rare Brass and",
+                        "Netherite/Sturdy Sheet results. When false, only Gold/Iron/Copper variants drop.")
+                .define("manaSiphonSpecialIngotDrops", true);
+
+        MANA_SIPHON_BRASS_DROP_CHANCE = BUILDER
+                .comment("Chance an arcane ingot/sheet transmutes into Brass (only when special drops are enabled).")
+                .defineInRange("manaSiphonBrassDropChance", 0.05, 0.0, 1.0);
+
+        MANA_SIPHON_RARE_DROP_CHANCE = BUILDER
+                .comment("Chance an arcane ingot transmutes into a Netherite Ingot, or an arcane sheet into a",
+                        "Sturdy Sheet (only when special drops are enabled).")
+                .defineInRange("manaSiphonRareDropChance", 0.01, 0.0, 1.0);
+
         BUILDER.pop();
 
         BUILDER.push("mana_pipes");
@@ -101,6 +137,12 @@ public class CWConfig
     public static double manaSiphonTransformationDamagePercent;
     public static int playerManaPerMb;
     public static boolean manaSiphonDropKeyItems;
+    public static boolean manaSiphonDrainItems;
+    public static double manaSiphonScrollDrainPercent;
+    public static double manaSiphonItemDrainPercent;
+    public static boolean manaSiphonSpecialIngotDrops;
+    public static double manaSiphonBrassDropChance;
+    public static double manaSiphonRareDropChance;
 
     public static double manaPipeLossRate;
     public static boolean manaLeakingEnabled;
@@ -118,6 +160,12 @@ public class CWConfig
         manaSiphonTransformationDamagePercent = MANA_SIPHON_TRANSFORMATION_DAMAGE_PERCENT.get();
         playerManaPerMb = PLAYER_MANA_PER_MB.get();
         manaSiphonDropKeyItems = MANA_SIPHON_DROP_KEY_ITEMS.get();
+        manaSiphonDrainItems = MANA_SIPHON_DRAIN_ITEMS.get();
+        manaSiphonScrollDrainPercent = MANA_SIPHON_SCROLL_DRAIN_PERCENT.get();
+        manaSiphonItemDrainPercent = MANA_SIPHON_ITEM_DRAIN_PERCENT.get();
+        manaSiphonSpecialIngotDrops = MANA_SIPHON_SPECIAL_INGOT_DROPS.get();
+        manaSiphonBrassDropChance = MANA_SIPHON_BRASS_DROP_CHANCE.get();
+        manaSiphonRareDropChance = MANA_SIPHON_RARE_DROP_CHANCE.get();
 
         manaPipeLossRate = MANA_PIPE_LOSS_RATE.get();
         manaLeakingEnabled = MANA_LEAKING_ENABLED.get();

@@ -25,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.ttzplayz.create_wizardry.CWConfig;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 
 import java.util.List;
@@ -130,7 +131,7 @@ public class ChannelerBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private void absorbNearbyChargedCreepers() {
         if (level == null) return;
 
-        int r = net.ttzplayz.create_wizardry.Config.channelerCreeperRange;
+        int r = CWConfig.channelerCreeperRange;
         AABB box = new AABB(worldPosition).inflate(r, r, r);
         List<Creeper> creepers = level.getEntitiesOfClass(Creeper.class, box, c -> c != null && c.isAlive() && c.isPowered());
 
@@ -152,7 +153,7 @@ public class ChannelerBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private void absorbNearbyLightning() {
         if (level == null) return;
 
-        int r = net.ttzplayz.create_wizardry.Config.channelerLightningRange;
+        int r = CWConfig.channelerLightningRange;
         AABB box = new AABB(worldPosition).inflate(r, r, r);
         List<LightningBolt> bolts = level.getEntitiesOfClass(LightningBolt.class, box, l -> l != null && l.isAlive());
 

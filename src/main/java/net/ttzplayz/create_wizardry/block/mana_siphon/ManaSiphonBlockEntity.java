@@ -46,7 +46,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.ttzplayz.create_wizardry.Config;
+import net.ttzplayz.create_wizardry.CWConfig;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import net.ttzplayz.create_wizardry.block.CWBlocks;
 import net.ttzplayz.create_wizardry.block.pipe.ManaPipeTransport;
@@ -89,7 +89,6 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     private static final double SPELL_PULL_SPEED = 0.55;
     private static final double SPELL_CONSUME_DIST = 1.4;
-    private static final int SPELL_MANA_PER_DAMAGE = 10;
 
     private static final int PUMP_MAX_PER_TICK = 128;
 
@@ -258,8 +257,8 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     private int currentRadius() {
         return getBlockState().getValue(ManaSiphonBlock.EXPANDED)
-                ? Config.manaSiphonLargeRadius
-                : Config.manaSiphonSmallRadius;
+                ? CWConfig.manaSiphonLargeRadius
+                : CWConfig.manaSiphonSmallRadius;
     }
 
     private AABB currentBox() {
@@ -294,7 +293,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     // DRAINING
 
     private void drainEntities(AABB box) {
-        int perOp = Config.manaSiphonDrainPerOp;
+        int perOp = CWConfig.manaSiphonDrainPerOp;
         Set<UUID> seenCasters = new HashSet<>();
         List<LivingEntity> living = level.getEntitiesOfClass(LivingEntity.class, box, LivingEntity::isAlive);
         for (LivingEntity e : living) {
@@ -335,7 +334,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         caster.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, SCAN_INTERVAL + 10, 2, false, false));
         applySiphonLock(caster);
 
-        int accepted = fillMana(Config.manaSiphonDrainPerOp);
+        int accepted = fillMana(CWConfig.manaSiphonDrainPerOp);
         if (accepted <= 0) return; // tank full: suppressed, but no further drain progress
         spawnDrainParticles(caster);
         awardOwner(net.ttzplayz.create_wizardry.advancement.CWAdvancements.YOUR_SOUL_IS_MINE);
@@ -371,9 +370,9 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         MagicData md = MagicData.getPlayerMagicData(player);
         float mana = md.getMana();
         if (mana > 0) {
-            int ratio = Config.playerManaPerMb;
+            int ratio = CWConfig.playerManaPerMb;
             int tankSpace = CAPACITY - storedMana();
-            int mbWanted = Math.min(Config.manaSiphonDrainPerOp, Math.min(tankSpace, (int) (mana / ratio)));
+            int mbWanted = Math.min(CWConfig.manaSiphonDrainPerOp, Math.min(tankSpace, (int) (mana / ratio)));
             if (mbWanted > 0) {
                 int filled = fillMana(mbWanted);
                 if (filled > 0) {
@@ -424,8 +423,9 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
             Vec3 toCenter = center.subtract(spell.position());
             double dist = toCenter.length();
             if (dist < SPELL_CONSUME_DIST) {
-                int half = Math.max(1, Math.round(spell.getDamage()) * SPELL_MANA_PER_DAMAGE / 2);
-                fillMana(half);
+                // spells absorbed in-radius bank mana scaled by their damage (see CWConfig)
+                int mana = Math.max(1, (int) (Math.round(spell.getDamage()) * CWConfig.manaSiphonSpellManaPerDamage));
+                fillMana(mana);
                 if (level instanceof ServerLevel sl) {
                     CWParticles.spawnManaRunes(sl, spell.getX(), spell.getY(), spell.getZ(), 10, 0.2, 0.1);
                 }
@@ -455,7 +455,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
             if (!eggProgress.isEmpty()) eggProgress.clear();
             return;
         }
-        if (fillMana(Config.manaSiphonDrainPerOp) <= 0) return; // tank full
+        if (fillMana(CWConfig.manaSiphonDrainPerOp) <= 0) return; // tank full
 
         int prog = eggProgress.getOrDefault(found, 0) + 1;
         if (prog >= EGG_DRAIN_STEPS) {
@@ -490,7 +490,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
             if (!armorPileProgress.isEmpty()) armorPileProgress.clear();
             return;
         }
-        int accepted = fillMana(Config.manaSiphonDrainPerOp);
+        int accepted = fillMana(CWConfig.manaSiphonDrainPerOp);
         if (accepted <= 0) return; // tank full
 
         int prog = armorPileProgress.getOrDefault(found, 0) + accepted;

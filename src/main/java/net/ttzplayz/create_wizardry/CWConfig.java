@@ -7,7 +7,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 
 @EventBusSubscriber(modid = CreateWizardry.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
-public class Config
+public class CWConfig
 {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
@@ -15,6 +15,7 @@ public class Config
     private static final ModConfigSpec.IntValue MANA_SIPHON_SMALL_RADIUS;
     private static final ModConfigSpec.IntValue MANA_SIPHON_LARGE_RADIUS;
     private static final ModConfigSpec.IntValue MANA_SIPHON_DRAIN_PER_OP;
+    private static final ModConfigSpec.DoubleValue MANA_SIPHON_SPELL_MANA_PER_DAMAGE;
     private static final ModConfigSpec.IntValue PLAYER_MANA_PER_MB;
     private static final ModConfigSpec.BooleanValue MANA_SIPHON_DROP_KEY_ITEMS;
 
@@ -40,6 +41,11 @@ public class Config
         MANA_SIPHON_DRAIN_PER_OP = BUILDER
                 .comment("Mana (mB) the Mana Siphon pulls from each entity per drain operation.")
                 .defineInRange("manaSiphonDrainPerOp", 1, 1, 1000);
+
+        MANA_SIPHON_SPELL_MANA_PER_DAMAGE = BUILDER
+                .comment("Mana (mB) the Mana Siphon banks per 1 point of damage of a spell projectile",
+                        "pulled in and consumed within its radius (each absorption banks at least 1 mB).")
+                .defineInRange("manaSiphonSpellManaPerDamage", 1.25, 0.0, 1000.0);
 
         PLAYER_MANA_PER_MB = BUILDER
                 .comment("Player mana spent per 1 mB the Mana Siphon stores (only applies to players).")
@@ -84,6 +90,7 @@ public class Config
     public static int manaSiphonSmallRadius;
     public static int manaSiphonLargeRadius;
     public static int manaSiphonDrainPerOp;
+    public static double manaSiphonSpellManaPerDamage;
     public static int playerManaPerMb;
     public static boolean manaSiphonDropKeyItems;
 
@@ -99,6 +106,7 @@ public class Config
         manaSiphonSmallRadius = MANA_SIPHON_SMALL_RADIUS.get();
         manaSiphonLargeRadius = MANA_SIPHON_LARGE_RADIUS.get();
         manaSiphonDrainPerOp = MANA_SIPHON_DRAIN_PER_OP.get();
+        manaSiphonSpellManaPerDamage = MANA_SIPHON_SPELL_MANA_PER_DAMAGE.get();
         playerManaPerMb = PLAYER_MANA_PER_MB.get();
         manaSiphonDropKeyItems = MANA_SIPHON_DROP_KEY_ITEMS.get();
 

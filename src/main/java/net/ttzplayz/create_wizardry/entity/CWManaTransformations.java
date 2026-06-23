@@ -23,7 +23,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.ttzplayz.create_wizardry.Config;
+import net.ttzplayz.create_wizardry.CWConfig;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import net.ttzplayz.create_wizardry.particle.CWParticles;
 
@@ -140,7 +140,7 @@ public final class CWManaTransformations {
     }
 
     public static void dropKeyItem(ServerLevel level, Mob mob) {
-        if (!Config.manaSiphonDropKeyItems) return;
+        if (!CWConfig.manaSiphonDropKeyItems) return;
         Item item = keyItemFor(mob.getType());
         if (item == null || item == Items.AIR) return;
         mob.spawnAtLocation(new ItemStack(item));

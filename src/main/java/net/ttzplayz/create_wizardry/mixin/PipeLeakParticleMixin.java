@@ -12,7 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.ttzplayz.create_wizardry.Config;
+import net.ttzplayz.create_wizardry.CWConfig;
 import net.ttzplayz.create_wizardry.block.pipe.ManaPipeTransport;
 import net.ttzplayz.create_wizardry.particle.CWParticles;
 import org.spongepowered.asm.mixin.Mixin;
@@ -29,7 +29,7 @@ public class PipeLeakParticleMixin {
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void create_wizardry$leakRunes(CallbackInfo ci) {
-        if (!Config.manaLeakingEnabled) return; // leaking off
+        if (!CWConfig.manaLeakingEnabled) return; // leaking off
 
         Object self = this;
         boolean isPipe = self instanceof FluidPipeBlockEntity || self instanceof StraightPipeBlockEntity;

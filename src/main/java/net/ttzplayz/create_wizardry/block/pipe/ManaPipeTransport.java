@@ -7,12 +7,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.ttzplayz.create_wizardry.CWConfig;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +56,8 @@ public final class ManaPipeTransport {
 
     // fraction surviving N copper blocks
     public static double decayFactor(int copperBlocks) {
-        if (copperBlocks <= 0 || !net.ttzplayz.create_wizardry.Config.manaLeakingEnabled) return 1.0;
-        return Math.exp(-net.ttzplayz.create_wizardry.Config.manaPipeLossRate * copperBlocks);
+        if (copperBlocks <= 0 || !CWConfig.manaLeakingEnabled) return 1.0;
+        return Math.exp(-CWConfig.manaPipeLossRate * copperBlocks);
     }
 
     public static boolean isMana(FluidStack stack) {

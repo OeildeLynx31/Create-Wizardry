@@ -116,7 +116,18 @@ public final class CWManaTransformations {
                 result.getZ(), 16, result.getBbWidth() / 2, 0.1);
         level.playSound(null, result.blockPosition(), SoundRegistry.EVOCATION_CAST.get(),
                 SoundSource.HOSTILE, 1.0F, 1.0F);
+        applyTransformationDamage(level, result);
         return true;
+    }
+
+    // siphon-driven revert damage: hurts the reverted mob for a config % of its max health,
+    // gated by the siphonTransformationDamage gamerule (default off)
+    public static void applyTransformationDamage(ServerLevel level, Mob result) {
+        if (!level.getGameRules().getBoolean(net.ttzplayz.create_wizardry.CWGameRules.SIPHON_TRANSFORMATION_DAMAGE)) return;
+        double pct = CWConfig.manaSiphonTransformationDamagePercent;
+        if (pct <= 0) return;
+        float dmg = (float) (result.getMaxHealth() * pct);
+        if (dmg > 0) result.hurt(level.damageSources().magic(), dmg);
     }
 
     // KEY ITEM DROPS

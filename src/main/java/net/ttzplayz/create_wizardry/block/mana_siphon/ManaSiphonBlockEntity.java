@@ -359,6 +359,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
                 CWParticles.spawnManaRunes(sl, result.getX(), result.getY() + result.getBbHeight() / 2,
                         result.getZ(), 16, result.getBbWidth() / 2, 0.1);
                 sl.playSound(null, result.blockPosition(), SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.HOSTILE, 1.0F, 0.8F);
+                CWManaTransformations.applyTransformationDamage(sl, result);
             }
             return;
         }

@@ -123,6 +123,9 @@ public class CreateWizardry {
 
         NeoForge.EVENT_BUS.register(this);
 
+        // register custom gamerules early
+        CWGameRules.register();
+
         CWFluidRegistry.register(modEventBus);
         CWBlocks.register(modEventBus);
         CWBlockEntities.register(modEventBus);
@@ -339,7 +342,7 @@ public class CreateWizardry {
                         .factory(GlassPipeVisual::new)
                         .skipVanillaRender(be -> true)
                         .apply();
-                // pump cog via flywheel, reusing create's pump cog model
+
                 SimpleBlockEntityVisualizer.builder(CWBlockEntities.ARCANE_PUMP.get())
                         .factory(SingleAxisRotatingVisual.ofZ(AllPartialModels.MECHANICAL_PUMP_COG))
                         .skipVanillaRender(be -> true)
@@ -348,17 +351,17 @@ public class CreateWizardry {
                         .register(CreateWizardry.id("arcane_casing"),
                                 model -> new CTModel(model, new SimpleCTBehaviour(CWSpriteShifts.ARCANE_CASING)));
 
-                // dynamic pipe rims/casings, mirroring create's PipeAttachmentModel
+
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("arcane_pipe"), ArcanePipeAttachmentModel::withAO);
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("smart_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
-                // glass pipe wrapped like create's so rims render; sub-models stay in their own layers (no black glass)
+
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("glass_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("encased_arcane_pipe"), ArcanePipeAttachmentModel::withAO);
-                // pump reuses the pipe-attachment model so rims render
+
                 CreateClient.MODEL_SWAPPER.getCustomBlockModels()
                         .register(CreateWizardry.id("arcane_pump"), ArcanePipeAttachmentModel::withAO);
             });
@@ -383,7 +386,6 @@ public class CreateWizardry {
             event.registerBlockEntityRenderer(CWBlockEntities.CHANNELER_BE.get(), ChannelerRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.BLAZE_CASTER_BE.get(), BlazeCasterRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.MANA_SIPHON_BE.get(), ManaSiphonRenderer::new);
-            // smart pipe value box; glass pipe fluid when flywheel off
             event.registerBlockEntityRenderer(CWBlockEntities.SMART_ARCANE_PIPE.get(), SmartBlockEntityRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.GLASS_ARCANE_PIPE.get(), TransparentStraightPipeRenderer::new);
             event.registerBlockEntityRenderer(CWBlockEntities.ARCANE_PUMP.get(), PumpRenderer::new);

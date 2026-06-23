@@ -16,6 +16,7 @@ public class CWConfig
     private static final ModConfigSpec.IntValue MANA_SIPHON_LARGE_RADIUS;
     private static final ModConfigSpec.IntValue MANA_SIPHON_DRAIN_PER_OP;
     private static final ModConfigSpec.DoubleValue MANA_SIPHON_SPELL_MANA_PER_DAMAGE;
+    private static final ModConfigSpec.DoubleValue MANA_SIPHON_TRANSFORMATION_DAMAGE_PERCENT;
     private static final ModConfigSpec.IntValue PLAYER_MANA_PER_MB;
     private static final ModConfigSpec.BooleanValue MANA_SIPHON_DROP_KEY_ITEMS;
 
@@ -46,6 +47,12 @@ public class CWConfig
                 .comment("Mana (mB) the Mana Siphon banks per 1 point of damage of a spell projectile",
                         "pulled in and consumed within its radius (each absorption banks at least 1 mB).")
                 .defineInRange("manaSiphonSpellManaPerDamage", 1.25, 0.0, 1000.0);
+
+        MANA_SIPHON_TRANSFORMATION_DAMAGE_PERCENT = BUILDER
+                .comment("Damage dealt to a mob when the Mana Siphon reverts it (fraction of the reverted",
+                        "mob's max health, dealt once on transformation; 0.25 = 25%). Only applies when the",
+                        "siphonTransformationDamage gamerule is enabled.")
+                .defineInRange("manaSiphonTransformationDamagePercent", 0.25, 0.0, 1.0);
 
         PLAYER_MANA_PER_MB = BUILDER
                 .comment("Player mana spent per 1 mB the Mana Siphon stores (only applies to players).")
@@ -91,6 +98,7 @@ public class CWConfig
     public static int manaSiphonLargeRadius;
     public static int manaSiphonDrainPerOp;
     public static double manaSiphonSpellManaPerDamage;
+    public static double manaSiphonTransformationDamagePercent;
     public static int playerManaPerMb;
     public static boolean manaSiphonDropKeyItems;
 
@@ -107,6 +115,7 @@ public class CWConfig
         manaSiphonLargeRadius = MANA_SIPHON_LARGE_RADIUS.get();
         manaSiphonDrainPerOp = MANA_SIPHON_DRAIN_PER_OP.get();
         manaSiphonSpellManaPerDamage = MANA_SIPHON_SPELL_MANA_PER_DAMAGE.get();
+        manaSiphonTransformationDamagePercent = MANA_SIPHON_TRANSFORMATION_DAMAGE_PERCENT.get();
         playerManaPerMb = PLAYER_MANA_PER_MB.get();
         manaSiphonDropKeyItems = MANA_SIPHON_DROP_KEY_ITEMS.get();
 

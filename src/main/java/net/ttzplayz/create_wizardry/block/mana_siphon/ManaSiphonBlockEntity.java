@@ -109,6 +109,8 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     private final Map<Direction, IFluidHandler> decayingCaps = new HashMap<>();
     private final Map<BlockPos, Integer> eggProgress = new HashMap<>();
     private final Map<BlockPos, Integer> armorPileProgress = new HashMap<>();
+    // per-item transformation warm-up (accumulated ticks keyed by item entity UUID)
+    private final Map<UUID, Integer> itemDrainProgress = new HashMap<>();
     // caster drain
     private final Map<UUID, Integer> casterDrain = new HashMap<>();
     // placer uuid
@@ -541,27 +543,63 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     // yield (mB) banked + optional transmuted result item (null = item is consumed)
     private record DrainResult(int yieldMb, Item result) {}
 
-    // drain one dropped magical item per scan: bank its mana, transmute/consume it
+    // warm one dropped magical item at a time: tether a rune-line to it, then transform it
     private void tickItems(AABB box) {
+        // prefer continuing an item that is already warming up; otherwise take the first drainable one
+        ItemEntity target = null, firstDrainable = null;
+        DrainResult drain = null, firstDrain = null;
         for (ItemEntity ie : level.getEntitiesOfClass(ItemEntity.class, box, ItemEntity::isAlive)) {
-            ItemStack stack = ie.getItem();
-            DrainResult drain = classifyItem(stack);
-            if (drain == null) continue;
+            DrainResult d = classifyItem(ie.getItem());
+            if (d == null) continue;
+            if (firstDrainable == null) { firstDrainable = ie; firstDrain = d; }
+            if (itemDrainProgress.containsKey(ie.getUUID())) { target = ie; drain = d; break; }
+        }
+        if (target == null) { target = firstDrainable; drain = firstDrain; }
 
-            int accepted = fillMana(drain.yieldMb());
-            if (accepted <= 0) continue; // tank full / nothing banked: leave the item
+        if (target == null) {
+            if (!itemDrainProgress.isEmpty()) itemDrainProgress.clear();
+            return;
+        }
 
-            stack.shrink(1);
-            if (stack.isEmpty()) ie.discard(); else ie.setItem(stack);
-            if (drain.result() != null) {
-                Block.popResource(level, ie.blockPosition(), new ItemStack(drain.result()));
-            }
-            level.playSound(null, ie.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.6F, 1.4F);
-            if (level instanceof ServerLevel sl) {
-                CWParticles.spawnManaRunes(sl, ie.getX(), ie.getY(), ie.getZ(), 8, 0.2, 0.08);
-            }
-            markDraining();
-            return; // one item per scan
+        UUID id = target.getUUID();
+        itemDrainProgress.keySet().retainAll(Set.of(id)); // drop any stale warm-ups
+
+        // rune-line tether + orb pulse while the item is being transformed
+        spawnItemDrainParticles(target);
+        markDraining();
+
+        int progress = itemDrainProgress.getOrDefault(id, 0) + SCAN_INTERVAL;
+        if (progress < CWConfig.manaSiphonTransformDelayTicks) {
+            itemDrainProgress.put(id, progress);
+            return;
+        }
+
+        int accepted = fillMana(drain.yieldMb());
+        if (accepted <= 0) {
+            // tank full / nothing banked: hold at the delay and retry next scan, keeping the item
+            itemDrainProgress.put(id, CWConfig.manaSiphonTransformDelayTicks);
+            return;
+        }
+        itemDrainProgress.remove(id);
+
+        ItemStack stack = target.getItem();
+        stack.shrink(1);
+        if (stack.isEmpty()) target.discard(); else target.setItem(stack);
+        if (drain.result() != null) {
+            Block.popResource(level, target.blockPosition(), new ItemStack(drain.result()));
+        }
+        level.playSound(null, target.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.6F, 1.4F);
+        if (level instanceof ServerLevel sl) {
+            CWParticles.spawnManaRunes(sl, target.getX(), target.getY(), target.getZ(), 8, 0.2, 0.08);
+        }
+    }
+
+    // rune burst at the item + a rune-line tether back to the Siphon, while it warms up
+    private void spawnItemDrainParticles(ItemEntity ie) {
+        if (level instanceof ServerLevel sl) {
+            CWParticles.spawnManaRunes(sl, ie.getX(), ie.getY(), ie.getZ(), 6, 0.2, 0.06);
+            Vec3 top = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.0, worldPosition.getZ() + 0.5);
+            CWParticles.spawnManaTrail(sl, new Vec3(ie.getX(), ie.getY(), ie.getZ()), top, 8);
         }
     }
 
@@ -580,7 +618,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
             int cost = spell.getManaCost(spellData.getLevel());
             if (cost <= 0) return null;
             int yield = Math.max(1, (int) Math.round(CWConfig.manaSiphonScrollDrainPercent * cost));
-            return new DrainResult(yield, null);
+            return new DrainResult(yield, Items.PAPER);
         }
         if (item == ItemRegistry.ARCANE_INGOT.get()) {
             return new DrainResult(arcaneItemYield(), randomIngot());

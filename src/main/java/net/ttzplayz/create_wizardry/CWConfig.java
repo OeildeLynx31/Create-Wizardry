@@ -22,6 +22,7 @@ public class CWConfig
     private static final ModConfigSpec.BooleanValue MANA_SIPHON_DRAIN_ITEMS;
     private static final ModConfigSpec.DoubleValue MANA_SIPHON_SCROLL_DRAIN_PERCENT;
     private static final ModConfigSpec.DoubleValue MANA_SIPHON_ITEM_DRAIN_PERCENT;
+    private static final ModConfigSpec.IntValue MANA_SIPHON_TRANSFORM_DELAY_TICKS;
     private static final ModConfigSpec.BooleanValue MANA_SIPHON_SPECIAL_INGOT_DROPS;
     private static final ModConfigSpec.DoubleValue MANA_SIPHON_BRASS_DROP_CHANCE;
     private static final ModConfigSpec.DoubleValue MANA_SIPHON_RARE_DROP_CHANCE;
@@ -85,6 +86,12 @@ public class CWConfig
                         "Arcane ingots/sheets transmute into mundane ingots/sheets; magic cloth becomes wool.")
                 .defineInRange("manaSiphonItemDrainPercent", 0.25, 0.0, 1.0);
 
+        MANA_SIPHON_TRANSFORM_DELAY_TICKS = BUILDER
+                .comment("Ticks an item must sit in the Mana Siphon's radius (with a rune-line",
+                        "tethered to it) before it transforms and banks its mana. 100 ticks = 5s;",
+                        "0 = instant. Applies to scrolls, arcane ingots/sheets, and magic cloth.")
+                .defineInRange("manaSiphonTransformDelayTicks", 100, 0, 1200);
+
         MANA_SIPHON_SPECIAL_INGOT_DROPS = BUILDER
                 .comment("Whether draining arcane ingots/sheets can yield the rare Brass and",
                         "Netherite/Sturdy Sheet results. When false, only Gold/Iron/Copper variants drop.")
@@ -140,6 +147,7 @@ public class CWConfig
     public static boolean manaSiphonDrainItems;
     public static double manaSiphonScrollDrainPercent;
     public static double manaSiphonItemDrainPercent;
+    public static int manaSiphonTransformDelayTicks;
     public static boolean manaSiphonSpecialIngotDrops;
     public static double manaSiphonBrassDropChance;
     public static double manaSiphonRareDropChance;
@@ -163,6 +171,7 @@ public class CWConfig
         manaSiphonDrainItems = MANA_SIPHON_DRAIN_ITEMS.get();
         manaSiphonScrollDrainPercent = MANA_SIPHON_SCROLL_DRAIN_PERCENT.get();
         manaSiphonItemDrainPercent = MANA_SIPHON_ITEM_DRAIN_PERCENT.get();
+        manaSiphonTransformDelayTicks = MANA_SIPHON_TRANSFORM_DELAY_TICKS.get();
         manaSiphonSpecialIngotDrops = MANA_SIPHON_SPECIAL_INGOT_DROPS.get();
         manaSiphonBrassDropChance = MANA_SIPHON_BRASS_DROP_CHANCE.get();
         manaSiphonRareDropChance = MANA_SIPHON_RARE_DROP_CHANCE.get();

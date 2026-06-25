@@ -84,6 +84,10 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     private static final int CAPACITY = 1000;
     private static final int SCAN_INTERVAL = 10;
+    // rpm for normal cadence; above this scans get more frequent
+    private static final float SCAN_BASELINE_RPM = 32f;
+    // floor so high rpm can't drain every tick
+    private static final int MIN_SCAN_INTERVAL = 2;
 
     private static final float STRESS_IMPACT = 4f;
 
@@ -155,6 +159,14 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         float speed = getSpeed();
         if (speed != 0) return speed;
         return CWConfig.manaSiphonRequiresRotation ? 0f : UNPOWERED_PUMP_SPEED;
+    }
+
+    // faster shaft -> shorter scan interval, clamped between MIN_SCAN_INTERVAL and SCAN_INTERVAL
+    private int scanIntervalForSpeed() {
+        float speed = Math.abs(effectiveSpeed());
+        if (speed <= 0f) return SCAN_INTERVAL;
+        int interval = Math.round(SCAN_INTERVAL * (SCAN_BASELINE_RPM / speed));
+        return Mth.clamp(interval, MIN_SCAN_INTERVAL, SCAN_INTERVAL);
     }
 
     // floating orb sits just off the front face; rune tethers terminate slightly closer in
@@ -281,7 +293,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         attractSpells(box); // pull every tick
 
         if (--scanCooldown > 0) return;
-        scanCooldown = SCAN_INTERVAL;
+        scanCooldown = scanIntervalForSpeed();
 
         if (bossBreakCheck(box)) return;
         drainEntities(box);

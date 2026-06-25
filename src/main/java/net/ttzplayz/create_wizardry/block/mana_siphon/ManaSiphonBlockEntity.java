@@ -263,6 +263,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         drainEntities(box);
         tickEggs();
         tickArmorPiles();
+        tickSoulRune();
         if (CWConfig.manaSiphonDrainItems) tickItems(box);
     }
 
@@ -427,6 +428,17 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         markDraining();
     }
 
+    // rune burst at a drained block + a rune-line tether back to the Siphon (mirrors item/entity draining)
+    private void spawnBlockDrainParticles(BlockPos pos) {
+        if (level instanceof ServerLevel sl) {
+            double bx = pos.getX() + 0.5, by = pos.getY() + 0.5, bz = pos.getZ() + 0.5;
+            CWParticles.spawnManaRunes(sl, bx, by, bz, 6, 0.3, 0.06);
+            Vec3 top = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.0, worldPosition.getZ() + 0.5);
+            CWParticles.spawnManaTrail(sl, new Vec3(bx, by, bz), top, 8);
+        }
+        markDraining();
+    }
+
     // light the orb's fast-spin pulse and sync it to the client
     private void markDraining() {
         boolean was = drainPulseTicks > 0;
@@ -488,9 +500,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
             }
         } else {
             eggProgress.put(found, prog);
-            if (level instanceof ServerLevel sl) {
-                CWParticles.spawnManaRunes(sl, found.getX() + 0.5, found.getY() + 0.5, found.getZ() + 0.5, 4, 0.2, 0.05);
-            }
+            spawnBlockDrainParticles(found);
         }
     }
 
@@ -525,10 +535,28 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
             }
         } else {
             armorPileProgress.put(found, prog);
-            if (level instanceof ServerLevel sl) {
-                CWParticles.spawnManaRunes(sl, found.getX() + 0.5, found.getY() + 0.5, found.getZ() + 0.5, 4, 0.2, 0.05);
+            spawnBlockDrainParticles(found);
+        }
+    }
+
+    // Cinderous Soul Rune
+
+    // Drains infinite mana while a dormant cinderous soul rune is in range.
+    // Once it's used to summon Tyros, the FireBoss overloads the siphon in bossBreakCheck.
+    private void tickSoulRune() {
+        int radius = currentRadius();
+        BlockPos found = null;
+        for (BlockPos p : BlockPos.betweenClosed(
+                worldPosition.offset(-radius, -radius, -radius),
+                worldPosition.offset(radius, radius, radius))) {
+            if (level.getBlockState(p).is(BlockRegistry.CINDEROUS_KEYSTONE.get())) {
+                found = p.immutable();
+                break;
             }
         }
+        if (found == null) return;
+        fillMana(CWConfig.manaSiphonDrainPerOp); // inf mana from the soul rune
+        spawnBlockDrainParticles(found);
     }
 
     private static final Item[] ARMOR_PILE_LOOT = {
@@ -629,6 +657,9 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         if (item == ItemRegistry.ARCANE_INGOT.get()) {
             return new DrainResult(arcaneItemYield(), randomIngot());
         }
+        if (item == CWBlocks.ARCANE_BLOCK.get().asItem()) {
+            return new DrainResult(arcaneItemYield() * 9, randomMineralBlock()); // a block is 9 ingots
+        }
         if (item == CWItems.ARCANE_SHEET.get()) {
             return new DrainResult(arcaneItemYield(), randomSheet());
         }
@@ -647,6 +678,13 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     private Item randomIngot() {
         Item special = rollSpecial(Items.NETHERITE_INGOT, createItem("brass_ingot"));
         return special != null ? special : BASE_INGOTS[level.random.nextInt(BASE_INGOTS.length)];
+    }
+
+    private static final Item[] BASE_BLOCKS = {Items.GOLD_BLOCK, Items.IRON_BLOCK, Items.COPPER_BLOCK};
+
+    private Item randomMineralBlock() {
+        Item special = rollSpecial(Items.NETHERITE_BLOCK, createItem("brass_block"));
+        return special != null ? special : BASE_BLOCKS[level.random.nextInt(BASE_BLOCKS.length)];
     }
 
     private Item randomSheet() {

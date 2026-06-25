@@ -14,6 +14,7 @@ import io.redspace.ironsspellbooks.api.spells.SpellData;
 import io.redspace.ironsspellbooks.registries.ItemRegistry;
 import io.redspace.ironsspellbooks.entity.mobs.abstract_spell_casting_mob.AbstractSpellCastingMob;
 import io.redspace.ironsspellbooks.entity.mobs.dead_king_boss.DeadKingBoss;
+import io.redspace.ironsspellbooks.entity.mobs.dead_king_boss.DeadKingCorpseEntity;
 import io.redspace.ironsspellbooks.entity.mobs.ice_spider.IceSpiderEntity;
 import io.redspace.ironsspellbooks.entity.mobs.wizards.fire_boss.FireBossEntity;
 import io.redspace.ironsspellbooks.entity.spells.AbstractMagicProjectile;
@@ -282,9 +283,14 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     // boss break
     private boolean bossBreakCheck(AABB box) {
         boolean overload = !level.getEntitiesOfClass(FireBossEntity.class, box).isEmpty();
+        // A fully-awakened Dead King overloads the siphon
         if (!overload) {
-            for (DeadKingBoss dk : level.getEntitiesOfClass(DeadKingBoss.class, box)) {
-                if (!dk.isPhase(DeadKingBoss.Phases.FirstPhase)) {
+            overload = !level.getEntitiesOfClass(DeadKingBoss.class, box).isEmpty();
+        }
+        // So does a Dead King corpse the instant it begins awakening
+        if (!overload) {
+            for (DeadKingCorpseEntity corpse : level.getEntitiesOfClass(DeadKingCorpseEntity.class, box)) {
+                if (corpse.triggered()) {
                     overload = true;
                     break;
                 }
@@ -309,10 +315,10 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         Set<UUID> seenCasters = new HashSet<>();
         List<LivingEntity> living = level.getEntitiesOfClass(LivingEntity.class, box, LivingEntity::isAlive);
         for (LivingEntity e : living) {
-            if (e instanceof DeadKingBoss) {
+            if (e instanceof DeadKingCorpseEntity) {
                 fillMana(perOp);
                 spawnDrainParticles(e);
-                continue; // inf mana if dead king is asleep
+                continue; // inf mana from the sleeping dead king
             }
             if (e instanceof IceSpiderEntity spider) {
                 seenCasters.add(spider.getUUID());

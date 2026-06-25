@@ -102,6 +102,10 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     private static final int PUMP_MAX_PER_TICK = 128;
 
+    // Speed used to drive farming/pumping. When the config makes rotation optional and the
+    // block isn't spinning, fall back to a fixed emulated speed so the pump still flows.
+    private static final float UNPOWERED_PUMP_SPEED = 32f;
+
     private int scanCooldown = SCAN_INTERVAL;
     private int growthCooldown = 0;
 
@@ -143,6 +147,14 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     // the direction the crystal grows ("front"); fluid output is the opposite side
     private Direction facing() {
         return getBlockState().getValue(ManaSiphonBlock.FACING);
+    }
+
+    // Operating speed driving farming/pumping. Falls back to an emulated speed when the config
+    // lets the Siphon run without rotation; otherwise mirrors the real shaft speed.
+    private float effectiveSpeed() {
+        float speed = getSpeed();
+        if (speed != 0) return speed;
+        return CWConfig.manaSiphonRequiresRotation ? 0f : UNPOWERED_PUMP_SPEED;
     }
 
     // floating orb sits just off the front face; rune tethers terminate slightly closer in
@@ -262,7 +274,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         if (drainPulseTicks > 0 && --drainPulseTicks == 0) notifyUpdate();
         tickCrystallization();
 
-        if (getSpeed() == 0) return;
+        if (effectiveSpeed() == 0) return;
         tickPump();
 
         AABB box = currentBox();
@@ -779,7 +791,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     }
 
     private void maintainDownwardPressure(FluidTransportBehaviour firstPipe) {
-        float speed = Math.abs(getSpeed());
+        float speed = Math.abs(effectiveSpeed());
         if (speed == 0) {
             lastPumpSpeed = Float.NaN;
             return;
@@ -824,7 +836,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         int stored = storedMana();
         IFluidHandler target = level.getCapability(BLOCK, worldPosition.relative(facing().getOpposite()), facing());
         if (target == null) return;
-        int toPush = Math.min(stored, Mth.clamp((int) Math.abs(getSpeed()), 1, PUMP_MAX_PER_TICK));
+        int toPush = Math.min(stored, Mth.clamp((int) Math.abs(effectiveSpeed()), 1, PUMP_MAX_PER_TICK));
         ManaPipeTransport.enterPipeTransport();
         int consumed;
         try {

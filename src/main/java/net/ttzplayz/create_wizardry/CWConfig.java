@@ -26,6 +26,7 @@ public class CWConfig
     private static final ModConfigSpec.BooleanValue MANA_SIPHON_SPECIAL_INGOT_DROPS;
     private static final ModConfigSpec.DoubleValue MANA_SIPHON_BRASS_DROP_CHANCE;
     private static final ModConfigSpec.DoubleValue MANA_SIPHON_RARE_DROP_CHANCE;
+    private static final ModConfigSpec.BooleanValue MANA_SIPHON_REQUIRES_ROTATION;
 
     // Mana Pipe Leaking
     private static final ModConfigSpec.DoubleValue MANA_PIPE_LOSS_RATE;
@@ -106,6 +107,12 @@ public class CWConfig
                         "Sturdy Sheet (only when special drops are enabled).")
                 .defineInRange("manaSiphonRareDropChance", 0.01, 0.0, 1.0);
 
+        MANA_SIPHON_REQUIRES_ROTATION = BUILDER
+                .comment("Whether the Mana Siphon needs rotational power to function. When false, the",
+                        "Siphon drains, absorbs spells, and pumps mana even with no rotation (still applies",
+                        "stress if connected to a kinetic network).")
+                .define("manaSiphonRequiresRotation", true);
+
         BUILDER.pop();
 
         BUILDER.push("mana_pipes");
@@ -151,6 +158,7 @@ public class CWConfig
     public static boolean manaSiphonSpecialIngotDrops;
     public static double manaSiphonBrassDropChance;
     public static double manaSiphonRareDropChance;
+    public static boolean manaSiphonRequiresRotation;
 
     public static double manaPipeLossRate;
     public static boolean manaLeakingEnabled;
@@ -175,6 +183,7 @@ public class CWConfig
         manaSiphonSpecialIngotDrops = MANA_SIPHON_SPECIAL_INGOT_DROPS.get();
         manaSiphonBrassDropChance = MANA_SIPHON_BRASS_DROP_CHANCE.get();
         manaSiphonRareDropChance = MANA_SIPHON_RARE_DROP_CHANCE.get();
+        manaSiphonRequiresRotation = MANA_SIPHON_REQUIRES_ROTATION.get();
 
         manaPipeLossRate = MANA_PIPE_LOSS_RATE.get();
         manaLeakingEnabled = MANA_LEAKING_ENABLED.get();

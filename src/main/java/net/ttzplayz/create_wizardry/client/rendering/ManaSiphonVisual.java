@@ -11,7 +11,9 @@ import dev.engine_room.flywheel.lib.transform.Translate;
 import dev.engine_room.flywheel.lib.visual.AbstractBlockEntityVisual;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
 import net.createmod.catnip.animation.AnimationTickHolder;
+import net.createmod.catnip.math.AngleHelper;
 import net.minecraft.core.Direction;
+import net.ttzplayz.create_wizardry.block.mana_siphon.ManaSiphonBlock;
 import net.ttzplayz.create_wizardry.block.mana_siphon.ManaSiphonBlockEntity;
 import net.ttzplayz.create_wizardry.client.CWPartialModels;
 import org.jetbrains.annotations.Nullable;
@@ -55,10 +57,17 @@ public class ManaSiphonVisual extends AbstractBlockEntityVisual<ManaSiphonBlockE
     }
 
     private void animate() {
-        float angle = KineticBlockEntityRenderer.getAngleForBe(blockEntity, pos, Direction.Axis.Y);
+        // orient the assembly to the block's facing (model authored pointing up); identity at FACING=UP
+        Direction facing = blockEntity.getBlockState().getValue(ManaSiphonBlock.FACING);
+        float hAngle = AngleHelper.horizontalAngle(facing);
+        float vAngle = AngleHelper.verticalAngle(facing) + 90;
+
+        float angle = KineticBlockEntityRenderer.getAngleForBe(blockEntity, pos, facing.getAxis());
         wheel.setIdentityTransform()
                 .translate(getVisualPosition())
                 .translate(Translate.CENTER)
+                .rotateYDegrees(hAngle)
+                .rotateXDegrees(vAngle)
                 .rotateY(angle)
                 .translateBack(Translate.CENTER)
                 .setChanged();
@@ -69,6 +78,8 @@ public class ManaSiphonVisual extends AbstractBlockEntityVisual<ManaSiphonBlockE
             prongs[i].setIdentityTransform()
                     .translate(getVisualPosition())
                     .translate(Translate.CENTER)
+                    .rotateYDegrees(hAngle)
+                    .rotateXDegrees(vAngle)
                     .rotateYDegrees(90f * i)
                     .translateBack(Translate.CENTER)
                     .translate(HINGE_X, HINGE_Y, HINGE_Z)

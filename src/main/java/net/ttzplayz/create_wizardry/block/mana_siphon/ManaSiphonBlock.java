@@ -1,6 +1,6 @@
 package net.ttzplayz.create_wizardry.block.mana_siphon;
 
-import com.simibubi.create.content.kinetics.base.KineticBlock;
+import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
@@ -32,7 +32,7 @@ import net.minecraft.world.level.block.Block;
 import static com.simibubi.create.AllShapes.PUMP;
 import static net.ttzplayz.create_wizardry.block.CWShapes.CHANNELER_SHAPE;
 
-public class ManaSiphonBlock extends KineticBlock implements IBE<ManaSiphonBlockEntity>, ICogWheel, SimpleWaterloggedBlock {
+public class ManaSiphonBlock extends DirectionalKineticBlock implements IBE<ManaSiphonBlockEntity>, ICogWheel, SimpleWaterloggedBlock {
 
     // expanded radius
     public static final BooleanProperty EXPANDED = BooleanProperty.create("expanded");
@@ -40,19 +40,20 @@ public class ManaSiphonBlock extends KineticBlock implements IBE<ManaSiphonBlock
 
     public ManaSiphonBlock(Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any()
+        this.registerDefaultState(super.defaultBlockState()
+                .setValue(FACING, Direction.UP)
                 .setValue(EXPANDED, false)
                 .setValue(WATERLOGGED, false));
     }
 
     @Override
     public @NotNull VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
-        return PUMP.get(Direction.UP);
+        return PUMP.get(state.getValue(FACING));
     }
 
     @Override
     public Axis getRotationAxis(BlockState state) {
-        return Axis.Y;
+        return state.getValue(FACING).getAxis();
     }
 
     @Override
@@ -62,13 +63,15 @@ public class ManaSiphonBlock extends KineticBlock implements IBE<ManaSiphonBlock
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(EXPANDED, WATERLOGGED);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState state = super.getStateForPlacement(context);
         FluidState fluidState = context.getLevel().getFluidState(context.getClickedPos());
-        return defaultBlockState().setValue(WATERLOGGED, fluidState.getType() == Fluids.WATER);
+        return state.setValue(WATERLOGGED, fluidState.getType() == Fluids.WATER);
     }
 
     @Override

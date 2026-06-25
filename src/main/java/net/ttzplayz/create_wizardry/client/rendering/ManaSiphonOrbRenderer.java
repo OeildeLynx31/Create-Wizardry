@@ -13,8 +13,10 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import net.ttzplayz.create_wizardry.block.mana_siphon.ManaSiphonBlock;
 import net.ttzplayz.create_wizardry.block.mana_siphon.ManaSiphonBlockEntity;
 import net.ttzplayz.create_wizardry.client.ClientManaSiphons;
 import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
@@ -26,7 +28,8 @@ import java.util.List;
 public final class ManaSiphonOrbRenderer {
 
     private static final RenderType ORB_TYPE = RenderType.entityTranslucent(TextureAtlas.LOCATION_BLOCKS);
-    private static final float CENTER_Y = 1.25f;
+    // distance from block center along the facing direction that the orb floats
+    private static final float ORB_OFFSET = 0.75f;
     private static final int FULL_BRIGHT = LightTexture.FULL_BRIGHT;
 
     private ManaSiphonOrbRenderer() {}
@@ -65,8 +68,11 @@ public final class ManaSiphonOrbRenderer {
         float half = (edgePx / 16f) / 2f;
         float spin = Mth.lerp(partialTick, be.prevOrbSpin, be.orbSpin);
 
+        Direction facing = be.getBlockState().getValue(ManaSiphonBlock.FACING);
         ps.pushPose();
-        ps.translate(pos.getX() - cam.x + 0.5, pos.getY() - cam.y + CENTER_Y, pos.getZ() - cam.z + 0.5);
+        ps.translate(pos.getX() - cam.x + 0.5 + facing.getStepX() * ORB_OFFSET,
+                pos.getY() - cam.y + 0.5 + facing.getStepY() * ORB_OFFSET,
+                pos.getZ() - cam.z + 0.5 + facing.getStepZ() * ORB_OFFSET);
         ps.mulPose(Axis.YP.rotationDegrees(spin));
         ps.mulPose(Axis.XP.rotationDegrees(spin * 0.66f));
         ps.mulPose(Axis.ZP.rotationDegrees(spin * 0.37f));

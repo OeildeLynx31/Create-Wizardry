@@ -1,5 +1,10 @@
 {
 	"variants": {
-		"": { "model": "create_wizardry:block/mana_siphon" }
+		"facing=up":    { "model": "create_wizardry:block/mana_siphon" },
+		"facing=down":  { "model": "create_wizardry:block/mana_siphon", "x": 180 },
+		"facing=north": { "model": "create_wizardry:block/mana_siphon", "x": 90 },
+		"facing=south": { "model": "create_wizardry:block/mana_siphon", "x": 90, "y": 180 },
+		"facing=east":  { "model": "create_wizardry:block/mana_siphon", "x": 90, "y": 90 },
+		"facing=west":  { "model": "create_wizardry:block/mana_siphon", "x": 90, "y": 270 }
 	}
 }

@@ -140,8 +140,22 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     }
 
 
+    // the direction the crystal grows ("front"); fluid output is the opposite side
+    private Direction facing() {
+        return getBlockState().getValue(ManaSiphonBlock.FACING);
+    }
+
+    // floating orb sits just off the front face; rune tethers terminate slightly closer in
+    private Vec3 orbCenter() {
+        return Vec3.atCenterOf(worldPosition).add(Vec3.atLowerCornerOf(facing().getNormal()).scale(0.75));
+    }
+
+    private Vec3 tetherPoint() {
+        return Vec3.atCenterOf(worldPosition).add(Vec3.atLowerCornerOf(facing().getNormal()).scale(0.5));
+    }
+
     private IFluidHandler decayingCapability(Direction side) {
-        if (side != Direction.DOWN) return null; // only connect from the bottom
+        if (side != facing().getOpposite()) return null; // only connect from the output (back) side
         if (internalTank == null) return null;
         return decayingCaps.computeIfAbsent(side,
                 s -> ManaPipeTransport.decaying(this, s, internalTank.getCapability()));
@@ -232,16 +246,14 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         if (--orbRingCooldown > 0) return;
         orbRingCooldown = 4;
         int count = Math.min(8, ((mana - 1) / 250 + 1) * 2); // 2/4/6/8 by tier
-        double cx = worldPosition.getX() + 0.5;
-        double cy = worldPosition.getY() + 1.25;
-        double cz = worldPosition.getZ() + 0.5;
+        Vec3 center = orbCenter();
         double phase = Math.toRadians(orbSpin);
         for (int i = 0; i < count; i++) {
             double a = phase + i * (Math.PI * 2 / count);
-            double px = cx + Math.cos(a) * 0.45;
-            double pz = cz + Math.sin(a) * 0.45;
+            double px = center.x + Math.cos(a) * 0.45;
+            double pz = center.z + Math.sin(a) * 0.45;
             SimpleParticleType rune = CWParticles.RUNES.get(i % CWParticles.RUNES.size()).get();
-            level.addParticle(rune, px, cy, pz, 0, 0.005, 0);
+            level.addParticle(rune, px, center.y, pz, 0, 0.005, 0);
         }
     }
 
@@ -422,7 +434,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
             double ez = e.getZ();
             CWParticles.spawnManaRunes(sl, ex, ey, ez, 6, e.getBbWidth() / 2, 0.06);
             // Rune trail
-            Vec3 top = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.0, worldPosition.getZ() + 0.5);
+            Vec3 top = tetherPoint();
             CWParticles.spawnManaTrail(sl, new Vec3(ex, ey, ez), top, 8);
         }
         markDraining();
@@ -433,7 +445,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         if (level instanceof ServerLevel sl) {
             double bx = pos.getX() + 0.5, by = pos.getY() + 0.5, bz = pos.getZ() + 0.5;
             CWParticles.spawnManaRunes(sl, bx, by, bz, 6, 0.3, 0.06);
-            Vec3 top = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.0, worldPosition.getZ() + 0.5);
+            Vec3 top = tetherPoint();
             CWParticles.spawnManaTrail(sl, new Vec3(bx, by, bz), top, 8);
         }
         markDraining();
@@ -632,7 +644,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     private void spawnItemDrainParticles(ItemEntity ie) {
         if (level instanceof ServerLevel sl) {
             CWParticles.spawnManaRunes(sl, ie.getX(), ie.getY(), ie.getZ(), 6, 0.2, 0.06);
-            Vec3 top = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.0, worldPosition.getZ() + 0.5);
+            Vec3 top = tetherPoint();
             CWParticles.spawnManaTrail(sl, new Vec3(ie.getX(), ie.getY(), ie.getZ()), top, 8);
         }
     }
@@ -719,10 +731,11 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         if (growthCooldown > 0) return;
         if (storedMana() < GROWTH_COST) return;
 
-        BlockPos host = worldPosition.above(2);
+        Direction f = facing();
+        BlockPos host = worldPosition.relative(f, 2);
         if (!level.getBlockState(host).is(CWTags.Blocks.CRYSTALLINE)) return;
 
-        BlockPos clusterPos = worldPosition.above(1);
+        BlockPos clusterPos = worldPosition.relative(f, 1);
         BlockState cs = level.getBlockState(clusterPos);
 
         if (cs.getBlock() instanceof ArcaneEssenceClusterBlock) {
@@ -736,7 +749,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         } else if (cs.isAir() || cs.canBeReplaced()) {
             drainMana(GROWTH_COST);
             BlockState cluster = CWBlocks.ARCANE_ESSENCE_CLUSTER.get().defaultBlockState()
-                    .setValue(ArcaneEssenceClusterBlock.FACING, Direction.DOWN)
+                    .setValue(ArcaneEssenceClusterBlock.FACING, f.getOpposite())
                     .setValue(ArcaneEssenceClusterBlock.AGE, 0)
                     .setValue(ArcaneEssenceClusterBlock.WATERLOGGED, cs.getFluidState().getType() == Fluids.WATER);
             level.setBlockAndUpdate(clusterPos, cluster);
@@ -755,10 +768,10 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
     // PUMP
 
     private void tickPump() {
-        BlockPos below = worldPosition.below();
-        FluidTransportBehaviour pipeBelow = FluidPropagator.getPipe(level, below);
-        if (pipeBelow != null) {
-            maintainDownwardPressure(pipeBelow);
+        BlockPos out = worldPosition.relative(facing().getOpposite());
+        FluidTransportBehaviour outputPipe = FluidPropagator.getPipe(level, out);
+        if (outputPipe != null) {
+            maintainDownwardPressure(outputPipe);
         } else {
             lastPumpSpeed = Float.NaN; // pipe removed; force a fresh apply if one returns
             if (storedMana() > 0) directFillBelow();
@@ -781,8 +794,8 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         Set<BlockPos> visited = new HashSet<>();
         Deque<BlockPos> frontier = new ArrayDeque<>();
         Map<BlockPos, Direction> entryFace = new HashMap<>();
-        BlockPos first = worldPosition.below();
-        entryFace.put(first, Direction.UP); // fluid enters the first pipe from the Siphon above
+        BlockPos first = worldPosition.relative(facing().getOpposite());
+        entryFace.put(first, facing()); // fluid enters the first pipe from the Siphon on its front side
         frontier.add(first);
 
         while (!frontier.isEmpty() && visited.size() < max) {
@@ -809,7 +822,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
 
     private void directFillBelow() {
         int stored = storedMana();
-        IFluidHandler target = level.getCapability(BLOCK, worldPosition.below(), Direction.UP);
+        IFluidHandler target = level.getCapability(BLOCK, worldPosition.relative(facing().getOpposite()), facing());
         if (target == null) return;
         int toPush = Math.min(stored, Mth.clamp((int) Math.abs(getSpeed()), 1, PUMP_MAX_PER_TICK));
         ManaPipeTransport.enterPipeTransport();

@@ -258,7 +258,8 @@ public class CreateWizardry {
             CWManaTransformations.tickPendingConversion(mob);
         }
         // low mana (< 5) applies depletion: slowness and slowed regen, self-clears once mana recovers
-        if (event.getEntity() instanceof Player player && !player.level().isClientSide()
+        if (CWConfig.manaDepletionEnabled
+                && event.getEntity() instanceof Player player && !player.level().isClientSide()
                 && !player.isCreative() && !player.isSpectator()) {
             float mana = MagicData.getPlayerMagicData(player).getMana();
             if (mana < 5) {

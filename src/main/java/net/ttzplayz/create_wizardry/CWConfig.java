@@ -36,6 +36,9 @@ public class CWConfig
     private static final ModConfigSpec.IntValue CHANNELER_CREEPER_RANGE;
     private static final ModConfigSpec.IntValue CHANNELER_LIGHTNING_RANGE;
 
+    // Player Mana
+    private static final ModConfigSpec.BooleanValue MANA_DEPLETION_ENABLED;
+
     static {
         BUILDER.push("mana_siphon");
 
@@ -140,6 +143,15 @@ public class CWConfig
                 .defineInRange("channelerLightningRange", 8, 1, 64);
 
         BUILDER.pop();
+
+        BUILDER.push("player_mana");
+
+        MANA_DEPLETION_ENABLED = BUILDER
+                .comment("Whether running out of mana inflicts the Depletion effect (slowness and slowed",
+                        "mana regen until mana recovers). When false, low mana applies no penalty.")
+                .define("manaDepletionEnabled", true);
+
+        BUILDER.pop();
     }
 
     static final ModConfigSpec SPEC = BUILDER.build();
@@ -166,6 +178,8 @@ public class CWConfig
     public static int channelerCreeperRange;
     public static int channelerLightningRange;
 
+    public static boolean manaDepletionEnabled;
+
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event)
     {
@@ -190,5 +204,7 @@ public class CWConfig
 
         channelerCreeperRange = CHANNELER_CREEPER_RANGE.get();
         channelerLightningRange = CHANNELER_LIGHTNING_RANGE.get();
+
+        manaDepletionEnabled = MANA_DEPLETION_ENABLED.get();
     }
 }

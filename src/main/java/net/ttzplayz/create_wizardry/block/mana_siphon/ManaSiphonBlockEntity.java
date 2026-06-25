@@ -272,12 +272,20 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
         int count = Math.min(8, ((mana - 1) / 250 + 1) * 2); // 2/4/6/8 by tier
         Vec3 center = orbCenter();
         double phase = Math.toRadians(orbSpin);
+        // ring sits in the plane facing the siphon's FACING (normal = facing dir)
+        Vec3 normal = Vec3.atLowerCornerOf(facing().getNormal());
+        Vec3 ref = Math.abs(normal.y) < 0.99 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
+        Vec3 u = normal.cross(ref).normalize();
+        Vec3 v = normal.cross(u).normalize();
         for (int i = 0; i < count; i++) {
             double a = phase + i * (Math.PI * 2 / count);
-            double px = center.x + Math.cos(a) * 0.45;
-            double pz = center.z + Math.sin(a) * 0.45;
+            double cos = Math.cos(a) * 0.45;
+            double sin = Math.sin(a) * 0.45;
+            double px = center.x + u.x * cos + v.x * sin;
+            double py = center.y + u.y * cos + v.y * sin;
+            double pz = center.z + u.z * cos + v.z * sin;
             SimpleParticleType rune = CWParticles.RUNES.get(i % CWParticles.RUNES.size()).get();
-            level.addParticle(rune, px, center.y, pz, 0, 0.005, 0);
+            level.addParticle(rune, px, py, pz, 0, 0.005, 0);
         }
     }
 
@@ -440,7 +448,7 @@ public class ManaSiphonBlockEntity extends KineticBlockEntity {
                 }
             }
         }
-        if (md.getMana() <= 0) {
+        if (CWConfig.manaDepletionEnabled && md.getMana() <= 0) {
             player.addEffect(new MobEffectInstance(CWMobEffects.DEPLETION, DEPLETION_DURATION, 0, false, true, true));
         }
     }

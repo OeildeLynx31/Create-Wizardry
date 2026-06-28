@@ -15,6 +15,7 @@ import io.redspace.ironsspellbooks.api.spells.ISpellContainer;
 import io.redspace.ironsspellbooks.api.spells.SchoolType;
 import io.redspace.ironsspellbooks.api.spells.SpellData;
 import io.redspace.ironsspellbooks.capabilities.magic.TargetEntityCastData;
+import io.redspace.ironsspellbooks.util.ParticleHelper;
 import net.createmod.catnip.animation.LerpedFloat;
 import net.createmod.catnip.math.AngleHelper;
 import net.createmod.catnip.math.VecHelper;
@@ -29,7 +30,12 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.ttzplayz.create_wizardry.particle.CWParticles;
+import io.redspace.ironsspellbooks.particle.ZapParticleOption;
+import org.joml.Vector3f;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -61,6 +67,7 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.ttzplayz.create_wizardry.CreateWizardry;
+import net.ttzplayz.create_wizardry.CWConfig;
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
 import net.ttzplayz.create_wizardry.block.pipe.ManaPipeTransport;
 import net.ttzplayz.create_wizardry.client.CWPartialModels;
@@ -98,16 +105,16 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     private static final Set<String> SPELL_BLACKLIST = Set.of(
         // Melee spells
         "echoing_strikes", "flaming_strike", "shadow_slash",
-        "volt_strike", "divine_smite", "touch_dig", "heartstop",
+        "volt_strike", "divine_smite", "touch_dig", "heartstop", "wall_of_fire",
         // Movement spells
         "teleport", "recall", "blood_step", "frost_step", "burning_dash",
-        "thunder_step", "evasion", "charge", "ascension", "angel_wings", "portal",
+        "thunder_step", "evasion", "charge", "ascension", "angel_wing", "portal",
         // Inventory/utility spells
         "summon_ender_chest", "summon_horse", "summon_polar_bear",
         // Self-effect spells
         "sacrifice", "invisibility", "haste", "spider_aspect",
         // Healing spells
-        "heal", "greater_heal", "ice_tomb", "healing_circle"
+        "heal", "greater_heal", "ice_tomb", "healing_circle", "fortify"
     );
 
     public static boolean isSpellBlacklisted(AbstractSpell spell) {
@@ -133,8 +140,11 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     public final LerpedFloat headAngle = LerpedFloat.angular();
 
     protected boolean creative = false;
+    // Permanent superheat from the Creative Blaze Cake (the second step of its toggle cycle).
+    protected boolean creativeSuperheat = false;
     protected int castTicksRemaining = 0;
     protected int cooldownTicksRemaining = 0;
+    protected int superheatTicksRemaining = 0;
     @Nullable protected UUID placerUuid;
     protected boolean wasPowered = false;
     protected boolean lockedHead = false;
@@ -158,6 +168,26 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         return creative;
     }
 
+    public boolean isSuperheated() {
+        return superheatTicksRemaining > 0 || creativeSuperheat;
+    }
+
+    public int getSuperheatTicksRemaining() {
+        return superheatTicksRemaining;
+    }
+
+    /** Superheats the caster (or refreshes the timer) for the configured duration. */
+    public void applySuperheat() {
+        superheatTicksRemaining = CWConfig.blazeCasterSuperheatDuration;
+        updateBlockState();
+        notifyUpdate();
+    }
+
+    private int superheatCooldown(int base) {
+        if (!isSuperheated()) return base;
+        return Math.max(1, (int) (base * CWConfig.blazeCasterSuperheatCooldownMult));
+    }
+
     public BlazeBurnerBlock.HeatLevel getHeatLevel() {
         if (castTicksRemaining > 0 || channelTicksRemaining > 0) return BlazeBurnerBlock.HeatLevel.FADING;
         boolean hasMana = creative || (internalTank != null
@@ -165,8 +195,20 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         return hasMana ? BlazeBurnerBlock.HeatLevel.SMOULDERING : BlazeBurnerBlock.HeatLevel.NONE;
     }
 
+    /**
+     * Cycles the Creative Blaze Cake state, mirroring Create's Blaze Burner:
+     * inert -> creative (no mana drain) -> creative + permanently superheated -> inert.
+     */
     public void toggleCreativeHeat() {
-        creative = !creative;
+        if (!creative) {                       // inert -> creative
+            creative = true;
+            creativeSuperheat = false;
+        } else if (!creativeSuperheat) {       // creative -> creative + superheated
+            creativeSuperheat = true;
+        } else {                               // creative + superheated -> inert
+            creative = false;
+            creativeSuperheat = false;
+        }
         updateBlockState();
         notifyUpdate();
     }
@@ -182,7 +224,68 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (!heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.SMOULDERING))
             return CWPartialModels.BLAZE_CASTER_INERT;
         String element = getElementId();
+        if (isSuperheated()) {
+            if (active && CWPartialModels.SUPERHEAT_BLAZE_ACTIVE_BY_ELEMENT.containsKey(element))
+                return CWPartialModels.SUPERHEAT_BLAZE_ACTIVE_BY_ELEMENT.get(element);
+            if (CWPartialModels.SUPERHEAT_BLAZE_BY_ELEMENT.containsKey(element))
+                return CWPartialModels.SUPERHEAT_BLAZE_BY_ELEMENT.get(element);
+            // No supercharged art for this element yet: keep the regular element head instead of the
+            // magenta/black placeholder. The empty caster keeps the null (void) supercharged head.
+            if ("none".equals(element)) return CWPartialModels.SUPERHEAT_BLAZE_NULL;
+        }
         return CWPartialModels.BLAZE_BY_ELEMENT.getOrDefault(element, CWPartialModels.BLAZE_CASTER_NONE);
+    }
+
+    // Rod models mirror getBlazeModel: superheated rods use the supercharged caster texture
+    // (null rod for unmapped/none elements), otherwise the regular per-element rod.
+    @OnlyIn(Dist.CLIENT)
+    public PartialModel getRodSmallModel() {
+        String element = getElementId();
+        if (isSuperheated()) {
+            if (CWPartialModels.SUPERHEAT_ROD_SMALL_BY_ELEMENT.containsKey(element))
+                return CWPartialModels.SUPERHEAT_ROD_SMALL_BY_ELEMENT.get(element);
+            // No supercharged rod art yet: keep the regular element rod; null void rod for the empty caster.
+            if ("none".equals(element)) return CWPartialModels.ROD_SMALL_SUPERHEAT_NULL;
+        }
+        return CWPartialModels.ROD_SMALL_BY_ELEMENT.getOrDefault(element, com.simibubi.create.AllPartialModels.BLAZE_BURNER_RODS);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public PartialModel getRodLargeModel() {
+        String element = getElementId();
+        if (isSuperheated()) {
+            if (CWPartialModels.SUPERHEAT_ROD_LARGE_BY_ELEMENT.containsKey(element))
+                return CWPartialModels.SUPERHEAT_ROD_LARGE_BY_ELEMENT.get(element);
+            if ("none".equals(element)) return CWPartialModels.ROD_LARGE_SUPERHEAT_NULL;
+        }
+        return CWPartialModels.ROD_LARGE_BY_ELEMENT.getOrDefault(element, com.simibubi.create.AllPartialModels.BLAZE_BURNER_RODS_2);
+    }
+
+    // Emissive "black hole" glow overlay shown only while superheated. Ender has art (purple idle,
+    // pink/white while casting); other elements have no glow yet (null).
+    @OnlyIn(Dist.CLIENT)
+    @Nullable
+    public PartialModel getSuperheatGlowModel(BlazeBurnerBlock.HeatLevel heatLevel, boolean active) {
+        if (!isSuperheated() || !heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.SMOULDERING)) return null;
+        if (!"ender".equals(getElementId())) return null;
+        return active ? CWPartialModels.SUPERHEAT_GLOW_ENDER_ACTIVE : CWPartialModels.SUPERHEAT_GLOW_ENDER;
+    }
+
+    // Glow-outline shells for the rods, matching the head glow (ender only).
+    @OnlyIn(Dist.CLIENT)
+    @Nullable
+    public PartialModel getRodSmallGlowModel(BlazeBurnerBlock.HeatLevel heatLevel, boolean active) {
+        if (!isSuperheated() || !heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.SMOULDERING)) return null;
+        if (!"ender".equals(getElementId())) return null;
+        return active ? CWPartialModels.ROD_SMALL_GLOW_ENDER_ACTIVE : CWPartialModels.ROD_SMALL_GLOW_ENDER;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Nullable
+    public PartialModel getRodLargeGlowModel(BlazeBurnerBlock.HeatLevel heatLevel, boolean active) {
+        if (!isSuperheated() || !heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.SMOULDERING)) return null;
+        if (!"ender".equals(getElementId())) return null;
+        return active ? CWPartialModels.ROD_LARGE_GLOW_ENDER_ACTIVE : CWPartialModels.ROD_LARGE_GLOW_ENDER;
     }
 
     public String getElementId() {
@@ -256,6 +359,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     @Nullable
     public PartialModel getEyesModel(BlazeBurnerBlock.HeatLevel heatLevel) {
         if (!heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.SMOULDERING)) return null;
+        // The superheated head has its own glow; hide the normal blaze eyes while superheated.
+        if (isSuperheated()) return null;
         return heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING)
                 ? CWPartialModels.BLAZE_CASTER_ACTIVE_EYES
                 : CWPartialModels.BLAZE_CASTER_IDLE_EYES;
@@ -276,7 +381,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                             Component.translatable(sd.getSpell().getComponentId()))
                             .withStyle(ChatFormatting.GRAY));
                     SchoolType school = sd.getSpell().getSchoolType();
-                    if (school != null && "eldritch".equals(school.getId().getPath())) {
+                    if (!isSuperheated() && school != null && "eldritch".equals(school.getId().getPath())) {
                         tooltip.add(Component.translatable("create_wizardry.tooltip.must_be_superheated")
                                 .withStyle(ChatFormatting.DARK_GRAY));
                     } else if (SPELL_BLACKLIST.contains(sd.getSpell().getSpellResource().getPath())) {
@@ -327,6 +432,20 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             } else {
                 tooltip.add(Component.translatable("create_wizardry.tooltip.not_enough_mana")
                         .withStyle(ChatFormatting.RED));
+            }
+            showed = true;
+        }
+
+        if (isSuperheated()) {
+            if (superheatTicksRemaining > 0) {
+                float seconds = superheatTicksRemaining / 20f;
+                tooltip.add(Component.translatable("create_wizardry.tooltip.superheated",
+                        String.format("%.0f", seconds))
+                        .withStyle(ChatFormatting.LIGHT_PURPLE));
+            } else {
+                // Permanent superheat from the Creative Blaze Cake has no timer.
+                tooltip.add(Component.translatable("create_wizardry.tooltip.superheated_permanent")
+                        .withStyle(ChatFormatting.LIGHT_PURPLE));
             }
             showed = true;
         }
@@ -436,6 +555,14 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 notifyUpdate();
         }
 
+        // Superheat (from a Caster's Scone) ticks down; sync so the goggle tooltip and the
+        // supercharged head/glow rendering stay accurate, and once more when it expires.
+        if (superheatTicksRemaining > 0) {
+            superheatTicksRemaining--;
+            if (superheatTicksRemaining == 0 || superheatTicksRemaining % 20 == 0)
+                notifyUpdate();
+        }
+
         // Resolve spell from held scroll
         if (heldItem.isEmpty()) { cancelCast(); return; }
         ISpellContainer container = ISpellContainer.get(heldItem);
@@ -476,7 +603,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 int chCooldown = channelSpell.getSpellCooldown();
                 channelSpell.onServerCastComplete(level, channelSpellLevel, channelProxy, channelMagicData, false);
                 endChannel();
-                cooldownTicksRemaining = chCooldown;
+                cooldownTicksRemaining = superheatCooldown(chCooldown);
                 if (mode == CasterMode.SENTRY && chTarget != null)
                     tryStartCast(spell, spellLevel);
             }
@@ -494,7 +621,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                     executeCast(spell, spellLevel, null);
                     // continuous spells cool down when the channel ends, not now
                     if (channelProxy == null)
-                        cooldownTicksRemaining = spell.getSpellCooldown();
+                        cooldownTicksRemaining = superheatCooldown(spell.getSpellCooldown());
                 }
             } else if (risingEdge) {
                 tryStartCast(spell, spellLevel);
@@ -514,7 +641,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 // continuous spells cool down when the channel ends, not now
                 if (channelProxy == null)
                     // min 1-tick cooldown to prevent spam
-                    cooldownTicksRemaining = Math.max(1, spell.getSpellCooldown());
+                    cooldownTicksRemaining = Math.max(1, superheatCooldown(spell.getSpellCooldown()));
             }
         } else if (target != null) {
             tryStartCast(spell, spellLevel);
@@ -544,7 +671,8 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     private void tryStartCast(AbstractSpell spell, int spellLevel) {
         if (cooldownTicksRemaining > 0) return;
         SchoolType school = spell.getSchoolType();
-        if (school != null && "eldritch".equals(school.getId().getPath())) return;
+        // Eldritch spells are normally refused; superheating the caster unlocks them.
+        if (!isSuperheated() && school != null && "eldritch".equals(school.getId().getPath())) return;
         if (SPELL_BLACKLIST.contains(spell.getSpellResource().getPath())) return;
         int manaCost = computeManaCost(spell, spellLevel);
         IFluidHandler handler = internalTank.getPrimaryHandler();
@@ -578,7 +706,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         if (sd == null || sd == SpellData.EMPTY) return true;
         AbstractSpell spell = sd.getSpell();
         SchoolType school = spell.getSchoolType();
-        if (school != null && "eldritch".equals(school.getId().getPath())) return true;
+        if (!isSuperheated() && school != null && "eldritch".equals(school.getId().getPath())) return true;
         if (SPELL_BLACKLIST.contains(spell.getSpellResource().getPath())) return true;
         int manaCost = computeManaCost(spell, sd.getLevel());
         return internalTank.getPrimaryHandler().getFluidInTank(0).getAmount() >= manaCost;
@@ -637,6 +765,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
         }
         serverLevel.addFreshEntity(proxy);
         applyHatSpellPowerBoost(proxy, spell);
+        applySuperheatBoost(proxy);
 
         MagicData magicData = new MagicData(true);
         if (target != null)
@@ -777,6 +906,16 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
             0.10, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
     }
 
+    // Superheat (Caster's Scone) grants a flat extra spell power boost on top of any hat bonus.
+    private void applySuperheatBoost(ArmorStand proxy) {
+        if (!isSuperheated()) return;
+        AttributeInstance generalAttr = proxy.getAttribute(AttributeRegistry.SPELL_POWER);
+        if (generalAttr != null)
+            generalAttr.addTransientModifier(new AttributeModifier(
+                ResourceLocation.fromNamespaceAndPath(CreateWizardry.MOD_ID, "superheat_spell_power"),
+                CWConfig.blazeCasterSuperheatDamageBonus, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+    }
+
     @Nullable
     private static Holder<Attribute> getSchoolSpellPowerAttribute(String schoolPath) {
         return switch (schoolPath) {
@@ -847,12 +986,14 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     @Override
     public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
         compound.putBoolean("Creative", creative);
+        compound.putBoolean("CreativeSuperheat", creativeSuperheat);
         if (!heldItem.isEmpty())
             compound.put("HeldItem", heldItem.save(registries));
         if (!heldHat.isEmpty())
             compound.put("HeldHat", heldHat.save(registries));
         compound.putInt("CastTicks", castTicksRemaining);
         compound.putInt("CooldownTicks", cooldownTicksRemaining);
+        compound.putInt("SuperheatTicks", superheatTicksRemaining);
         // Channel state is sync-only (never persisted): on a mid-channel save/reload the proxy
         // is gone, so restoring channelTicksRemaining would leave the caster stuck "casting".
         if (clientPacket) {
@@ -879,6 +1020,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
     @Override
     protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
         creative = compound.getBoolean("Creative");
+        creativeSuperheat = compound.getBoolean("CreativeSuperheat");
         heldItem = compound.contains("HeldItem")
                 ? ItemStack.parseOptional(registries, compound.getCompound("HeldItem"))
                 : ItemStack.EMPTY;
@@ -887,6 +1029,7 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 : ItemStack.EMPTY;
         castTicksRemaining = compound.getInt("CastTicks");
         cooldownTicksRemaining = compound.getInt("CooldownTicks");
+        superheatTicksRemaining = compound.getInt("SuperheatTicks");
         // channel state is sync-only, never read from disk on the server
         if (clientPacket) {
             channelTicksRemaining = compound.getInt("ChannelTicks");
@@ -1017,7 +1160,6 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
 
         RandomSource random = level.getRandom();
         Vec3 center = VecHelper.getCenterOf(worldPosition);
-        Vec3 smokePos = center.add(VecHelper.offsetRandomly(Vec3.ZERO, random, .125f).multiply(1, 0, 1));
 
         if (random.nextInt(4) != 0)
             return;
@@ -1026,20 +1168,54 @@ public class BlazeCasterBlockEntity extends SmartBlockEntity implements IHaveGog
                 .getCollisionShape(level, worldPosition.above())
                 .isEmpty();
 
-        if (empty || random.nextInt(8) == 0)
-            level.addParticle(ParticleTypes.LARGE_SMOKE, smokePos.x, smokePos.y, smokePos.z, 0, 0, 0);
-
         double yMotion = empty ? .0625f : random.nextDouble() * .0125f;
-        Vec3 flamePos = center.add(VecHelper.offsetRandomly(Vec3.ZERO, random, .5f)
+        Vec3 pos = center.add(VecHelper.offsetRandomly(Vec3.ZERO, random, .5f)
                         .multiply(1, .25f, 1)
                         .normalize()
                         .scale((empty ? .25f : .5) + random.nextDouble() * .125f))
                 .add(0, .5, 0);
 
-        if (heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.SEETHING)) {
-            level.addParticle(ParticleTypes.SOUL_FIRE_FLAME, flamePos.x, flamePos.y, flamePos.z, 0, yMotion, 0);
-        } else if (heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING)) {
-            level.addParticle(ParticleTypes.FLAME, flamePos.x, flamePos.y, flamePos.z, 0, yMotion, 0);
+        // Particle type is keyed off element + superheat only (not casting state): a normal caster
+        // always emits its element's rune, a superheated one always emits its element's special
+        // particle — both passively, like smoke. ("none" / no scroll falls back to arcane runes.)
+        String element = getElementId();
+        if (isSuperheated()) {
+            spawnSpecialElementParticle(element, pos, yMotion, random);
+        } else {
+            level.addParticle(CWParticles.runeFor(element), pos.x, pos.y, pos.z, 0, yMotion, 0);
+        }
+    }
+
+    /** School-specific particle emitted by a superheated caster. Easily tweakable. */
+    @OnlyIn(Dist.CLIENT)
+    private void spawnSpecialElementParticle(String element, Vec3 pos, double yMotion, RandomSource random) {
+        assert level != null;
+        switch (element) {
+            case "lightning" -> {
+                // A real "zap" arc to a nearby random point.
+                Vec3 dest = pos.add((random.nextDouble() - .5) * .6, (random.nextDouble() - .5) * .6,
+                        (random.nextDouble() - .5) * .6);
+                level.addParticle(new ZapParticleOption(dest), pos.x, pos.y, pos.z, 0, 0, 0);
+            }
+            case "ender" ->
+                level.addParticle(ParticleTypes.REVERSE_PORTAL, pos.x, pos.y, pos.z,
+                        (random.nextDouble() - .5), (random.nextDouble() - .5), (random.nextDouble() - .5));
+            case "blood" ->
+                level.addParticle(ParticleHelper.BLOOD, pos.x, pos.y, pos.z, 0, yMotion, 0);
+            case "fire" ->
+                level.addParticle(ParticleHelper.FIRE_EMITTER, pos.x, pos.y, pos.z, 0, yMotion, 0);
+            case "ice" ->
+                level.addParticle(ParticleHelper.SNOWFLAKE, pos.x, pos.y, pos.z, 0, yMotion, 0);
+            case "holy" ->
+                level.addParticle(ParticleHelper.CLEANSE_PARTICLE, pos.x, pos.y, pos.z, 0, yMotion, 0);
+            case "nature" ->
+                level.addParticle(ParticleHelper.FIREFLY, pos.x, pos.y, pos.z, 0, yMotion, 0);
+            case "evocation" ->
+                level.addParticle(ParticleTypes.HAPPY_VILLAGER, pos.x, pos.y, pos.z, 0, yMotion, 0);
+            default -> {
+                ParticleOptions rune = CWParticles.runeFor(element);
+                level.addParticle(rune, pos.x, pos.y, pos.z, 0, yMotion, 0);
+            }
         }
     }
 

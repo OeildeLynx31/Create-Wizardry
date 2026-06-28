@@ -38,6 +38,7 @@ public class CWLangProvider extends LanguageProvider {
         add("jei.create_wizardry.blood",
                 "The lifeblood of all organisms. Can be obtained by compressing meat or boiling mobs.");
         add("item.create_wizardry.incomplete_blaze_caster", "Incomplete Blaze Caster");
+        add("item.create_wizardry.casters_scone", "Caster's Scone");
         add("itemGroup.create_wizardry.main", "Create: Wizardry");
         add("block.create_wizardry.blaze_caster", "Blaze Caster");
         add("block.create_wizardry.arcane_casing", "Arcane Casing");
@@ -62,6 +63,8 @@ public class CWLangProvider extends LanguageProvider {
         add("create_wizardry.tooltip.not_enough_mana", "Not enough Mana!");
         add("create_wizardry.tooltip.casting", "Casting...");
         add("create_wizardry.tooltip.creative_mode", "Creative Mode: ON (right-click with Creative Blaze Cake to toggle)");
+        add("create_wizardry.tooltip.superheated", "Superheated: %ss");
+        add("create_wizardry.tooltip.superheated_permanent", "Superheated");
         add("create_wizardry.tooltip.spell_incompatible", "(Incompatible with Blaze Caster)");
         add("create_wizardry.message.spell_incompatible", "This spell cannot be cast from the Blaze Caster");
         add("create_wizardry.tooltip.hat.spell_power_boost", "+5%% Spell Power");

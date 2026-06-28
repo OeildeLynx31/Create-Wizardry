@@ -39,6 +39,11 @@ public class CWConfig
     // Player Mana
     private static final ModConfigSpec.BooleanValue MANA_DEPLETION_ENABLED;
 
+    // Blaze Caster
+    private static final ModConfigSpec.IntValue BLAZE_CASTER_SUPERHEAT_DURATION;
+    private static final ModConfigSpec.DoubleValue BLAZE_CASTER_SUPERHEAT_COOLDOWN_MULT;
+    private static final ModConfigSpec.DoubleValue BLAZE_CASTER_SUPERHEAT_DAMAGE_BONUS;
+
     static {
         BUILDER.push("mana_siphon");
 
@@ -152,6 +157,25 @@ public class CWConfig
                 .define("manaDepletionEnabled", true);
 
         BUILDER.pop();
+
+        BUILDER.push("blaze_caster");
+
+        BLAZE_CASTER_SUPERHEAT_DURATION = BUILDER
+                .comment("How long (in ticks) a Blaze Caster stays superheated after being fed a",
+                        "Caster's Scone. 3600 ticks = 3 minutes. Feeding another scone refreshes the timer.")
+                .defineInRange("blazeCasterSuperheatDuration", 3600, 100, 72000);
+
+        BLAZE_CASTER_SUPERHEAT_COOLDOWN_MULT = BUILDER
+                .comment("Spell cooldown multiplier while a Blaze Caster is superheated.",
+                        "0.5 = half the normal cooldown.")
+                .defineInRange("blazeCasterSuperheatCooldownMult", 0.5, 0.0, 1.0);
+
+        BLAZE_CASTER_SUPERHEAT_DAMAGE_BONUS = BUILDER
+                .comment("Extra spell power granted while a Blaze Caster is superheated, applied as an",
+                        "added fraction of base spell power. 0.10 = +10% damage.")
+                .defineInRange("blazeCasterSuperheatDamageBonus", 0.10, 0.0, 10.0);
+
+        BUILDER.pop();
     }
 
     static final ModConfigSpec SPEC = BUILDER.build();
@@ -180,6 +204,10 @@ public class CWConfig
 
     public static boolean manaDepletionEnabled;
 
+    public static int blazeCasterSuperheatDuration;
+    public static double blazeCasterSuperheatCooldownMult;
+    public static double blazeCasterSuperheatDamageBonus;
+
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event)
     {
@@ -206,5 +234,9 @@ public class CWConfig
         channelerLightningRange = CHANNELER_LIGHTNING_RANGE.get();
 
         manaDepletionEnabled = MANA_DEPLETION_ENABLED.get();
+
+        blazeCasterSuperheatDuration = BLAZE_CASTER_SUPERHEAT_DURATION.get();
+        blazeCasterSuperheatCooldownMult = BLAZE_CASTER_SUPERHEAT_COOLDOWN_MULT.get();
+        blazeCasterSuperheatDamageBonus = BLAZE_CASTER_SUPERHEAT_DAMAGE_BONUS.get();
     }
 }

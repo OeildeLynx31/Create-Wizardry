@@ -52,6 +52,8 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         String elementId = blockEntity.getElementId();
         int hatDyeColor = blockEntity.getHatDyeColor();
         PartialModel hatBaseModel = blockEntity.getHatBaseModel(heatLevel);
+        PartialModel glowModel = blockEntity.getSuperheatGlowModel(heatLevel,
+                active && heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING));
         SpriteShiftEntry elementFlame = CWSpriteShifts.BY_ELEMENT.getOrDefault(elementId, CWSpriteShifts.NONE);
         renderBlaze(
                 blockState, heatLevel, renderTime,
@@ -59,7 +61,8 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
                 light, overlay, seed,
                 animation, horizontalAngle,
                 active && heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING),
-                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, hatDyeColor, hatBaseModel);
+                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, hatDyeColor, hatBaseModel,
+                glowModel);
     }
 
     protected void renderGoggles(
@@ -129,7 +132,7 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
             @Nullable SpriteShiftEntry elementFlame, @Nullable String elementId) {
         renderBlaze(blockState, heatLevel, renderTime, poseStack, transformStack, bufferSource,
                 light, overlay, seed, animation, horizontalAngle, active,
-                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, 0xFFFFFF, null);
+                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, 0xFFFFFF, null, null);
     }
 
     public void renderBlaze(
@@ -142,7 +145,7 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
             @Nullable SpriteShiftEntry elementFlame, @Nullable String elementId, int hatDyeColor) {
         renderBlaze(blockState, heatLevel, renderTime, poseStack, transformStack, bufferSource,
                 light, overlay, seed, animation, horizontalAngle, active,
-                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, hatDyeColor, null);
+                blazeModel, hatModel, gogglesModel, eyesModel, elementFlame, elementId, hatDyeColor, null, null);
     }
 
     public void renderBlaze(
@@ -153,7 +156,7 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
             PartialModel blazeModel, @Nullable PartialModel hatModel, @Nullable PartialModel gogglesModel,
             @Nullable PartialModel eyesModel,
             @Nullable SpriteShiftEntry elementFlame, @Nullable String elementId, int hatDyeColor,
-            @Nullable PartialModel hatBaseModel) {
+            @Nullable PartialModel hatBaseModel, @Nullable PartialModel glowModel) {
         float seededRenderTime = renderTime + (seed % 13) * 16f;
         float offsetScale = heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) ? 64 : 16;
         float offset = Mth.sin((seededRenderTime / 16f) % (2 * Mth.PI)) / offsetScale;
@@ -171,6 +174,13 @@ public class BlazeCasterRenderer<T extends BlazeCasterBlockEntity> extends SafeB
         // Eyes overlay
         if (eyesModel != null)
             renderEyes(blockState, poseStack, transformStack, bufferSource, horizontalAngle, headY, eyesModel);
+        // Superheat "black hole" glow overlay (emissive, translucent)
+        if (glowModel != null) {
+            SuperByteBuffer glowBuffer = CachedBuffers.partial(glowModel, blockState);
+            if (transformStack != null) glowBuffer.transform(transformStack);
+            glowBuffer.translate(0, headY, 0);
+            draw(glowBuffer, horizontalAngle, poseStack, bufferSource.getBuffer(RenderType.translucent()));
+        }
         // Goggles
         if (gogglesModel != null)
             renderGoggles(

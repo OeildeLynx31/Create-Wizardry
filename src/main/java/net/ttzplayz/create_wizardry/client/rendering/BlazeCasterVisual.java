@@ -11,6 +11,8 @@ import dev.engine_room.flywheel.api.visual.DynamicVisual;
 import dev.engine_room.flywheel.api.visual.TickableVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.api.material.Material;
+import dev.engine_room.flywheel.api.material.Transparency;
+import dev.engine_room.flywheel.api.material.WriteMask;
 import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
 import dev.engine_room.flywheel.lib.instance.TransformedInstance;
@@ -53,15 +55,49 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         return NO_CULL_MODELS.get(partial);
     }
 
+    // Inverted-hull outline: the glow cube model is inverted (from/to swapped) so its near faces are
+    // culled and only the far faces render. Drawn OPAQUE, the front-facing head occludes the centre
+    // and the magenta far faces peek out around the silhouette as a solid, gap-free colour outline.
+    // (Translucent blending washed the flat faces out to thin edges — that was the old bug.)
+    // diffuse(false): the base render type applies directional diffuse shading, which darkens the
+    // inverted faces unevenly (a "shadow"); a flat glow outline must be uniformly lit on every face.
+    private static final RendererReloadCache<PartialModel, Model> GLOW_MODELS =
+            new RendererReloadCache<>(partial -> new BakedModelBuilder(partial.get())
+                    .materialFunc((renderType, shaded) -> {
+                        Material base = ModelUtil.getMaterial(renderType, shaded);
+                        return base == null ? null
+                                : new SimpleMaterial.Builder().copyFrom(base)
+                                        .transparency(Transparency.OPAQUE)
+                                        .writeMask(WriteMask.COLOR_DEPTH)
+                                        .backfaceCulling(true)
+                                        .diffuse(false)
+                                        .build();
+                    })
+                    .build());
+
+    private static Model glowPartial(PartialModel partial) {
+        return GLOW_MODELS.get(partial);
+    }
+
     private BlazeBurnerBlock.HeatLevel heatLevel;
     private final TransformedInstance head;
     @Nullable private TransformedInstance hat;
     @Nullable private TransformedInstance hatBase;
     @Nullable private TransformedInstance eyes;
+    @Nullable private TransformedInstance glow;
     @Nullable private TransformedInstance smallRods;
     @Nullable private TransformedInstance largeRods;
+    @Nullable private TransformedInstance glowSmallRods;
+    @Nullable private TransformedInstance glowLargeRods;
     @Nullable private ScrollInstance flame;
     @Nullable private String currentElement;
+    @Nullable private PartialModel currentHeadModel;
+    @Nullable private PartialModel currentHatModel;
+    @Nullable private PartialModel currentHatBaseModel;
+    @Nullable private PartialModel currentGlowModel;
+    @Nullable private PartialModel currentRodSmallGlowModel;
+    @Nullable private PartialModel currentRodLargeGlowModel;
+    private boolean superheatedState;
 
     public BlazeCasterVisual(VisualizationContext ctx, BlazeCasterBlockEntity blockEntity, float partialTick) {
         super(ctx, blockEntity, partialTick);
@@ -69,12 +105,14 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         heatLevel = blockEntity.getHeatLevelFromBlock();
         boolean active = blockEntity.headAnimation.getValue(partialTick) * .175f > 0.125f;
 
+        currentHeadModel = blockEntity.getBlazeModel(heatLevel, active);
         head = instancerProvider()
-                .instancer(InstanceTypes.TRANSFORMED, Models.partial(blockEntity.getBlazeModel(heatLevel, active)))
+                .instancer(InstanceTypes.TRANSFORMED, Models.partial(currentHeadModel))
                 .createInstance();
         head.light(LightTexture.FULL_BRIGHT);
 
         PartialModel hatModel = blockEntity.getHatModel(heatLevel);
+        currentHatModel = hatModel;
         if (hatModel != null) {
             hat = instancerProvider()
                     .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatModel))
@@ -83,6 +121,7 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         }
 
         PartialModel hatBaseModel = blockEntity.getHatBaseModel(heatLevel);
+        currentHatBaseModel = hatBaseModel;
         if (hatBaseModel != null) {
             hatBase = instancerProvider()
                     .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatBaseModel))
@@ -99,16 +138,26 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         }
 
         currentElement = blockEntity.getElementId();
+        superheatedState = blockEntity.isSuperheated();
+
+        PartialModel glowModel = blockEntity.getSuperheatGlowModel(heatLevel, active);
+        currentGlowModel = glowModel;
+        if (glowModel != null) {
+            glow = instancerProvider()
+                    .instancer(InstanceTypes.TRANSFORMED, glowPartial(glowModel))
+                    .createInstance();
+            glow.light(LightTexture.FULL_BRIGHT);
+        }
 
         if (heatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING)) {
             smallRods = instancerProvider()
                     .instancer(InstanceTypes.TRANSFORMED, Models.partial(
-                        CWPartialModels.ROD_SMALL_BY_ELEMENT.getOrDefault(currentElement, AllPartialModels.BLAZE_BURNER_RODS)))
+                        blockEntity.getRodSmallModel()))
                     .createInstance();
             smallRods.light(LightTexture.FULL_BRIGHT);
             largeRods = instancerProvider()
                     .instancer(InstanceTypes.TRANSFORMED, Models.partial(
-                        CWPartialModels.ROD_LARGE_BY_ELEMENT.getOrDefault(currentElement, AllPartialModels.BLAZE_BURNER_RODS_2)))
+                        blockEntity.getRodLargeModel()))
                     .createInstance();
             largeRods.light(LightTexture.FULL_BRIGHT);
         }
@@ -130,50 +179,18 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         boolean active = animation > 0.125f;
 
         String newElement = blockEntity.getElementId();
+        boolean newSuperheated = blockEntity.isSuperheated();
         boolean heatOrElementChanged = newHeatLevel != heatLevel
-                || !Objects.equals(newElement, currentElement);
+                || !Objects.equals(newElement, currentElement)
+                || newSuperheated != superheatedState;
 
         if (heatOrElementChanged) {
             heatLevel = newHeatLevel;
             currentElement = newElement;
+            superheatedState = newSuperheated;
 
-            instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(blockEntity.getBlazeModel(heatLevel, active)))
-                    .stealInstance(head);
-
-            PartialModel hatModel = blockEntity.getHatModel(heatLevel);
-            if (hatModel != null) {
-                if (hat == null) {
-                    hat = instancerProvider()
-                            .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatModel))
-                            .createInstance();
-                    hat.light(LightTexture.FULL_BRIGHT);
-                } else {
-                    instancerProvider()
-                            .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatModel))
-                            .stealInstance(hat);
-                }
-            } else if (hat != null) {
-                hat.delete();
-                hat = null;
-            }
-
-            PartialModel hatBaseModel = blockEntity.getHatBaseModel(heatLevel);
-            if (hatBaseModel != null) {
-                if (hatBase == null) {
-                    hatBase = instancerProvider()
-                            .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatBaseModel))
-                            .createInstance();
-                    hatBase.light(LightTexture.FULL_BRIGHT);
-                } else {
-                    instancerProvider()
-                            .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatBaseModel))
-                            .stealInstance(hatBase);
-                }
-            } else if (hatBase != null) {
-                hatBase.delete();
-                hatBase = null;
-            }
+            // Hat/hatBase are not driven by heat/element/superheat — their models are handled by the
+            // model-aware lifecycle below, which also catches a swap between two different hats.
 
             if (eyes != null) {
                 eyes.delete();
@@ -191,28 +208,42 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
             }
         }
 
-        // hat lifecycle
-        PartialModel currentHatModel = blockEntity.getHatModel(newHeatLevel);
-        if (currentHatModel != null && hat == null) {
-            hat = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, noCullPartial(currentHatModel))
-                    .createInstance();
-            hat.light(LightTexture.FULL_BRIGHT);
-        } else if (currentHatModel == null && hat != null) {
-            hat.delete();
-            hat = null;
+        // Hat lifecycle: compare the model every frame so swapping one hat for a *different* hat
+        // (same heat/element) is detected, not just none<->hat. stealInstance swaps the model in
+        // place without dropping the instance's transform.
+        PartialModel hatModel = blockEntity.getHatModel(newHeatLevel);
+        if (!Objects.equals(hatModel, currentHatModel)) {
+            currentHatModel = hatModel;
+            if (hatModel == null) {
+                if (hat != null) { hat.delete(); hat = null; }
+            } else if (hat == null) {
+                hat = instancerProvider()
+                        .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatModel))
+                        .createInstance();
+                hat.light(LightTexture.FULL_BRIGHT);
+            } else {
+                instancerProvider()
+                        .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatModel))
+                        .stealInstance(hat);
+            }
         }
 
-        // Hat base lifecycle (non-dyeable metal parts)
-        PartialModel currentHatBaseModel = blockEntity.getHatBaseModel(newHeatLevel);
-        if (currentHatBaseModel != null && hatBase == null) {
-            hatBase = instancerProvider()
-                    .instancer(InstanceTypes.TRANSFORMED, noCullPartial(currentHatBaseModel))
-                    .createInstance();
-            hatBase.light(LightTexture.FULL_BRIGHT);
-        } else if (currentHatBaseModel == null && hatBase != null) {
-            hatBase.delete();
-            hatBase = null;
+        // Hat base lifecycle (non-dyeable metal parts) — same model-aware handling
+        PartialModel hatBaseModel = blockEntity.getHatBaseModel(newHeatLevel);
+        if (!Objects.equals(hatBaseModel, currentHatBaseModel)) {
+            currentHatBaseModel = hatBaseModel;
+            if (hatBaseModel == null) {
+                if (hatBase != null) { hatBase.delete(); hatBase = null; }
+            } else if (hatBase == null) {
+                hatBase = instancerProvider()
+                        .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatBaseModel))
+                        .createInstance();
+                hatBase.light(LightTexture.FULL_BRIGHT);
+            } else {
+                instancerProvider()
+                        .instancer(InstanceTypes.TRANSFORMED, noCullPartial(hatBaseModel))
+                        .stealInstance(hatBase);
+            }
         }
 
         // Eyes lifecycle
@@ -227,21 +258,70 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
             eyes = null;
         }
 
+        // Head lifecycle: re-fetch every frame so the head swaps on idle<->active (e.g. the
+        // superheated ender/blood casting textures), not just on heat/element/superheat changes.
+        PartialModel headModel = blockEntity.getBlazeModel(newHeatLevel, active);
+        if (!Objects.equals(headModel, currentHeadModel)) {
+            currentHeadModel = headModel;
+            instancerProvider()
+                    .instancer(InstanceTypes.TRANSFORMED, Models.partial(headModel))
+                    .stealInstance(head);
+        }
+
+        // Superheat glow lifecycle (recreate when the model changes: on/off or idle<->active)
+        PartialModel glowModel = blockEntity.getSuperheatGlowModel(newHeatLevel, active);
+        if (!Objects.equals(glowModel, currentGlowModel)) {
+            if (glow != null) { glow.delete(); glow = null; }
+            currentGlowModel = glowModel;
+            if (glowModel != null) {
+                glow = instancerProvider()
+                        .instancer(InstanceTypes.TRANSFORMED, glowPartial(glowModel))
+                        .createInstance();
+                glow.light(LightTexture.FULL_BRIGHT);
+            }
+        }
+
         // rod lifecycle, created at FADING+
         if (newHeatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) && smallRods == null) {
             smallRods = instancerProvider()
                     .instancer(InstanceTypes.TRANSFORMED, Models.partial(
-                        CWPartialModels.ROD_SMALL_BY_ELEMENT.getOrDefault(newElement, AllPartialModels.BLAZE_BURNER_RODS)))
+                        blockEntity.getRodSmallModel()))
                     .createInstance();
             smallRods.light(LightTexture.FULL_BRIGHT);
             largeRods = instancerProvider()
                     .instancer(InstanceTypes.TRANSFORMED, Models.partial(
-                        CWPartialModels.ROD_LARGE_BY_ELEMENT.getOrDefault(newElement, AllPartialModels.BLAZE_BURNER_RODS_2)))
+                        blockEntity.getRodLargeModel()))
                     .createInstance();
             largeRods.light(LightTexture.FULL_BRIGHT);
         } else if (!newHeatLevel.isAtLeast(BlazeBurnerBlock.HeatLevel.FADING) && smallRods != null) {
             smallRods.delete(); smallRods = null;
             if (largeRods != null) { largeRods.delete(); largeRods = null; }
+        }
+
+        // Rod glow-outline lifecycle (ender superheat only), tied to the rods existing. Recreated on
+        // model change (on/off or idle<->active), mirroring the head glow lifecycle.
+        PartialModel rodSmallGlow = smallRods != null ? blockEntity.getRodSmallGlowModel(newHeatLevel, active) : null;
+        if (!Objects.equals(rodSmallGlow, currentRodSmallGlowModel)) {
+            if (glowSmallRods != null) { glowSmallRods.delete(); glowSmallRods = null; }
+            currentRodSmallGlowModel = rodSmallGlow;
+            if (rodSmallGlow != null) {
+                glowSmallRods = instancerProvider()
+                        .instancer(InstanceTypes.TRANSFORMED, glowPartial(rodSmallGlow))
+                        .createInstance();
+                glowSmallRods.light(LightTexture.FULL_BRIGHT);
+            }
+        }
+
+        PartialModel rodLargeGlow = largeRods != null ? blockEntity.getRodLargeGlowModel(newHeatLevel, active) : null;
+        if (!Objects.equals(rodLargeGlow, currentRodLargeGlowModel)) {
+            if (glowLargeRods != null) { glowLargeRods.delete(); glowLargeRods = null; }
+            currentRodLargeGlowModel = rodLargeGlow;
+            if (rodLargeGlow != null) {
+                glowLargeRods = instancerProvider()
+                        .instancer(InstanceTypes.TRANSFORMED, glowPartial(rodLargeGlow))
+                        .createInstance();
+                glowLargeRods.light(LightTexture.FULL_BRIGHT);
+            }
         }
 
         animate(ctx.partialTick());
@@ -296,20 +376,48 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
                     .setChanged();
         }
 
+        if (glow != null) {
+            glow.setIdentityTransform()
+                    .translate(getVisualPosition())
+                    .translateY(headY)
+                    .translate(Translate.CENTER)
+                    .rotateY(horizontalAngle)
+                    .translateBack(Translate.CENTER)
+                    .setChanged();
+        }
+
         if (smallRods != null) {
             float offset1 = Mth.sin((float) ((renderTick / 16f + Math.PI) % (2 * Math.PI))) / offsetMult;
+            float smallY = offset1 + animation + .125f;
             smallRods.setIdentityTransform()
                     .translate(getVisualPosition())
-                    .translateY(offset1 + animation + .125f)
+                    .translateY(smallY)
                     .setChanged();
+            if (glowSmallRods != null) {
+                // Glow geometry is already inverted+inflated per rod (like the head glow), so it
+                // uses the exact same transform as the rods — no scaling, so it stays aligned.
+                glowSmallRods.setIdentityTransform()
+                        .translate(getVisualPosition())
+                        .translateY(smallY)
+                        .light(LightTexture.FULL_BRIGHT)
+                        .setChanged();
+            }
         }
 
         if (largeRods != null) {
             float offset2 = Mth.sin((float) ((renderTick / 16f + Math.PI / 2) % (2 * Math.PI))) / offsetMult;
+            float largeY = offset2 + animation - 3 / 16f;
             largeRods.setIdentityTransform()
                     .translate(getVisualPosition())
-                    .translateY(offset2 + animation - 3 / 16f)
+                    .translateY(largeY)
                     .setChanged();
+            if (glowLargeRods != null) {
+                glowLargeRods.setIdentityTransform()
+                        .translate(getVisualPosition())
+                        .translateY(largeY)
+                        .light(LightTexture.FULL_BRIGHT)
+                        .setChanged();
+            }
         }
 
         // flame lifecycle, shown above anim threshold
@@ -352,8 +460,11 @@ public class BlazeCasterVisual extends AbstractBlockEntityVisual<BlazeCasterBloc
         if (hat != null) hat.delete();
         if (hatBase != null) hatBase.delete();
         if (eyes != null) eyes.delete();
+        if (glow != null) glow.delete();
         if (smallRods != null) smallRods.delete();
         if (largeRods != null) largeRods.delete();
+        if (glowSmallRods != null) glowSmallRods.delete();
+        if (glowLargeRods != null) glowLargeRods.delete();
         if (flame != null) flame.delete();
     }
 }

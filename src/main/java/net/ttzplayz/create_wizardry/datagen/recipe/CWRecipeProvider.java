@@ -350,6 +350,16 @@ public class CWRecipeProvider extends RecipeProvider {
     }
 
     private void buildMiscItemRecipes(RecipeOutput output) {
+        // Caster's Scone: superheats a Blaze Caster when used on it
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, CASTERS_SCONE.get())
+                .pattern("WEW")
+                .pattern("ASA")
+                .define('W', WHEAT)
+                .define('E', EGG)
+                .define('S', SUGAR)
+                .define('A', ARCANE_ESSENCE.get())
+                .unlockedBy("has_arcane_essence", has(ARCANE_ESSENCE.get()))
+                .save(output);
         manaFilling(output, ARCANE_ESSENCE.get(), DUSTS, 200);
         manaFilling(output, ARCANE_INGOT.get(), INGOTS, 500);
         manaFilling(output, MAGIC_CLOTH.get(), WOOL, 500);

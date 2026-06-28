@@ -23,6 +23,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.ttzplayz.create_wizardry.block.CWBlockEntities;
+import net.ttzplayz.create_wizardry.item.CWItems;
 
 public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<BlazeCasterBlockEntity>, IWrenchable, SpecialBlockItemRequirement {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -164,18 +166,28 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
 
+        // Caster's Scone superheats the caster for a few minutes (½ cooldown, +10% damage,
+        // unlocks eldritch spells)
+        if (stack.is(CWItems.CASTERS_SCONE.get())) {
+            if (!level.isClientSide) {
+                withBlockEntityDo(level, pos, BlazeCasterBlockEntity::applySuperheat);
+                if (!player.isCreative()) stack.shrink(1);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+
         // Shift right-click: hat management
         if (player.isShiftKeyDown()) {
             if (!stack.isEmpty() && isHat(stack)) {
-                // consume the click so armor auto-equip never fires; slot check is server-only
+                // consume the click so armor auto-equip never fires; swap is server-only
                 if (!level.isClientSide) {
                     withBlockEntityDo(level, pos, be -> {
-                        if (be.heldHat.isEmpty()) {
-                            be.heldHat = stack.copyWithCount(1);
-                            if (!player.isCreative()) stack.shrink(1);
-                            be.updateTankCapacity();
-                            be.notifyUpdate();
-                        }
+                        ItemStack previous = be.heldHat.copy();
+                        be.heldHat = stack.copyWithCount(1);
+                        returnOrDrop(player, previous);
+                        if (!player.isCreative()) stack.shrink(1);
+                        be.updateTankCapacity();
+                        be.notifyUpdate();
                     });
                 }
                 return ItemInteractionResult.sidedSuccess(level.isClientSide);
@@ -198,48 +210,54 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
-        // Insert a hat into the hat slot (non-shift right-click)
+        // Insert (or swap) a hat into the hat slot (non-shift right-click)
         if (!stack.isEmpty() && isHat(stack)) {
             if (!level.isClientSide) {
                 withBlockEntityDo(level, pos, be -> {
-                    if (be.heldHat.isEmpty()) {
-                        be.heldHat = stack.copyWithCount(1);
-                        if (!player.isCreative()) stack.shrink(1);
-                        be.updateTankCapacity();
-                        be.notifyUpdate();
-                    }
+                    ItemStack previous = be.heldHat.copy();
+                    be.heldHat = stack.copyWithCount(1);
+                    returnOrDrop(player, previous);
+                    if (!player.isCreative()) stack.shrink(1);
+                    be.updateTankCapacity();
+                    be.notifyUpdate();
                 });
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
 
-        // Insert a spell scroll into the held slot
+        // Insert (or swap) a spell scroll into the held slot
         if (!stack.isEmpty() && stack.getItem() instanceof IScroll) {
-            boolean hasSlot = getBlockEntityOptional(level, pos)
-                    .map(be -> be.heldItem.isEmpty()).orElse(false);
-            if (hasSlot) {
-                // Block insertion of spells incompatible with the Blaze Caster
-                ISpellContainer container = ISpellContainer.get(stack);
-                if (container != null && !container.isEmpty()) {
-                    SpellData sd = container.getSpellAtIndex(0);
-                    if (sd != null && sd != SpellData.EMPTY
-                            && BlazeCasterBlockEntity.isSpellBlacklisted(sd.getSpell())) {
-                        if (!level.isClientSide)
-                            player.displayClientMessage(
-                                Component.translatable("create_wizardry.message.spell_incompatible"), true);
-                        return ItemInteractionResult.FAIL;
-                    }
+            // Block insertion of spells incompatible with the Blaze Caster
+            ISpellContainer container = ISpellContainer.get(stack);
+            if (container != null && !container.isEmpty()) {
+                SpellData sd = container.getSpellAtIndex(0);
+                if (sd != null && sd != SpellData.EMPTY
+                        && BlazeCasterBlockEntity.isSpellBlacklisted(sd.getSpell())) {
+                    if (!level.isClientSide)
+                        player.displayClientMessage(
+                            Component.translatable("create_wizardry.message.spell_incompatible"), true);
+                    // Consume the interaction so the scroll never casts: the Blaze Caster takes
+                    // full priority over the scroll's right-click cast, so a misclick can't waste
+                    // it. (Returning FAIL would not consume the action and the cast would fire.)
+                    // The incompatible scroll is intentionally left in hand, not inserted.
+                    return ItemInteractionResult.sidedSuccess(level.isClientSide);
                 }
-                if (!level.isClientSide) {
-                    withBlockEntityDo(level, pos, be -> {
-                        be.heldItem = stack.copyWithCount(1);
-                        if (!player.isCreative()) stack.shrink(1);
-                        be.notifyUpdate();
-                    });
-                }
-                return ItemInteractionResult.sidedSuccess(level.isClientSide);
             }
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            if (!level.isClientSide) {
+                withBlockEntityDo(level, pos, be -> {
+                    // Swap out whatever scroll is currently held (empty if none)
+                    ItemStack previous = be.heldItem.copy();
+                    be.heldItem = stack.copyWithCount(1);
+                    // Return the old scroll before consuming the new one. add() still stacks it
+                    // onto a matching scroll if the player already has one; otherwise, with a full
+                    // inventory it drops on the ground rather than being absorbed into the slot
+                    // that shrink() would have freed.
+                    returnOrDrop(player, previous);
+                    if (!player.isCreative()) stack.shrink(1);
+                    be.notifyUpdate();
+                });
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
 
         // Retrieve held scroll with empty hand
@@ -269,6 +287,21 @@ public class BlazeCasterBlock extends HorizontalDirectionalBlock implements IBE<
 
     private static boolean isHat(ItemStack stack) {
         return stack.is(WIZARD_HATS);
+    }
+
+    // Return a swapped-out item to the player, or drop it at their feet if it won't fit.
+    // add() merges onto a matching stack (or fills an empty slot); in survival it returns false
+    // with the remainder left in `stack` when nothing fits. In creative it instead silently voids
+    // an unplaceable stack (and returns true), so only call add() when there is real room and drop
+    // otherwise. `stack` is always a single item here, so any available room fits it fully — this
+    // keeps the "stack onto a matching scroll" behavior even in creative.
+    private static void returnOrDrop(Player player, ItemStack stack) {
+        if (stack.isEmpty()) return;
+        Inventory inv = player.getInventory();
+        if (inv.getSlotWithRemainingSpace(stack) >= 0 || inv.getFreeSlot() >= 0)
+            inv.add(stack);
+        else
+            player.drop(stack, false);
     }
 
     @Override

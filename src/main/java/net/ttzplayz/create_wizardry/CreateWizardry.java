@@ -212,6 +212,7 @@ public class CreateWizardry {
             event.accept(CWBlocks.SMART_ARCANE_PIPE.get());
             event.accept(CWBlocks.ARCANE_PUMP.get());
             event.accept(ARCANE_SHEET.get());
+            event.accept(CASTERS_SCONE.get());
             event.accept(CRUSHED_MITHRIL.get());
             event.accept(MITHRIL_NUGGET.get());
             event.accept(MANA_BUCKET.get());

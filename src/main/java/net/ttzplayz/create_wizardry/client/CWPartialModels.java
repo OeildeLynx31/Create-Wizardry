@@ -40,6 +40,25 @@ public class CWPartialModels {
     public static final PartialModel BLAZE_CASTER_IDLE_EYES   = block("blaze_caster/blaze/idle_eyes");
     public static final PartialModel BLAZE_CASTER_ACTIVE_EYES = block("blaze_caster/blaze/active_eyes");
 
+    // Superheated (Caster's Scone) head variants + ender "black hole" glow overlay
+    public static final PartialModel SUPERHEAT_BLAZE_ENDER        = block("blaze_caster/blaze/supercharged/ender");
+    public static final PartialModel SUPERHEAT_BLAZE_ENDER_ACTIVE = block("blaze_caster/blaze/supercharged/ender_active");
+    public static final PartialModel SUPERHEAT_BLAZE_BLOOD        = block("blaze_caster/blaze/supercharged/blood");
+    public static final PartialModel SUPERHEAT_BLAZE_BLOOD_ACTIVE = block("blaze_caster/blaze/supercharged/blood_active");
+    // Elements without dedicated supercharged art (fire, lightning, ice, holy, evocation) intentionally
+    // have no head/rod here — they fall back to their regular element model so the missing-texture
+    // (magenta/black) placeholder is never shown. See BlazeCasterBlockEntity#getBlazeModel.
+    public static final PartialModel SUPERHEAT_BLAZE_NATURE        = block("blaze_caster/blaze/supercharged/nature");
+    public static final PartialModel SUPERHEAT_BLAZE_NATURE_ACTIVE = block("blaze_caster/blaze/supercharged/nature_active");
+    public static final PartialModel SUPERHEAT_BLAZE_NULL         = block("blaze_caster/blaze/supercharged/null");
+    public static final PartialModel SUPERHEAT_GLOW_ENDER         = block("blaze_caster/blaze/supercharged/ender_glow");
+    public static final PartialModel SUPERHEAT_GLOW_ENDER_ACTIVE  = block("blaze_caster/blaze/supercharged/ender_glow_active");
+    // Matching glow-outline shells for the rods (ender only), rendered like the head glow.
+    public static final PartialModel ROD_SMALL_GLOW_ENDER         = block("blaze_caster/rods/supercharged/ender_small_glow");
+    public static final PartialModel ROD_SMALL_GLOW_ENDER_ACTIVE  = block("blaze_caster/rods/supercharged/ender_small_glow_active");
+    public static final PartialModel ROD_LARGE_GLOW_ENDER         = block("blaze_caster/rods/supercharged/ender_large_glow");
+    public static final PartialModel ROD_LARGE_GLOW_ENDER_ACTIVE  = block("blaze_caster/rods/supercharged/ender_large_glow_active");
+
     public static final PartialModel ROD_SMALL_NONE      = block("blaze_caster/rods/none_small");
     public static final PartialModel ROD_SMALL_FIRE      = block("blaze_caster/rods/fire_small");
     public static final PartialModel ROD_SMALL_LIGHTNING = block("blaze_caster/rods/lightning_small");
@@ -60,6 +79,18 @@ public class CWPartialModels {
     public static final PartialModel ROD_LARGE_EVOCATION = block("blaze_caster/rods/evocation_large");
     public static final PartialModel ROD_LARGE_NATURE    = block("blaze_caster/rods/nature_large");
 
+    // Superheated rods reuse the supercharged caster texture (mirrors how the regular rods reuse the
+    // regular caster texture). Unmapped/none elements fall back to the null supercharged rod.
+    public static final PartialModel ROD_SMALL_SUPERHEAT_NULL      = block("blaze_caster/rods/supercharged/null_small");
+    public static final PartialModel ROD_SMALL_SUPERHEAT_ENDER     = block("blaze_caster/rods/supercharged/ender_small");
+    public static final PartialModel ROD_SMALL_SUPERHEAT_BLOOD     = block("blaze_caster/rods/supercharged/blood_small");
+    public static final PartialModel ROD_SMALL_SUPERHEAT_NATURE    = block("blaze_caster/rods/supercharged/nature_small");
+
+    public static final PartialModel ROD_LARGE_SUPERHEAT_NULL      = block("blaze_caster/rods/supercharged/null_large");
+    public static final PartialModel ROD_LARGE_SUPERHEAT_ENDER     = block("blaze_caster/rods/supercharged/ender_large");
+    public static final PartialModel ROD_LARGE_SUPERHEAT_BLOOD     = block("blaze_caster/rods/supercharged/blood_large");
+    public static final PartialModel ROD_LARGE_SUPERHEAT_NATURE    = block("blaze_caster/rods/supercharged/nature_large");
+
     public static final Map<String, PartialModel> BLAZE_BY_ELEMENT = Map.of(
         "none",      BLAZE_CASTER_NONE,
         "fire",      BLAZE_CASTER_FIRE,
@@ -70,6 +101,22 @@ public class CWPartialModels {
         "blood",     BLAZE_CASTER_BLOOD,
         "evocation", BLAZE_CASTER_EVOCATION,
         "nature",    BLAZE_CASTER_NATURE
+    );
+
+    // Superheated head per element. Only elements with dedicated supercharged art are listed; others
+    // (incl. "none") are handled by the caller, which keeps the regular element head / null void head.
+    public static final Map<String, PartialModel> SUPERHEAT_BLAZE_BY_ELEMENT = Map.of(
+        "ender",     SUPERHEAT_BLAZE_ENDER,
+        "blood",     SUPERHEAT_BLAZE_BLOOD,
+        "nature",    SUPERHEAT_BLAZE_NATURE
+    );
+
+    // Superheated head shown while casting; elements without an active variant fall back to the
+    // idle SUPERHEAT_BLAZE_BY_ELEMENT entry.
+    public static final Map<String, PartialModel> SUPERHEAT_BLAZE_ACTIVE_BY_ELEMENT = Map.of(
+        "ender",     SUPERHEAT_BLAZE_ENDER_ACTIVE,
+        "blood",     SUPERHEAT_BLAZE_BLOOD_ACTIVE,
+        "nature",    SUPERHEAT_BLAZE_NATURE_ACTIVE
     );
 
     public static final Map<String, PartialModel> ROD_SMALL_BY_ELEMENT = Map.of(
@@ -94,6 +141,20 @@ public class CWPartialModels {
         "blood",     ROD_LARGE_BLOOD,
         "evocation", ROD_LARGE_EVOCATION,
         "nature",    ROD_LARGE_NATURE
+    );
+
+    // Superheated rods per element. Only elements with dedicated supercharged art are listed; others
+    // (incl. "none") are handled by the caller, which keeps the regular element rod / null void rod.
+    public static final Map<String, PartialModel> SUPERHEAT_ROD_SMALL_BY_ELEMENT = Map.of(
+        "ender",     ROD_SMALL_SUPERHEAT_ENDER,
+        "blood",     ROD_SMALL_SUPERHEAT_BLOOD,
+        "nature",    ROD_SMALL_SUPERHEAT_NATURE
+    );
+
+    public static final Map<String, PartialModel> SUPERHEAT_ROD_LARGE_BY_ELEMENT = Map.of(
+        "ender",     ROD_LARGE_SUPERHEAT_ENDER,
+        "blood",     ROD_LARGE_SUPERHEAT_BLOOD,
+        "nature",    ROD_LARGE_SUPERHEAT_NATURE
     );
 
     public static final Map<String, PartialModel> HAT_BASE_BY_ITEM = Map.of(

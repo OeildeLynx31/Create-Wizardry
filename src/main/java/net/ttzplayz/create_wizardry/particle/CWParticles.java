@@ -12,6 +12,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ttzplayz.create_wizardry.CreateWizardry;
 
 import java.util.List;
+import java.util.Map;
 
 public class CWParticles {
 
@@ -32,6 +33,21 @@ public class CWParticles {
     public static final List<DeferredHolder<ParticleType<?>, SimpleParticleType>> RUNES = List.of(
             ARCANE_RUNE, BLOOD_RUNE, ENDER_RUNE, EVOCATION_RUNE, FIRE_RUNE,
             HOLY_RUNE, ICE_RUNE, LIGHTNING_RUNE, NATURE_RUNE);
+
+    // rune keyed by spell school id; unmapped elements (incl. "none") fall back to ARCANE_RUNE.
+    public static final Map<String, DeferredHolder<ParticleType<?>, SimpleParticleType>> RUNE_BY_ELEMENT = Map.of(
+            "fire", FIRE_RUNE,
+            "lightning", LIGHTNING_RUNE,
+            "ice", ICE_RUNE,
+            "ender", ENDER_RUNE,
+            "blood", BLOOD_RUNE,
+            "evocation", EVOCATION_RUNE,
+            "holy", HOLY_RUNE,
+            "nature", NATURE_RUNE);
+
+    public static SimpleParticleType runeFor(String element) {
+        return RUNE_BY_ELEMENT.getOrDefault(element, ARCANE_RUNE).get();
+    }
 
     private static DeferredHolder<ParticleType<?>, SimpleParticleType> rune(String name) {
         return PARTICLES.register(name, () -> new SimpleParticleType(false) {});

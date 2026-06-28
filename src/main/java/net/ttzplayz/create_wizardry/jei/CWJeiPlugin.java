@@ -17,8 +17,11 @@ import net.minecraft.world.item.ItemStack;
 
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.JeiPlugin;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.ttzplayz.create_wizardry.block.CWBlocks;
+import net.ttzplayz.create_wizardry.fluids.CWFluidRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -59,6 +62,17 @@ public class CWJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(List.of(new ItemStack(LIGHTNING_BUCKET)), VanillaTypes.ITEM_STACK, Component.translatable("jei.create_wizardry.liquid_lightning"));
         registration.addIngredientInfo(List.of(new ItemStack(MANA_BUCKET)), VanillaTypes.ITEM_STACK, Component.translatable("jei.create_wizardry.mana"));
         registration.addIngredientInfo(List.of(new ItemStack(BLOOD_BUCKET)), VanillaTypes.ITEM_STACK, Component.translatable("jei.create_wizardry.blood"));
+    }
+
+    @Override
+    public void onRuntimeAvailable(@NotNull IJeiRuntime jeiRuntime) {
+        // Hide our internal CW Blood fluid from JEI; it's plumbing for blood spells, not a
+        // standalone ingredient players interact with directly.
+        // Only the source fluid is listed as a JEI ingredient (flowing fluids aren't), so removing
+        // just it avoids "ingredient not in list" warnings.
+        jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(
+                NeoForgeTypes.FLUID_STACK,
+                List.of(new FluidStack(CWFluidRegistry.BLOOD_SOURCE.get(), 1000)));
     }
 
 }
